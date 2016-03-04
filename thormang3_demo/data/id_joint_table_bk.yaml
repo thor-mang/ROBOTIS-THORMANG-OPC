@@ -1,0 +1,65 @@
+id:
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+  - 15
+  - 16
+  - 17
+  - 18
+  - 19
+  - 20
+  - 21
+  - 22
+  - 23
+  - 24
+  - 25
+  - 26
+  - 27
+  - 28
+  - 29
+joint:
+  - r_arm_sh_p1
+  - l_arm_sh_p1
+  - r_arm_sh_r
+  - l_arm_sh_r
+  - r_arm_sh_p2
+  - l_arm_sh_p2
+  - r_arm_el_y
+  - l_arm_el_y
+  - r_arm_wr_r
+  - l_arm_wr_r
+  - r_arm_wr_y
+  - l_arm_wr_y
+  - r_arm_wr_p
+  - l_arm_wr_p
+  - r_leg_hip_y
+  - l_leg_hip_y
+  - r_leg_hip_r
+  - l_leg_hip_r
+  - r_leg_hip_p
+  - l_leg_hip_p
+  - r_leg_kn_p
+  - l_leg_kn_p
+  - r_leg_an_p
+  - l_leg_an_p
+  - r_leg_an_r
+  - l_leg_an_r
+  - torso_y
+  - head_y
+  - head_p
+preset:
+  none : [0]
+  manipulation_module : [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,12, 13, 14, 27]
+  walking_module : [15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26]
+  head_control_module : [28, 29]
