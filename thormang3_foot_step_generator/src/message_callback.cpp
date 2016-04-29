@@ -20,6 +20,8 @@ ros::Subscriber		walking_module_status_msg_sub;
 
 ros::Subscriber     walking_command_sub;
 ros::Subscriber		balance_command_sub;
+ros::Subscriber		footsteps_2d_sub;
+
 
 ROBOTIS::FootStepGenerator thormang3_foot_stp_generator;
 
@@ -30,18 +32,28 @@ void Initialize()
     get_ref_step_data_client		= _nh.serviceClient<thormang3_walking_module_msgs::GetReferenceStepData>("/robotis/walking/get_reference_step_data");
     add_step_data_array_client		= _nh.serviceClient<thormang3_walking_module_msgs::AddStepDataArray>("/robotis/walking/add_step_data");
     set_balance_param_client		= _nh.serviceClient<thormang3_walking_module_msgs::SetBalanceParam>("/robotis/walking/set_balance_param");
-	//is_running_client				= _nh.serviceClient<walking_module_msgs::IsRunning>("/robotis/walking/is_running");
+	is_running_client				= _nh.serviceClient<thormang3_walking_module_msgs::IsRunning>("/robotis/walking/is_running");
 
-	walking_module_status_msg_sub	= _nh.subscribe("/robotis/walking/status_message", 10, WalkingModuleStatusMSGCallback);
+	walking_module_status_msg_sub	= _nh.subscribe("/robotis/status", 10, WalkingModuleStatusMSGCallback);
 
 	walking_command_sub			= _nh.subscribe("/robotis/thormang3_foot_step_generator/walking_command", 0, WalkingCommandCallback);
 	balance_command_sub			= _nh.subscribe("/robotis/thormang3_foot_step_generator/balance_command", 0, BalanceCommandCallback);
+	footsteps_2d_sub			= _nh.subscribe("/robotis/thormang3_foot_step_generator/footsteps_2d",    0, Step2DArrayCallback);
 
 }
 
-void WalkingModuleStatusMSGCallback(const std_msgs::String::ConstPtr& msg)
+void WalkingModuleStatusMSGCallback(const robotis_controller_msgs::StatusMsg::ConstPtr& msg)
 {
-	ROS_INFO_STREAM("[Robot] : " << msg->data);
+	if(msg->type == msg->STATUS_ERROR)
+		ROS_ERROR_STREAM("[Robot] : " << msg->status_msg);
+	else if(msg->type == msg->STATUS_INFO)
+		ROS_INFO_STREAM("[Robot] : " << msg->status_msg);
+	else if(msg->type == msg->STATUS_WARN)
+		ROS_WARN_STREAM("[Robot] : " << msg->status_msg);
+	else if(msg->type == msg->STATUS_UNKNOWN)
+		ROS_ERROR_STREAM("[Robot] : " << msg->status_msg);
+	else
+		ROS_ERROR_STREAM("[Robot] : " << msg->status_msg);
 }
 
 void WalkingCommandCallback(const thormang3_foot_step_generator::FootStepCommand::ConstPtr &msg)
@@ -68,8 +80,10 @@ void WalkingCommandCallback(const thormang3_foot_step_generator::FootStepCommand
 
 
 	//get reference step data
-	if(get_ref_step_data_client.call(_get_ref_stp_data_srv) == false)
+	if(get_ref_step_data_client.call(_get_ref_stp_data_srv) == false) {
 		ROS_ERROR("Failed to get reference step data");
+		return;
+	}
 
 	_ref_step_data = _get_ref_stp_data_srv.response.reference_step_data;
 //
@@ -111,6 +125,7 @@ void WalkingCommandCallback(const thormang3_foot_step_generator::FootStepCommand
 	}
 	else {
 		ROS_ERROR("[Demo]  : Invalid Command");
+		return;
 	}
 
 	//set add step data srv fot auto start and remove existing step data
@@ -124,6 +139,7 @@ void WalkingCommandCallback(const thormang3_foot_step_generator::FootStepCommand
 			ROS_INFO("[Demo]  : Succeed to add step data array");
 		else {
 			ROS_ERROR("[Demo]  : Failed to add step data array");
+
 			if(_result & STEP_DATA_ERR::NOT_ENABLED_WALKING_MODULE)
 				ROS_ERROR("[Demo]  : STEP_DATA_ERR::NOT_ENABLED_WALKING_MODULE");
 			if(_result & STEP_DATA_ERR::PROBLEM_IN_POSITION_DATA)
@@ -132,14 +148,79 @@ void WalkingCommandCallback(const thormang3_foot_step_generator::FootStepCommand
 				ROS_ERROR("[Demo]  : STEP_DATA_ERR::PROBLEM_IN_TIME_DATA");
 			if(_result & STEP_DATA_ERR::ROBOT_IS_WALKING_NOW)
 				ROS_ERROR("[Demo]  : STEP_DATA_ERR::ROBOT_IS_WALKING_NOW");
+
+			return;
 		}
 	}
 	else {
 		ROS_ERROR("[Demo]  : Failed to add step data array ");
+		return;
 	}
 
 }
 
+
+void Step2DArrayCallback(const thormang3_foot_step_generator::Step2DArray::ConstPtr& msg)
+{
+    thormang3_walking_module_msgs::GetReferenceStepData	_get_ref_stp_data_srv;
+    thormang3_walking_module_msgs::StepData				_ref_step_data;
+    thormang3_walking_module_msgs::AddStepDataArray		_add_stp_data_srv;
+    thormang3_walking_module_msgs::IsRunning			_is_running_srv;
+
+
+    if(is_running_client.call(_is_running_srv) == false) {
+    	ROS_ERROR("[Demo]  : Failed to Walking Status");
+    	return;
+    }
+    else {
+    	if(_is_running_srv.response.is_running == true)
+    	{
+    		ROS_ERROR("[Demo]  : STEP_DATA_ERR::ROBOT_IS_WALKING_NOW");
+    		return;
+    	}
+    }
+
+
+	//get reference step data
+	if(get_ref_step_data_client.call(_get_ref_stp_data_srv) == false) {
+		ROS_ERROR("[Demo]  : Failed to get reference step data");
+		return;
+	}
+
+	_ref_step_data = _get_ref_stp_data_srv.response.reference_step_data;
+
+
+	thormang3_foot_stp_generator.GetStepDataFromStepData2DArray(&_add_stp_data_srv.request.step_data_array, _ref_step_data, msg);
+
+	//set add step data srv fot auto start and remove existing step data
+	_add_stp_data_srv.request.auto_start = true;
+	_add_stp_data_srv.request.remove_existing_step_data = true;
+
+	//add step data
+	if(add_step_data_array_client.call(_add_stp_data_srv) == true) {
+		int _result = _add_stp_data_srv.response.result;
+		if(_result== STEP_DATA_ERR::NO_ERROR)
+			ROS_INFO("[Demo]  : Succeed to add step data array");
+		else {
+			ROS_ERROR("[Demo]  : Failed to add step data array");
+
+			if(_result & STEP_DATA_ERR::NOT_ENABLED_WALKING_MODULE)
+				ROS_ERROR("[Demo]  : STEP_DATA_ERR::NOT_ENABLED_WALKING_MODULE");
+			if(_result & STEP_DATA_ERR::PROBLEM_IN_POSITION_DATA)
+				ROS_ERROR("[Demo]  : STEP_DATA_ERR::PROBLEM_IN_POSITION_DATA");
+			if(_result & STEP_DATA_ERR::PROBLEM_IN_TIME_DATA)
+				ROS_ERROR("[Demo]  : STEP_DATA_ERR::PROBLEM_IN_TIME_DATA");
+			if(_result & STEP_DATA_ERR::ROBOT_IS_WALKING_NOW)
+				ROS_ERROR("[Demo]  : STEP_DATA_ERR::ROBOT_IS_WALKING_NOW");
+
+			return;
+		}
+	}
+	else {
+		ROS_ERROR("[Demo]  : Failed to add step data array ");
+		return;
+	}
+}
 
 
 void BalanceCommandCallback(const std_msgs::Bool::ConstPtr &msg)

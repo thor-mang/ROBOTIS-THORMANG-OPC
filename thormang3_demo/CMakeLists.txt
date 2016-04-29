@@ -21,6 +21,8 @@ find_package(catkin REQUIRED COMPONENTS
   thormang3_base_module_msgs
   thormang3_walking_module_msgs
   thormang3_manipulation_module_msgs
+  thormang3_feet_ft_module_msgs
+  humanoid_nav_msgs
 )
 
 find_package(Eigen REQUIRED)

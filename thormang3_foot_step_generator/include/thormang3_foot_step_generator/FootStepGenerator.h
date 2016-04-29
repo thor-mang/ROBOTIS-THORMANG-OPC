@@ -8,9 +8,10 @@
 #ifndef REALTIMEFOOTSTEPGENERATOR_H_
 #define REALTIMEFOOTSTEPGENERATOR_H_
 
-
+#include <ros/ros.h>
 #include "thormang3_walking_module_msgs/AddStepDataArray.h"
 #include "thormang3_foot_step_generator/WalkingModuleCommon.h"
+#include "thormang3_foot_step_generator/Step2DArray.h"
 
 #define Stop					0
 #define ForwardWalking			1
@@ -56,7 +57,13 @@ namespace ROBOTIS
 		~FootStepGenerator();
 
         void SetReferenceStepData(const thormang3_walking_module_msgs::StepData& ref_stp_data);
-        void GetStepData(thormang3_walking_module_msgs::AddStepDataArray::Request::_step_data_array_type* _step_data_array, const thormang3_walking_module_msgs::StepData& ref_step_data, int desired_step_type);
+        void GetStepData(thormang3_walking_module_msgs::AddStepDataArray::Request::_step_data_array_type* _step_data_array,
+        				const thormang3_walking_module_msgs::StepData& ref_step_data,
+						int desired_step_type);
+
+        void GetStepDataFromStepData2DArray(thormang3_walking_module_msgs::AddStepDataArray::Request::_step_data_array_type* _step_data_array,
+        							const thormang3_walking_module_msgs::StepData& ref_step_data,
+									const thormang3_foot_step_generator::Step2DArray::ConstPtr& request_step_2d);
 	};
 
 

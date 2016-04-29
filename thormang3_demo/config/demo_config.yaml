@@ -30,9 +30,10 @@ id_joint:
   29 : head_p
   30 : l_arm_grip
   31 : r_arm_grip
-module: [none, walking_module, manipulation_module, head_control_module, base_module]
-preset:
-  none : [0]
-  manipulation_module : [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 27, 30, 31]
-  walking_module : [15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26]
-  head_control_module : [28, 29]
+module_list: [none, walking_module, manipulation_module, head_control_module, base_module, action_module]
+module_button:
+  1 : none
+  2 : manipulation_module
+  3 : walking_module
+  4 : head_control_module
+ # 5 : action_module

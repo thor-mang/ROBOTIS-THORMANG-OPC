@@ -1,3 +1,5 @@
-string    	        name
-string              demo
-geometry_msgs/Pose  pose
+string                  name
+string                  demo
+float64                 time
+float64                 grip_val
+geometry_msgs/Pose      pose

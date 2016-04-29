@@ -15,7 +15,6 @@ add_message_files(
   DemoPose.msg
   JointPose.msg
   KinematicsPose.msg
-  PathPlanningPose.msg
 )
 
 add_service_files(
