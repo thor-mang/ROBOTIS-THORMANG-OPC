@@ -21,7 +21,6 @@
   <build_depend>eigen_conversions</build_depend>
   <build_depend>thormang3_foot_step_generator</build_depend>
   <build_depend>robotis_controller_msgs</build_depend>
-  <build_depend>thormang3_base_module_msgs</build_depend>
   <build_depend>thormang3_walking_module_msgs</build_depend>
   <build_depend>thormang3_manipulation_module_msgs</build_depend>
   <build_depend>thormang3_feet_ft_module_msgs</build_depend>

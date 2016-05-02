@@ -18,11 +18,11 @@ find_package(catkin REQUIRED COMPONENTS
   eigen_conversions
   thormang3_foot_step_generator
   robotis_controller_msgs
-  thormang3_base_module_msgs
   thormang3_walking_module_msgs
   thormang3_manipulation_module_msgs
   thormang3_feet_ft_module_msgs
   humanoid_nav_msgs
+  footstep_planner
 )
 
 find_package(Eigen REQUIRED)

@@ -40,7 +40,6 @@
 
 // manipulation demo
 #include "thormang3_manipulation_module_msgs/JointPose.h"
-#include "thormang3_manipulation_module_msgs/DemoPose.h"
 #include "thormang3_manipulation_module_msgs/KinematicsPose.h"
 #include "thormang3_manipulation_module_msgs/GetJointPose.h"
 #include "thormang3_manipulation_module_msgs/GetKinematicsPose.h"

@@ -20,8 +20,9 @@ RosThor3PosePanelNode::~RosThor3PosePanelNode()
         ros::shutdown(); // explicitly needed since we use ros::start();
         ros::waitForShutdown();
     }
-    wait();
+
     */
+    wait();
 }
 
 bool RosThor3PosePanelNode::init()
@@ -376,8 +377,8 @@ Eigen::MatrixXd RosThor3PosePanelNode::rotationX(const double &angle )
     Eigen::MatrixXd _rotation( 3 , 3 );
 
     _rotation << 1.0,          0.0,           0.0,
-                 0.0, cos( angle ), -sin( angle ),
-                 0.0, sin( angle ),  cos( angle );
+            0.0, cos( angle ), -sin( angle ),
+            0.0, sin( angle ),  cos( angle );
 
     return _rotation;
 }
@@ -387,8 +388,8 @@ Eigen::MatrixXd RosThor3PosePanelNode::rotationY(const double &angle )
     Eigen::MatrixXd _rotation( 3 , 3 );
 
     _rotation << cos( angle ), 0.0, sin( angle ),
-                          0.0, 1.0,          0.0,
-                -sin( angle ), 0.0, cos( angle );
+            0.0, 1.0,          0.0,
+            -sin( angle ), 0.0, cos( angle );
 
     return _rotation;
 }
@@ -398,8 +399,8 @@ Eigen::MatrixXd RosThor3PosePanelNode::rotationZ(const double &angle )
     Eigen::MatrixXd _rotation(3,3);
 
     _rotation << cos( angle ), -sin( angle ), 0.0,
-                 sin( angle ),  cos( angle ), 0.0,
-                          0.0,           0.0, 1.0;
+            sin( angle ),  cos( angle ), 0.0,
+            0.0,           0.0, 1.0;
 
     return _rotation;
 }
