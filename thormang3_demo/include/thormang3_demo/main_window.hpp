@@ -5,8 +5,8 @@
  *
  * @date November 2010
  **/
-#ifndef thor3_control_MAIN_WINDOW_H
-#define thor3_control_MAIN_WINDOW_H
+#ifndef thormang3_demo_MAIN_WINDOW_H
+#define thormang3_demo_MAIN_WINDOW_H
 
 /*****************************************************************************
 ** Includes
@@ -39,12 +39,12 @@ class MainWindow : public QMainWindow {
         void WriteSettings(); // Save qt program settings when closing
 
         void closeEvent(QCloseEvent *event); // Overloaded function
-        void showNoMasterMessage();
+        void ShowNoMasterMessage();
 
     public Q_SLOTS:
         /******************************************
-    ** Auto-connections (connectSlotsByName())
-    *******************************************/
+        ** Auto-connections (connectSlotsByName())
+        *******************************************/
         void on_actionAbout_triggered();
         void on_button_assemble_lidar_clicked(bool check );
         void on_button_clear_log_clicked(bool check);
@@ -63,9 +63,6 @@ class MainWindow : public QMainWindow {
         void on_despos_button_clicked( bool check );
         void on_button_grip_on_clicked(bool check);
         void on_button_grip_off_clicked(bool check);
-        void on_button_pathplanning_ini_clicked(bool check);
-        void on_button_pathplanning_a_clicked(bool check);
-        void on_button_pathplanning_b_clicked(bool check);
 
         // Walking
         void on_A0_button_fl_clicked(bool check);
@@ -83,36 +80,41 @@ class MainWindow : public QMainWindow {
         void on_button_balance_on_clicked(bool check);
         void on_button_balance_off_clicked(bool check);
 
+        void on_A0_button_get_step_clicked(bool check);
+        void on_A1_button_clear_step_clicked(bool check);
+        void on_A2_button_go_walking_clicked(bool check);
+
         // Head Control
         void on_head_center_button_clicked(bool check);
 
         /******************************************
-    ** Manual connections
-    *******************************************/
-        void updateLoggingView(); // no idea why this can't connect automatically
-        void setMode(bool check);
-        void updateCurrentJointMode(std::vector<int> mode);
-        void setPreset(QString preset_name);
-        void updateHeadAngles(double pan, double tilt);
+        ** Manual connections
+        *******************************************/
+        void UpdateLoggingView(); // no idea why this can't connect automatically
+        void UpdatePresentJointModule(std::vector<int> mode);
+        void EnableModule(QString mode_name);
+        void UpdateHeadJointsAngle(double pan, double tilt);
 
         // Manipulation
-        void updateCurrJointSpinbox( double value );
-        void updateCurrPosSpinbox( double x , double y , double z  );
-        void updateCurrOriSpinbox( double x , double y , double z , double w );
+        void UpdateCurrJointSpinbox( double value );
+        void UpdateCurrPosSpinbox( double x , double y , double z  );
+        void UpdateCurrOriSpinbox( double x , double y , double z , double w );
+
+        // Walking
+        void EnableGetStepButton();
 
     private:
         Ui::MainWindowDesign ui;
         QNodeThor3 qnode_thor3;
         bool DEBUG;
-        void setUserShortcut();
-        void initModeUnit();
         bool is_updating_;
         std::map< std::string, QList<QWidget *> > module_ui_table_;
-        void updateModuleUI();
-        void setHeadAngle(double pan, double tilt);
-        void sendWalkingCommand(const std::string &command);
 
-        void sendDemoMsg(const std::string &demo_command);
+        void SetUserShortcut();
+        void InitModeUnit();
+        void UpdateModuleUI();
+        void SetHeadJointsAngle(double pan, double tilt);
+        void SendWalkingCommand(const std::string &command);
 
         /******************************************
         ** Transformation
@@ -124,9 +126,9 @@ class MainWindow : public QMainWindow {
         Eigen::Quaterniond rpy2quaternion(double r, double p, double y);
 
     protected Q_SLOTS:
-        void setHeadAngle();
+        void SetHeadJointsAngle();
 };
 
 }  // namespace thor3_control
 
-#endif // thor3_control_MAIN_WINDOW_H
+#endif // thormang3_demo_MAIN_WINDOW_H

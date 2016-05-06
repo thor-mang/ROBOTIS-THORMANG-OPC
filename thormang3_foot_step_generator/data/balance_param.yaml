@@ -3,7 +3,7 @@ cob_x_offset_m : -0.01
 cob_y_offset_m :  0.0
 
 ####### FeedForward #####
-hip_roll_swap_angle_rad : 0.017 # 0.0174532925 ## 1 deg
+hip_roll_swap_angle_rad : 0.008 # 0.0174532925 ## 1 deg
 
 ########## Gain ########
 #by gyro

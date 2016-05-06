@@ -20,8 +20,9 @@ RosThor3PosePanelNode::~RosThor3PosePanelNode()
         ros::shutdown(); // explicitly needed since we use ros::start();
         ros::waitForShutdown();
     }
-    wait();
+
     */
+    wait();
 }
 
 bool RosThor3PosePanelNode::init()
@@ -72,20 +73,6 @@ void RosThor3PosePanelNode::pointStampedCallback(const geometry_msgs::PointStamp
 
 void RosThor3PosePanelNode::interactiveMarkerFeedback(const visualization_msgs::InteractiveMarkerFeedbackConstPtr &feedback)
 {
-    /*
-    if( feedback->mouse_point_valid )
-    {
-        std::ostringstream mouse_point_ss;
-        mouse_point_ss << " at " << feedback->mouse_point.x
-                       << ", " << feedback->mouse_point.y
-                       << ", " << feedback->mouse_point.z
-                       << " in frame " << feedback->header.frame_id;
-
-        std::string _ssss = mouse_point_ss.str();
-        ROS_INFO_STREAM(_ssss);
-    }
-    */
-
     // event
     switch ( feedback->event_type )
     {
@@ -312,17 +299,6 @@ void RosThor3PosePanelNode::publishPose(const geometry_msgs::Pose &pose)
 }
 
 // math : euler & quaternion & rotation mat
-//Eigen::MatrixXd RosThor3PosePanelNode::rotation2rpy(const Eigen::MatrixXd &rotation )
-//{
-//    Eigen::MatrixXd _rpy = Eigen::MatrixXd::Zero( 3 , 1 );
-
-//    _rpy.coeffRef( 0 , 0 ) = atan2( rotation.coeff( 2 , 1 ), rotation.coeff( 2 , 2 ) );
-//    _rpy.coeffRef( 1 , 0 ) = atan2(-rotation.coeff( 2 , 0 ), sqrt( pow( rotation.coeff( 2 , 1 ) , 2 ) + pow( rotation.coeff( 2 , 2 ) , 2 ) ) );
-//    _rpy.coeffRef( 2 , 0 ) = atan2( rotation.coeff( 1 , 0 ), rotation.coeff( 0 , 0 ) );
-
-//    return _rpy;
-//}
-
 Eigen::Vector3d RosThor3PosePanelNode::rotation2rpy(const Eigen::MatrixXd &rotation )
 {
     Eigen::Vector3d _rpy;
@@ -372,13 +348,6 @@ Eigen::Quaterniond RosThor3PosePanelNode::rotation2quaternion(const Eigen::Matri
     return _quaternion;
 }
 
-//Eigen::MatrixXd RosThor3PosePanelNode::quaternion2rpy(const Eigen::Quaterniond &quaternion )
-//{
-//    Eigen::MatrixXd _rpy = rotation2rpy( quaternion.toRotationMatrix() );
-
-//    return _rpy;
-//}
-
 Eigen::Vector3d RosThor3PosePanelNode::quaternion2rpy(const Eigen::Quaterniond &quaternion )
 {
     Eigen::Vector3d _rpy = rotation2rpy( quaternion.toRotationMatrix() );
@@ -408,8 +377,8 @@ Eigen::MatrixXd RosThor3PosePanelNode::rotationX(const double &angle )
     Eigen::MatrixXd _rotation( 3 , 3 );
 
     _rotation << 1.0,          0.0,           0.0,
-                 0.0, cos( angle ), -sin( angle ),
-                 0.0, sin( angle ),  cos( angle );
+            0.0, cos( angle ), -sin( angle ),
+            0.0, sin( angle ),  cos( angle );
 
     return _rotation;
 }
@@ -419,8 +388,8 @@ Eigen::MatrixXd RosThor3PosePanelNode::rotationY(const double &angle )
     Eigen::MatrixXd _rotation( 3 , 3 );
 
     _rotation << cos( angle ), 0.0, sin( angle ),
-                          0.0, 1.0,          0.0,
-                -sin( angle ), 0.0, cos( angle );
+            0.0, 1.0,          0.0,
+            -sin( angle ), 0.0, cos( angle );
 
     return _rotation;
 }
@@ -430,8 +399,8 @@ Eigen::MatrixXd RosThor3PosePanelNode::rotationZ(const double &angle )
     Eigen::MatrixXd _rotation(3,3);
 
     _rotation << cos( angle ), -sin( angle ), 0.0,
-                 sin( angle ),  cos( angle ), 0.0,
-                          0.0,           0.0, 1.0;
+            sin( angle ),  cos( angle ), 0.0,
+            0.0,           0.0, 1.0;
 
     return _rotation;
 }

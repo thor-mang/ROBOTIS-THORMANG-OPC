@@ -1,0 +1,14 @@
+<launch>
+    <arg name="use_empty_map" default="true" />  
+
+    <include if="$(arg use_empty_map)" file="$(find footstep_planner)/launch/map_server_empty.launch" />
+    <include unless="$(arg use_empty_map)" file="$(find footstep_planner)/launch/map_server_thormang.launch" />
+    
+    <node name="footstep_planner" pkg="footstep_planner" type="footstep_planner_node" >
+        <rosparam file="$(find footstep_planner)/config/planning_params.yaml" command="load" />
+        <rosparam file="$(find footstep_planner)/config/planning_params_thormang3.yaml" command="load" />
+        <rosparam file="$(find footstep_planner)/config/footsteps_thormang3.yaml" command="load" />
+        <remap from="map" to="projected_map" />
+    </node>
+
+</launch>
