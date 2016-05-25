@@ -71,8 +71,8 @@ class QNodeThor3 : public QThread {
         void run();
 
         /*********************
-        ** Logging
-        **********************/
+    ** Logging
+    **********************/
         enum LogLevel {
             Debug = 0,
             Info = 1,
@@ -130,6 +130,7 @@ class QNodeThor3 : public QThread {
         void GetJointPose( std::string joint_name );
         void GetKinematicsPose (std::string group_name );
         void GetKinematicsPoseCallback(const geometry_msgs::Pose::ConstPtr &msg);
+        void playMotion(int motion_index);
         void SetCurrentControlUI(int mode);
 
     Q_SIGNALS:
@@ -197,6 +198,9 @@ class QNodeThor3 : public QThread {
         std::vector<geometry_msgs::Pose2D>  preview_foot_steps_;
         std::vector<int>                    preview_foot_types_;
 
+        // Action
+        ros::Publisher motion_index_pub_;
+
         ros::Time start_time_;
 
         QStringListModel logging_model_;
@@ -210,6 +214,7 @@ class QNodeThor3 : public QThread {
 
 
         void ParseJointNameFromYaml(const std::string &path);
+        void parseMotionMapFromYaml(const std::string &path);
         void RefreshCurrentJointControlCallback(const robotis_controller_msgs::JointCtrlModule::ConstPtr &msg);
         void UpdateHeadJointStatesCallback(const sensor_msgs::JointState::ConstPtr &msg);
         void InitFTFootCallback(const thormang3_feet_ft_module_msgs::BothWrench::ConstPtr &msg);

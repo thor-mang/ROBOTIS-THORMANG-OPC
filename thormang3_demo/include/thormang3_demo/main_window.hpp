@@ -43,8 +43,8 @@ class MainWindow : public QMainWindow {
 
     public Q_SLOTS:
         /******************************************
-        ** Auto-connections (connectSlotsByName())
-        *******************************************/
+    ** Auto-connections (connectSlotsByName())
+    *******************************************/
         void on_actionAbout_triggered();
         void on_button_assemble_lidar_clicked(bool check );
         void on_button_clear_log_clicked(bool check);
@@ -112,6 +112,7 @@ class MainWindow : public QMainWindow {
 
         void SetUserShortcut();
         void InitModeUnit();
+        void initMotionUnit();
         void UpdateModuleUI();
         void SetHeadJointsAngle(double pan, double tilt);
         void SendWalkingCommand(const std::string &command);

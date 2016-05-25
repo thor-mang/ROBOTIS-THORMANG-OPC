@@ -293,6 +293,49 @@ void MainWindow::SetUserShortcut()
     connect(_sig_map, SIGNAL(mapped(int)), ui.tabWidget_control, SLOT(setCurrentIndex(int)));
 }
 
+// mode control
+// it's not used now
+/*
+void MainWindow::setMode(bool check)
+{
+    robotis_controller_msgs::JointCtrlModule _control_msg;
+
+    QList<QComboBox *> _combo_children = ui.widget_mode->findChildren<QComboBox *>();
+    for(int ix = 0; ix < _combo_children.length(); ix++)
+    {
+        std::stringstream _stream;
+        std::string _joint;
+        int _id;
+
+        int _control_index = _combo_children.at(ix)->currentIndex();
+        // if(_control_index == QNodeThor3::Control_None) continue;
+
+        std::string _control_mode = _combo_children.at(ix)->currentText().toStdString();
+
+        if(qnode_thor3.getIDJointNameFromIndex(ix, _id, _joint) == true)
+        {
+            _stream << "[" << (_id < 10 ? "0" : "") << _id << "] "<< _joint <<" : " << _control_mode;
+
+            _control_msg.joint_name.push_back(_joint);
+            _control_msg.module_name.push_back(_control_mode);
+        }
+        else
+        {
+            _stream << "id " << ix << " : " << _control_mode;
+        }
+
+        qnode_thor3.log(QNodeThor3::Info, _stream.str());
+    }
+
+    // no control
+    if(_control_msg.joint_name.size() == 0) return;
+
+    qnode_thor3.log(QNodeThor3::Info, "set mode");
+
+    qnode_thor3.setJointControlMode(_control_msg);
+}
+*/
+
 void MainWindow::UpdatePresentJointModule(std::vector<int> mode)
 {
     QList<QComboBox *> _combo_children = ui.widget_mode->findChildren<QComboBox *>();
@@ -455,6 +498,7 @@ void MainWindow::InitModeUnit()
         QObject::connect(_preset_button, SIGNAL(clicked()), _signalMapper, SLOT(map()));
     }
 
+    // QObject::connect(_signalMapper, SIGNAL(mapped(QString)), this, SLOT(setPreset(QString)));
     QObject::connect(_signalMapper, SIGNAL(mapped(QString)), this, SLOT(EnableModule(QString)));
 
     ui.widget_mode_preset->setLayout(_preset_layout);
@@ -512,6 +556,46 @@ void MainWindow::InitModeUnit()
 
         if(DEBUG) std::cout << "Module widget : " << _mode << " [" << _list.size() << "]" << std::endl;
     }
+
+    // make motion tab
+    if(qnode_thor3.getModeIndex("action_module") != -1) initMotionUnit();
+}
+
+void MainWindow::initMotionUnit()
+{
+    // preset button
+    QGridLayout *_motion_layout = new QGridLayout;
+    QSignalMapper *_signalMapper = new QSignalMapper(this);
+
+    // yaml preset
+    int _index = 0;
+    for(std::map< int, std::string >::iterator _iter = qnode_thor3.motion_table.begin(); _iter != qnode_thor3.motion_table.end(); ++_iter)
+    {
+        int _motion_index = _iter->first;
+        std::string _motion_name = _iter->second;
+        QString _q_motion_name = QString::fromStdString(_motion_name);
+        QPushButton *_motion_button = new QPushButton(_q_motion_name);
+        // if(DEBUG) std::cout << "name : " <<  _motion_name << std::endl;
+
+        int _size = (_motion_index < 0) ? 2 : 1;
+        int _row = _index / 4;
+        int _col = _index % 4;
+        _motion_layout->addWidget(_motion_button, _row, _col, 1, _size);
+
+        _signalMapper->setMapping(_motion_button, _motion_index);
+        QObject::connect(_motion_button, SIGNAL(clicked()), _signalMapper, SLOT(map()));
+
+        _index += _size;
+    }
+
+    int _row = _index / 4;
+    _row = (_index % 4 == 0) ? _row : _row + 1;
+    QSpacerItem *_verticalSpacer = new QSpacerItem(20, 400, QSizePolicy::Minimum, QSizePolicy::Expanding);
+    _motion_layout->addItem(_verticalSpacer, _row, 0, 1, 4);
+
+    QObject::connect(_signalMapper, SIGNAL(mapped(int)), &qnode_thor3, SLOT(playMotion(int)));
+
+    ui.scroll_widget_motion->setLayout(_motion_layout);
 }
 
 void MainWindow::EnableModule(QString mode_name)

@@ -94,10 +94,16 @@ bool QNodeThor3::init()
     set_walking_footsteps_pub = _nh.advertise<thormang3_foot_step_generator::Step2DArray>("/robotis/thormang3_foot_step_generator/footsteps_2d", 0);
     set_walking_balance_pub = _nh.advertise<std_msgs::Bool>("/robotis/thormang3_foot_step_generator/balance_command", 0);
 
+    // Action
+    motion_index_pub_ = _nh.advertise<std_msgs::Int32>("/robotis/demo/motion_index", 0);
+
     // Config
     std::string _default_path = ros::package::getPath("thormang3_demo") +"/config/demo_config.yaml";
     std::string _path = _nh.param<std::string>("demo_config", _default_path);
     ParseJointNameFromYaml(_path);
+
+    std::string _motion_path = ros::package::getPath("thormang3_demo") +"/config/motion.yaml";
+    parseMotionMapFromYaml(_motion_path);
 
     // start time
     start_time_ = ros::Time::now();
@@ -180,6 +186,36 @@ void QNodeThor3::ParseJointNameFromYaml(const std::string &path)
         module_table[_key] = _module_name;
         if(DEBUG) std::cout << "Preset : " << _module_name << std::endl;
     }
+}
+
+void QNodeThor3::parseMotionMapFromYaml(const std::string &path)
+{
+    YAML::Node doc;
+    try
+    {
+        // load yaml
+        doc = YAML::LoadFile(path.c_str());
+    }
+    catch(const std::exception& e)
+    {
+        ROS_ERROR("Fail to load motion yaml.");
+        return;
+    }
+
+    // parse motion_table
+    YAML::Node _motion_sub_node = doc["motion"];
+    for(YAML::iterator _it = _motion_sub_node.begin() ; _it != _motion_sub_node.end() ; ++_it)
+    {
+        int _motion_index;
+        std::string _motion_name;
+
+        _motion_index = _it->first.as<int>();
+        _motion_name = _it->second.as<std::string>();
+
+        motion_table[_motion_index] = _motion_name;
+
+        if(DEBUG) std::cout << "Motion Index : " << _motion_index << " - " << _motion_name << std::endl;
+    }    
 }
 
 // joint id -> joint name
@@ -867,7 +903,40 @@ void QNodeThor3::VisualizePreviewFootsteps(bool clear)
     marker_pub_.publish(_marker_array);
 }
 
-// Pose for Walking and Manipulation
+// Motion
+void QNodeThor3::playMotion(int motion_index)
+{
+    if(motion_table.find(motion_index) == motion_table.end())
+    {
+        log(Error, "Motion index is not valid.");
+        return;
+    }
+
+    std::stringstream _ss;
+    switch(motion_index)
+    {
+        case -2:
+            _ss << "Break Motion";
+            break;
+
+        case -1:
+            _ss << "STOP Motion";
+            break;
+
+        default:
+            std::string _motion_name = motion_table[motion_index];
+            _ss << "Play Motion : [" << motion_index << "] " << _motion_name;
+    }
+
+    // publish motion index
+    std_msgs::Int32 _motion_msg;
+    _motion_msg.data = motion_index;
+
+    motion_index_pub_.publish(_motion_msg);
+
+    log(Info, _ss.str());
+}
+
 void QNodeThor3::PoseCallback(const geometry_msgs::Pose::ConstPtr &msg)
 {
     switch(current_control_ui)
