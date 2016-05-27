@@ -47,11 +47,11 @@ bool QNode::init() {
 	ros::NodeHandle n;
 
     // Add your ros communications here
-    joint_offset_data_pub = n.advertise<thormang3_offset_tuner_msgs::JointOffsetData>("/robotis/offset_tuner/joint_offset_data", 0);
-    torque_enable_pub = n.advertise<thormang3_offset_tuner_msgs::JointTorqueOnOffArray>("/robotis/offset_tuner/torque_enable", 0);
-    command_pub = n.advertise<std_msgs::String>("/robotis/offset_tuner/command", 0);
+    joint_offset_data_pub = n.advertise<thormang3_offset_tuner_msgs::JointOffsetData>("robotis/offset_tuner/joint_offset_data", 0);
+    torque_enable_pub = n.advertise<thormang3_offset_tuner_msgs::JointTorqueOnOffArray>("robotis/offset_tuner/torque_enable", 0);
+    command_pub = n.advertise<std_msgs::String>("robotis/offset_tuner/command", 0);
 
-    get_present_joint_offset_data_client = n.serviceClient<thormang3_offset_tuner_msgs::GetPresentJointOffsetData>("/robotis/offset_tuner/get_present_joint_offset_data");
+    get_present_joint_offset_data_client = n.serviceClient<thormang3_offset_tuner_msgs::GetPresentJointOffsetData>("robotis/offset_tuner/get_present_joint_offset_data");
 
 	start();
 	return true;

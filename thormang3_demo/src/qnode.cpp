@@ -60,39 +60,39 @@ bool QNodeThor3::init()
     ros::NodeHandle _nh;
 
     // Add your ros communications here.
-    move_lidar_pub_     = _nh.advertise<std_msgs::String>("/robotis/head_control/move_lidar", 0);
-    module_control_pub_  = _nh.advertise<robotis_controller_msgs::JointCtrlModule>("/robotis/set_joint_ctrl_modules", 0);
-    module_control_preset_pub_ = _nh.advertise<std_msgs::String>("/robotis/enable_ctrl_module", 0);
-    init_pose_pub_      = _nh.advertise<std_msgs::String>("/robotis/base/ini_pose", 0);
-    init_ft_pub_        = _nh.advertise<std_msgs::String>("/robotis/feet_ft/ft_calib_command", 0);
-    set_head_joint_angle_pub_ = _nh.advertise<sensor_msgs::JointState>("/robotis/head_control/set_joint_states", 0);
+    move_lidar_pub_     = _nh.advertise<std_msgs::String>("robotis/head_control/move_lidar", 0);
+    module_control_pub_  = _nh.advertise<robotis_controller_msgs::JointCtrlModule>("robotis/set_joint_ctrl_modules", 0);
+    module_control_preset_pub_ = _nh.advertise<std_msgs::String>("robotis/enable_ctrl_module", 0);
+    init_pose_pub_      = _nh.advertise<std_msgs::String>("robotis/base/ini_pose", 0);
+    init_ft_pub_        = _nh.advertise<std_msgs::String>("robotis/feet_ft/ft_calib_command", 0);
+    set_head_joint_angle_pub_ = _nh.advertise<sensor_msgs::JointState>("robotis/head_control/set_joint_states", 0);
 
-    init_ft_foot_sub_ = _nh.subscribe("/robotis/feet_ft/both_ft_value", 10, &QNodeThor3::InitFTFootCallback, this);
+    init_ft_foot_sub_ = _nh.subscribe("robotis/feet_ft/both_ft_value", 10, &QNodeThor3::InitFTFootCallback, this);
 
-    status_msg_sub_ = _nh.subscribe("/robotis/status", 10, &QNodeThor3::StatusMsgCallback, this);
-    current_module_control_sub_ = _nh.subscribe("/robotis/present_joint_ctrl_modules", 10, &QNodeThor3::RefreshCurrentJointControlCallback, this);
-    current_joint_states_sub_ = _nh.subscribe("/robotis/present_joint_states", 10, &QNodeThor3::UpdateHeadJointStatesCallback, this);
+    status_msg_sub_ = _nh.subscribe("robotis/status", 10, &QNodeThor3::StatusMsgCallback, this);
+    current_module_control_sub_ = _nh.subscribe("robotis/present_joint_ctrl_modules", 10, &QNodeThor3::RefreshCurrentJointControlCallback, this);
+    current_joint_states_sub_ = _nh.subscribe("robotis/present_joint_states", 10, &QNodeThor3::UpdateHeadJointStatesCallback, this);
 
-    get_module_control_client_ = _nh.serviceClient<robotis_controller_msgs::GetJointModule>("/robotis/get_present_joint_ctrl_modules");
+    get_module_control_client_ = _nh.serviceClient<robotis_controller_msgs::GetJointModule>("robotis/get_present_joint_ctrl_modules");
 
     humanoidFootStepClient = _nh.serviceClient<humanoid_nav_msgs::PlanFootsteps>("plan_footsteps");
-    marker_pub_ = _nh.advertise<visualization_msgs::MarkerArray>("/robotis/demo/foot_step_marker", 0);
-    pose_sub_ = _nh.subscribe("/robotis/demo/pose", 10, &QNodeThor3::PoseCallback, this);
+    marker_pub_ = _nh.advertise<visualization_msgs::MarkerArray>("robotis/demo/foot_step_marker", 0);
+    pose_sub_ = _nh.subscribe("robotis/demo/pose", 10, &QNodeThor3::PoseCallback, this);
 
     // Manipulation
     kenematics_pose_sub = _nh.subscribe("/thormang3_demo/ik_target_pose", 10, &QNodeThor3::GetKinematicsPoseCallback, this);
 
-    send_ini_pose_msg_pub = _nh.advertise<std_msgs::String>("/robotis/manipulation/ini_pose_msg", 0);
-    send_des_joint_msg_pub = _nh.advertise<thormang3_manipulation_module_msgs::JointPose>("/robotis/manipulation/joint_pose_msg", 0);
-    send_ik_msg_pub = _nh.advertise<thormang3_manipulation_module_msgs::KinematicsPose>("/robotis/manipulation/kinematics_pose_msg", 0);
+    send_ini_pose_msg_pub = _nh.advertise<std_msgs::String>("robotis/manipulation/ini_pose_msg", 0);
+    send_des_joint_msg_pub = _nh.advertise<thormang3_manipulation_module_msgs::JointPose>("robotis/manipulation/joint_pose_msg", 0);
+    send_ik_msg_pub = _nh.advertise<thormang3_manipulation_module_msgs::KinematicsPose>("robotis/manipulation/kinematics_pose_msg", 0);
 
-    get_joint_pose_client = _nh.serviceClient<thormang3_manipulation_module_msgs::GetJointPose>("/robotis/manipulation/get_joint_pose");
-    get_kinematics_pose_client = _nh.serviceClient<thormang3_manipulation_module_msgs::GetKinematicsPose>("/robotis/manipulation/get_kinematics_pose");
+    get_joint_pose_client = _nh.serviceClient<thormang3_manipulation_module_msgs::GetJointPose>("robotis/manipulation/get_joint_pose");
+    get_kinematics_pose_client = _nh.serviceClient<thormang3_manipulation_module_msgs::GetKinematicsPose>("robotis/manipulation/get_kinematics_pose");
 
     // Walking
-    set_walking_command_pub = _nh.advertise<thormang3_foot_step_generator::FootStepCommand>("/robotis/thormang3_foot_step_generator/walking_command", 0);
-    set_walking_footsteps_pub = _nh.advertise<thormang3_foot_step_generator::Step2DArray>("/robotis/thormang3_foot_step_generator/footsteps_2d", 0);
-    set_walking_balance_pub = _nh.advertise<std_msgs::Bool>("/robotis/thormang3_foot_step_generator/balance_command", 0);
+    set_walking_command_pub = _nh.advertise<thormang3_foot_step_generator::FootStepCommand>("robotis/thormang3_foot_step_generator/walking_command", 0);
+    set_walking_footsteps_pub = _nh.advertise<thormang3_foot_step_generator::Step2DArray>("robotis/thormang3_foot_step_generator/footsteps_2d", 0);
+    set_walking_balance_pub = _nh.advertise<std_msgs::Bool>("robotis/thormang3_foot_step_generator/balance_command", 0);
 
     // Config
     std::string _default_path = ros::package::getPath("thormang3_demo") +"/config/demo_config.yaml";

@@ -29,16 +29,16 @@ void Initialize()
 {
 	ros::NodeHandle _nh;
 
-    get_ref_step_data_client		= _nh.serviceClient<thormang3_walking_module_msgs::GetReferenceStepData>("/robotis/walking/get_reference_step_data");
-    add_step_data_array_client		= _nh.serviceClient<thormang3_walking_module_msgs::AddStepDataArray>("/robotis/walking/add_step_data");
-    set_balance_param_client		= _nh.serviceClient<thormang3_walking_module_msgs::SetBalanceParam>("/robotis/walking/set_balance_param");
-	is_running_client				= _nh.serviceClient<thormang3_walking_module_msgs::IsRunning>("/robotis/walking/is_running");
+    get_ref_step_data_client		= _nh.serviceClient<thormang3_walking_module_msgs::GetReferenceStepData>("robotis/walking/get_reference_step_data");
+    add_step_data_array_client		= _nh.serviceClient<thormang3_walking_module_msgs::AddStepDataArray>("robotis/walking/add_step_data");
+    set_balance_param_client		= _nh.serviceClient<thormang3_walking_module_msgs::SetBalanceParam>("robotis/walking/set_balance_param");
+	is_running_client				= _nh.serviceClient<thormang3_walking_module_msgs::IsRunning>("robotis/walking/is_running");
 
-	walking_module_status_msg_sub	= _nh.subscribe("/robotis/status", 10, WalkingModuleStatusMSGCallback);
+	walking_module_status_msg_sub	= _nh.subscribe("robotis/status", 10, WalkingModuleStatusMSGCallback);
 
-	walking_command_sub			= _nh.subscribe("/robotis/thormang3_foot_step_generator/walking_command", 0, WalkingCommandCallback);
-	balance_command_sub			= _nh.subscribe("/robotis/thormang3_foot_step_generator/balance_command", 0, BalanceCommandCallback);
-	footsteps_2d_sub			= _nh.subscribe("/robotis/thormang3_foot_step_generator/footsteps_2d",    0, Step2DArrayCallback);
+	walking_command_sub			= _nh.subscribe("robotis/thormang3_foot_step_generator/walking_command", 0, WalkingCommandCallback);
+	balance_command_sub			= _nh.subscribe("robotis/thormang3_foot_step_generator/balance_command", 0, BalanceCommandCallback);
+	footsteps_2d_sub			= _nh.subscribe("robotis/thormang3_foot_step_generator/footsteps_2d",    0, Step2DArrayCallback);
 
 }
 
