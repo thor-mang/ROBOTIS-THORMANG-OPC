@@ -68,10 +68,10 @@ class Thor3PosePanel: public rviz::Panel
     Q_SIGNALS:
 
     protected:
-        Ui::PosePanelForm ui;
+        Ui::PosePanelForm ui_;
         RosThor3PosePanelNode ros_node_;
 
-        bool from_UI;
+        bool from_UI_;
 
         void getPoseFromPanel(geometry_msgs::Pose &current);
         void setPoseToPanel(const geometry_msgs::Pose &current);

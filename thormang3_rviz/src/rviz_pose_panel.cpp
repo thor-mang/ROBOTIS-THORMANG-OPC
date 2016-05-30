@@ -18,11 +18,11 @@ namespace rviz_thor3
 Thor3PosePanel::Thor3PosePanel( QWidget* parent )
     : rviz::Panel( parent )
     , ros_node_()
-    , from_UI(true)
+    , from_UI_(true)
 {
     // SetUI : *.ui
     // Calling this incidentally connects all ui's triggers to on_...() callbacks in this class.
-    ui.setupUi(this);   // auto connect
+    ui_.setupUi(this);   // auto connect
 
     // for connection
     qRegisterMetaType<Pose_msg>("Pose_msg");
@@ -73,23 +73,23 @@ void Thor3PosePanel::on_button_clear_marker_clicked() { clearPanel(); }
 // Update UI - position
 void Thor3PosePanel::updatePointPanel(const Point_msg point)
 {
-    from_UI = false;
+    from_UI_ = false;
 
     setPointToPanel(point);
 
     ROS_INFO("Update Position Panel");
-    from_UI = true;
+    from_UI_ = true;
 }
 
 // Update UI - pose
 void Thor3PosePanel::updatePosePanel(const Pose_msg pose)
 {
-    from_UI = false;
+    from_UI_ = false;
 
     setPoseToPanel(pose);
 
     ROS_INFO("Update Pose Panel");
-    from_UI = true;
+    from_UI_ = true;
 }
 
 // make interactive marker
@@ -104,7 +104,7 @@ void Thor3PosePanel::makeInteractiveMarker()
 // update interactive marker pose from ui
 void Thor3PosePanel::updateInteractiveMarker()
 {
-    if(from_UI == false) return;
+    if(from_UI_ == false) return;
 
     geometry_msgs::Pose _current_pose;
     getPoseFromPanel(_current_pose);
@@ -141,14 +141,14 @@ void Thor3PosePanel::publishCurrentPose()
 void Thor3PosePanel::getPoseFromPanel(geometry_msgs::Pose &current)
 {
     // position
-    current.position.x = ui.doubleSpinBox_position_x->value();
-    current.position.y = ui.doubleSpinBox_position_y->value();
-    current.position.z = ui.doubleSpinBox_position_z->value();
+    current.position.x = ui_.doubleSpinBox_position_x->value();
+    current.position.y = ui_.doubleSpinBox_position_y->value();
+    current.position.z = ui_.doubleSpinBox_position_z->value();
 
     // orientation
-    Eigen::Vector3d _euler(ui.doubleSpinBox_orientation_r->value(),
-                           ui.doubleSpinBox_orientation_p->value(),
-                           ui.doubleSpinBox_orientation_y->value());
+    Eigen::Vector3d _euler(ui_.doubleSpinBox_orientation_r->value(),
+                           ui_.doubleSpinBox_orientation_p->value(),
+                           ui_.doubleSpinBox_orientation_y->value());
     Eigen::Quaterniond _q = ros_node_.rpy2quaternion(deg2rad<Eigen::Vector3d>(_euler));
 
     tf::quaternionEigenToMsg(_q, current.orientation);
@@ -157,37 +157,37 @@ void Thor3PosePanel::getPoseFromPanel(geometry_msgs::Pose &current)
 void Thor3PosePanel::setPoseToPanel(const geometry_msgs::Pose &current)
 {
     // position
-    ui.doubleSpinBox_position_x->setValue(current.position.x);
-    ui.doubleSpinBox_position_y->setValue(current.position.y);
-    ui.doubleSpinBox_position_z->setValue(current.position.z);
+    ui_.doubleSpinBox_position_x->setValue(current.position.x);
+    ui_.doubleSpinBox_position_y->setValue(current.position.y);
+    ui_.doubleSpinBox_position_z->setValue(current.position.z);
 
     // orientation
     Eigen::Vector3d _euler = rad2deg<Eigen::Vector3d>(ros_node_.quaternion2rpy(current.orientation));
 
-    ui.doubleSpinBox_orientation_r->setValue(_euler[0]);
-    ui.doubleSpinBox_orientation_p->setValue(_euler[1]);
-    ui.doubleSpinBox_orientation_y->setValue(_euler[2]);
+    ui_.doubleSpinBox_orientation_r->setValue(_euler[0]);
+    ui_.doubleSpinBox_orientation_p->setValue(_euler[1]);
+    ui_.doubleSpinBox_orientation_y->setValue(_euler[2]);
 }
 
 void Thor3PosePanel::getPointFromPanel(geometry_msgs::Point &current)
 {
     // position
-    current.x = ui.doubleSpinBox_position_x->value();
-    current.y = ui.doubleSpinBox_position_y->value();
-    current.z = ui.doubleSpinBox_position_z->value();
+    current.x = ui_.doubleSpinBox_position_x->value();
+    current.y = ui_.doubleSpinBox_position_y->value();
+    current.z = ui_.doubleSpinBox_position_z->value();
 }
 
 void Thor3PosePanel::setPointToPanel(const geometry_msgs::Point &current)
 {
     // position
-    ui.doubleSpinBox_position_x->setValue(current.x);
-    ui.doubleSpinBox_position_y->setValue(current.y);
-    ui.doubleSpinBox_position_z->setValue(current.z);
+    ui_.doubleSpinBox_position_x->setValue(current.x);
+    ui_.doubleSpinBox_position_y->setValue(current.y);
+    ui_.doubleSpinBox_position_z->setValue(current.z);
 
     // orientation
-    ui.doubleSpinBox_orientation_r->setValue(0.0);
-    ui.doubleSpinBox_orientation_p->setValue(0.0);
-    ui.doubleSpinBox_orientation_y->setValue(0.0);
+    ui_.doubleSpinBox_orientation_r->setValue(0.0);
+    ui_.doubleSpinBox_orientation_p->setValue(0.0);
+    ui_.doubleSpinBox_orientation_y->setValue(0.0);
 }
 
 } // end namespace rviz_thor3

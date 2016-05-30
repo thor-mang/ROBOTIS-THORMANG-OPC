@@ -1,10 +1,36 @@
-/**
- * @file /src/main_window.cpp
- *
- * @brief Implementation for the qt gui.
- *
- * @date February 2011
- **/
+/*******************************************************************************
+* Copyright (c) 2016, ROBOTIS CO., LTD.
+* All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification, are permitted provided that the following conditions are met:
+*
+* * Redistributions of source code must retain the above copyright notice, this
+*   list of conditions and the following disclaimer.
+*
+* * Redistributions in binary form must reproduce the above copyright notice,
+*   this list of conditions and the following disclaimer in the documentation
+*   and/or other materials provided with the distribution.
+*
+* * Neither the name of ROBOTIS nor the names of its
+*   contributors may be used to endorse or promote products derived from
+*   this software without specific prior written permission.
+*
+* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+* AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+* IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+* DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+* FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+* DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+* SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+* CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+* OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+* OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*******************************************************************************/
+
+
+/* Author: Kayman Jung */
+
 /*****************************************************************************
 ** Includes
 *****************************************************************************/
@@ -27,57 +53,62 @@ using namespace Qt;
 *****************************************************************************/
 
 MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
-    : QMainWindow(parent)
-    , qnode_thor3(argc,argv)
-    , is_updating_(false)
+  : QMainWindow(parent)
+  , qnode_thor3_(argc,argv)
+  , is_updating_(false)
 {
-    // code to DEBUG
-    DEBUG = false;
+  // code to DEBUG
+  DEBUG = false;
 
-    if(argc >= 2)
-    {
-        std::string _debug_code(argv[1]);
-        if(_debug_code == "debug")
-            DEBUG = true;
-        else
-            DEBUG = false;
-    }
+  if(argc >= 2)
+  {
+    std::string debug_code(argv[1]);
+    if(debug_code == "debug")
+      DEBUG = true;
+    else
+      DEBUG = false;
+  }
 
-    ui.setupUi(this); // Calling this incidentally connects all ui's triggers to on_...() callbacks in this class.
-    QObject::connect(ui.actionAbout_Qt, SIGNAL(triggered(bool)), qApp, SLOT(aboutQt())); // qApp is a global variable for the application
+  ui_.setupUi(this); // Calling this incidentally connects all ui's triggers to on_...() callbacks in this class.
+  QObject::connect(ui_.actionAbout_Qt, SIGNAL(triggered(bool)), qApp, SLOT(aboutQt())); // qApp is a global variable for the application
 
-    ReadSettings();
-    setWindowIcon(QIcon(":/images/icon.png"));
-    ui.tab_manager->setCurrentIndex(0); // ensure the first tab is showing - qt-designer should have this already hardwired, but often loses it (settings?).
-    QObject::connect(&qnode_thor3, SIGNAL(RosShutdown()), this, SLOT(close()));
+  readSettings();
+  setWindowIcon(QIcon(":/images/icon.png"));
+  ui_.tab_manager->setCurrentIndex(0); // ensure the first tab is showing - qt-designer should have this already hardwired, but often loses it (settings?).
+  QObject::connect(&qnode_thor3_, SIGNAL(rosShutdown()), this, SLOT(close()));
 
-    qRegisterMetaType< std::vector<int> >("std::vector<int>");
-    QObject::connect(&qnode_thor3, SIGNAL(UpdatePresentJointControlModules(std::vector<int>)), this, SLOT(UpdatePresentJointModule(std::vector<int>)));
-    QObject::connect(&qnode_thor3, SIGNAL(UpdateHeadJointsAngle(double,double)), this, SLOT(UpdateHeadJointsAngle(double,double)));
+  qRegisterMetaType< std::vector<int> >("std::vector<int>");
+  QObject::connect(&qnode_thor3_, SIGNAL(updatePresentJointControlModules(std::vector<int>)), this, SLOT(updatePresentJointModule(std::vector<int>)));
+  QObject::connect(&qnode_thor3_, SIGNAL(updateHeadJointsAngle(double,double)), this, SLOT(updateHeadJointsAngle(double,double)));
 
-    QObject::connect(ui.head_pan_slider, SIGNAL(valueChanged(int)), this, SLOT(SetHeadJointsAngle()));
-    QObject::connect(ui.head_tilt_slider, SIGNAL(valueChanged(int)), this, SLOT(SetHeadJointsAngle()));
+  QObject::connect(ui_.head_pan_slider, SIGNAL(valueChanged(int)), this, SLOT(setHeadJointsAngle()));
+  QObject::connect(ui_.head_tilt_slider, SIGNAL(valueChanged(int)), this, SLOT(setHeadJointsAngle()));
 
-    QObject::connect(&qnode_thor3, SIGNAL(UpdateCurrJoint(double)), this, SLOT(UpdateCurrJointSpinbox(double)));
-    QObject::connect(&qnode_thor3, SIGNAL(UpdateCurrPos(double , double , double)), this, SLOT(UpdateCurrPosSpinbox(double , double , double)));
-    QObject::connect(&qnode_thor3, SIGNAL(UpdateCurrOri(double , double , double, double)), this, SLOT(UpdateCurrOriSpinbox(double , double , double , double)));
+  QObject::connect(&qnode_thor3_, SIGNAL(updateCurrJoint(double)), this, SLOT(updateCurrJointSpinbox(double)));
+  QObject::connect(&qnode_thor3_, SIGNAL(updateCurrPos(double , double , double)), this, SLOT(updateCurrPosSpinbox(double , double , double)));
+  QObject::connect(&qnode_thor3_, SIGNAL(updateCurrOri(double , double , double, double)), this, SLOT(updateCurrOriSpinbox(double , double , double , double)));
 
-    QObject::connect(ui.tabWidget_control, SIGNAL(currentChanged(int)), &qnode_thor3, SLOT(SetCurrentControlUI(int)));
-    QObject::connect(&qnode_thor3, SIGNAL(HavePoseToMakeFootstep()), this, SLOT(EnableGetStepButton()));
+  QObject::connect(ui_.tabWidget_control, SIGNAL(currentChanged(int)), &qnode_thor3_, SLOT(setCurrentControlUI(int)));
+  QObject::connect(&qnode_thor3_, SIGNAL(havePoseToMakeFootstep()), this, SLOT(enableGetStepButton()));
 
-    /*********************
+  qRegisterMetaType<geometry_msgs::Point>("geometry_msgs::Point");
+  qRegisterMetaType<geometry_msgs::Pose>("geometry_msgs::Pose");
+  connect( &qnode_thor3_, SIGNAL(updateDemoPoint(geometry_msgs::Point)), this, SLOT(updatePointPanel(geometry_msgs::Point)));
+  connect( &qnode_thor3_, SIGNAL(updateDemoPose(geometry_msgs::Pose)), this, SLOT(updatePosePanel(geometry_msgs::Pose)));
+
+  /*********************
     ** Logging
     **********************/
-    ui.view_logging->setModel(qnode_thor3.LoggingModel());
-    QObject::connect(&qnode_thor3, SIGNAL(LoggingUpdated()), this, SLOT(UpdateLoggingView()));
+  ui_.view_logging->setModel(qnode_thor3_.loggingModel());
+  QObject::connect(&qnode_thor3_, SIGNAL(loggingUpdated()), this, SLOT(updateLoggingView()));
 
-    /*********************
+  /*********************
     ** Auto Start
     **********************/
-    qnode_thor3.init();
-    InitModeUnit();
-    SetUserShortcut();
-    UpdateModuleUI();
+  qnode_thor3_.init();
+  initModeUnit();
+  setUserShortcut();
+  updateModuleUI();
 }
 
 MainWindow::~MainWindow() {}
@@ -86,12 +117,12 @@ MainWindow::~MainWindow() {}
 ** Implementation [Slots]
 *****************************************************************************/
 
-void MainWindow::ShowNoMasterMessage()
+void MainWindow::showNoMasterMessage()
 {
-    QMessageBox msgBox;
-    msgBox.setText("Couldn't find the ros master.");
-    msgBox.exec();
-    close();
+  QMessageBox msgBox;
+  msgBox.setText("Couldn't find the ros master.");
+  msgBox.exec();
+  close();
 }
 
 /*
@@ -99,151 +130,170 @@ void MainWindow::ShowNoMasterMessage()
  * is already checked or not.
  */
 
-void MainWindow::on_button_assemble_lidar_clicked(bool check) { qnode_thor3.Assemble_lidar(); }
-void MainWindow::on_button_clear_log_clicked(bool check) { qnode_thor3.ClearLog(); }
-void MainWindow::on_button_init_pose_clicked(bool check) { qnode_thor3.MoveInitPose(); }
+void MainWindow::on_button_assemble_lidar_clicked(bool check) { qnode_thor3_.assembleLidar(); }
+void MainWindow::on_button_clear_log_clicked(bool check) { qnode_thor3_.clearLog(); }
+void MainWindow::on_button_init_pose_clicked(bool check) { qnode_thor3_.moveInitPose(); }
 
-void MainWindow::on_button_ft_air_clicked(bool check) { qnode_thor3.InitFTCommand("ft_air"); }
-void MainWindow::on_button_ft_gnd_clicked(bool check) { qnode_thor3.InitFTCommand("ft_gnd"); }
+void MainWindow::on_button_ft_air_clicked(bool check) { qnode_thor3_.initFTCommand("ft_air"); }
+void MainWindow::on_button_ft_gnd_clicked(bool check) { qnode_thor3_.initFTCommand("ft_gnd"); }
 void MainWindow::on_button_ft_calc_clicked(bool check)
 {
-    qnode_thor3.InitFTCommand("ft_send");
-    qnode_thor3.Log(QNodeThor3::Info, "Apply new FT config");
+  qnode_thor3_.initFTCommand("ft_send");
+  qnode_thor3_.log(QNodeThor3::Info, "Apply new FT config");
 }
 void MainWindow::on_button_ft_save_clicked(bool check)
 {
-    qnode_thor3.InitFTCommand("ft_save");
-    qnode_thor3.Log(QNodeThor3::Info, "Save FT config data.");
+  qnode_thor3_.initFTCommand("ft_save");
+  qnode_thor3_.log(QNodeThor3::Info, "Save FT config data.");
 }
 
 // Manipulation
 void MainWindow::on_inipose_button_clicked( bool check )
 {
-    std_msgs::String msg;
+  std_msgs::String msg;
 
-    msg.data = "ini_pose";
+  msg.data = "ini_pose";
 
-    qnode_thor3.SendInitPoseMsg( msg );
+  qnode_thor3_.sendInitPoseMsg( msg );
 }
 
 void MainWindow::on_currjoint_button_clicked( bool check )
 {
-    qnode_thor3.GetJointPose( ui.joint_combobox->currentText().toStdString() );
+  qnode_thor3_.getJointPose( ui_.joint_combobox->currentText().toStdString() );
 }
 
 void MainWindow::on_desjoint_button_clicked( bool check )
 {
-    thormang3_manipulation_module_msgs::JointPose msg;
+  thormang3_manipulation_module_msgs::JointPose msg;
 
-    msg.name = ui.joint_combobox->currentText().toStdString();
-    msg.value = ui.joint_spinbox->value() * M_PI / 180.0 ;
+  msg.name = ui_.joint_combobox->currentText().toStdString();
+  msg.value = ui_.joint_spinbox->value() * M_PI / 180.0 ;
 
-    qnode_thor3.SendDestJointMsg( msg );
+  qnode_thor3_.sendDestJointMsg( msg );
 }
 
 void MainWindow::on_currpos_button_clicked( bool check )
 {
-    qnode_thor3.GetKinematicsPose( ui.group_combobox->currentText().toStdString() );
+  qnode_thor3_.getKinematicsPose( ui_.group_combobox->currentText().toStdString() );
 }
 
 void MainWindow::on_despos_button_clicked( bool check )
 {
-    thormang3_manipulation_module_msgs::KinematicsPose msg;
+  thormang3_manipulation_module_msgs::KinematicsPose msg;
 
-    msg.name = ui.group_combobox->currentText().toStdString();
+  msg.name = ui_.group_combobox->currentText().toStdString();
 
-    msg.pose.position.x = ui.pos_x_spinbox->value();
-    msg.pose.position.y = ui.pos_y_spinbox->value();
-    msg.pose.position.z = ui.pos_z_spinbox->value();
+  msg.pose.position.x = ui_.pos_x_spinbox->value();
+  msg.pose.position.y = ui_.pos_y_spinbox->value();
+  msg.pose.position.z = ui_.pos_z_spinbox->value();
 
-    double roll = ui.ori_roll_spinbox->value() * M_PI / 180.0;
-    double pitch = ui.ori_pitch_spinbox->value() * M_PI / 180.0;
-    double yaw = ui.ori_yaw_spinbox->value() * M_PI / 180.0;
+  double roll = ui_.ori_roll_spinbox->value() * M_PI / 180.0;
+  double pitch = ui_.ori_pitch_spinbox->value() * M_PI / 180.0;
+  double yaw = ui_.ori_yaw_spinbox->value() * M_PI / 180.0;
 
-    Eigen::Quaterniond QR = rpy2quaternion( roll, pitch, yaw );
+  Eigen::Quaterniond QR = rpy2quaternion( roll, pitch, yaw );
 
-    msg.pose.orientation.x = QR.x();
-    msg.pose.orientation.y = QR.y();
-    msg.pose.orientation.z = QR.z();
-    msg.pose.orientation.w = QR.w();
+  msg.pose.orientation.x = QR.x();
+  msg.pose.orientation.y = QR.y();
+  msg.pose.orientation.z = QR.z();
+  msg.pose.orientation.w = QR.w();
 
-    qnode_thor3.SendIkMsg( msg );
+  qnode_thor3_.sendIkMsg( msg );
 }
 
 void MainWindow::on_button_grip_on_clicked(bool check)
 {
-    thormang3_manipulation_module_msgs::JointPose _msg;
+  thormang3_manipulation_module_msgs::JointPose msg;
 
-    _msg.name = ui.gripper_comboBox->currentText().toStdString();
-    _msg.value = 60 * M_PI / 180.0 ;
+  msg.name = ui_.gripper_comboBox->currentText().toStdString();
+  msg.value = 60 * M_PI / 180.0 ;
 
-    qnode_thor3.SendDestJointMsg( _msg );
+  qnode_thor3_.sendDestJointMsg( msg );
 }
 
 void MainWindow::on_button_grip_off_clicked(bool check)
 {
-    thormang3_manipulation_module_msgs::JointPose _msg;
+  thormang3_manipulation_module_msgs::JointPose msg;
 
-    _msg.name = ui.gripper_comboBox->currentText().toStdString();
-    _msg.value = 0 * M_PI / 180.0 ;
+  msg.name = ui_.gripper_comboBox->currentText().toStdString();
+  msg.value = 0 * M_PI / 180.0 ;
 
-    qnode_thor3.SendDestJointMsg( _msg );
+  qnode_thor3_.sendDestJointMsg( msg );
 }
 
-void MainWindow::on_A0_button_fl_clicked(bool check) { SendWalkingCommand("turn left"); }
+void MainWindow::on_A0_button_fl_clicked(bool check) { sendWalkingCommand("turn left"); }
 
-void MainWindow::on_A1_button_f_clicked(bool check) { SendWalkingCommand("forward"); }
-void MainWindow::on_A2_button_fr_clicked(bool check) { SendWalkingCommand("turn right"); }
+void MainWindow::on_A1_button_f_clicked(bool check) { sendWalkingCommand("forward"); }
+void MainWindow::on_A2_button_fr_clicked(bool check) { sendWalkingCommand("turn right"); }
 
-void MainWindow::on_B0_button_l_clicked(bool check) { SendWalkingCommand("left"); }
+void MainWindow::on_B0_button_l_clicked(bool check) { sendWalkingCommand("left"); }
 void MainWindow::on_B1_button_stop_clicked(bool check) { }  // disable
-void MainWindow::on_B2_button_r_clicked(bool check) { SendWalkingCommand("right"); }
+void MainWindow::on_B2_button_r_clicked(bool check) { sendWalkingCommand("right"); }
 
 void MainWindow::on_C0_button_bl_clicked(bool check) { }    // disable
-void MainWindow::on_C1_button_b_clicked(bool check) { SendWalkingCommand("backward"); }
+void MainWindow::on_C1_button_b_clicked(bool check) { sendWalkingCommand("backward"); }
 void MainWindow::on_C2_button_br_clicked(bool check) { }    // disable
 
-void MainWindow::on_button_balance_on_clicked(bool check) { qnode_thor3.SetWalkingBalance(true); }
-void MainWindow::on_button_balance_off_clicked(bool check) { qnode_thor3.SetWalkingBalance(false); }
+void MainWindow::on_button_balance_on_clicked(bool check) { qnode_thor3_.setWalkingBalance(true); }
+void MainWindow::on_button_balance_off_clicked(bool check) { qnode_thor3_.setWalkingBalance(false); }
+void MainWindow::on_button_balance_param_apply_clicked(bool check)
+{
+  double gyro_gain = ui_.dSpinBox_gyro_gain->value();
+  double ft_gain = ui_.dSpinBox_gyro_gain->value();
+  double imu_time_constant = ui_.dSpinBox_imu_time_constant->value();
+  double ft_time_constant = ui_.dSpinBox_ft_time_constant->value();
 
+  qnode_thor3_.setWalkingBalanceParam(gyro_gain, ft_gain, imu_time_constant, ft_time_constant);
+}
 
 void MainWindow::on_A0_button_get_step_clicked(bool check)
 {
-    qnode_thor3.MakeFootstepUsingPlanner();
+  qnode_thor3_.makeFootstepUsingPlanner();
 
-    ui.A0_button_get_step->setEnabled(false);
-    ui.A1_button_clear_step->setEnabled(true);
-    ui.A2_button_go_walking->setEnabled(true);
+  ui_.A0_button_get_step->setEnabled(false);
+  ui_.A1_button_clear_step->setEnabled(true);
+  ui_.A2_button_go_walking->setEnabled(true);
 }
 
 void MainWindow::on_A1_button_clear_step_clicked(bool check)
 {
-    qnode_thor3.ClearFootsteps();
+  qnode_thor3_.clearFootsteps();
 
-    ui.A0_button_get_step->setEnabled(false);
-    ui.A1_button_clear_step->setEnabled(false);
-    ui.A2_button_go_walking->setEnabled(false);
+  ui_.A0_button_get_step->setEnabled(false);
+  ui_.A1_button_clear_step->setEnabled(false);
+  ui_.A2_button_go_walking->setEnabled(false);
 }
 
 void MainWindow::on_A2_button_go_walking_clicked(bool check)
 {
-    qnode_thor3.SetWalkingFootsteps();
+  qnode_thor3_.setWalkingFootsteps();
 
-    ui.A0_button_get_step->setEnabled(false);
-    ui.A1_button_clear_step->setEnabled(false);
-    ui.A2_button_go_walking->setEnabled(false);
+  ui_.A0_button_get_step->setEnabled(false);
+  ui_.A1_button_clear_step->setEnabled(false);
+  ui_.A2_button_go_walking->setEnabled(false);
 }
 
 void MainWindow::on_head_center_button_clicked(bool check)
 {
-    //    is_updating_ == true;
-    //    ui.head_pan_slider->setValue(0.0);
-    //    ui.head_tilt_slider->setValue(0.0);
-    //    is_updating_ == false;
+  //    is_updating_ == true;
+  //    ui.head_pan_slider->setValue(0.0);
+  //    ui.head_tilt_slider->setValue(0.0);
+  //    is_updating_ == false;
 
-    qnode_thor3.Log(QNodeThor3::Info, "Go Head init position");
-    SetHeadJointsAngle(0, 0);
+  qnode_thor3_.log(QNodeThor3::Info, "Go Head init position");
+  setHeadJointsAngle(0, 0);
 }
+
+void MainWindow::on_dSpinBox_marker_pos_x_valueChanged(double value) { updateInteractiveMarker(); }
+void MainWindow::on_dSpinBox_marker_pos_y_valueChanged(double value) { updateInteractiveMarker(); }
+void MainWindow::on_dSpinBox_marker_pos_z_valueChanged(double value) { updateInteractiveMarker(); }
+
+void MainWindow::on_dSpinBox_marker_ori_r_valueChanged(double value) { updateInteractiveMarker(); }
+void MainWindow::on_dSpinBox_marker_ori_p_valueChanged(double value) { updateInteractiveMarker(); }
+void MainWindow::on_dSpinBox_marker_ori_y_valueChanged(double value) { updateInteractiveMarker(); }
+
+void MainWindow::on_button_marker_set_clicked() { makeInteractiveMarker(); }
+void MainWindow::on_button_marker_clear_clicked() { clearMarkerPanel(); }
 
 /*****************************************************************************
 ** Implemenation [Slots][manually connected]
@@ -254,43 +304,43 @@ void MainWindow::on_head_center_button_clicked(bool check)
  * this will drop the cursor down to the last line in the QListview to ensure
  * the user can always see the latest log message.
  */
-void MainWindow::UpdateLoggingView() {
-    ui.view_logging->scrollToBottom();
+void MainWindow::updateLoggingView() {
+  ui_.view_logging->scrollToBottom();
 }
 
 // user shortcut
-void MainWindow::SetUserShortcut()
+void MainWindow::setUserShortcut()
 {
-    // Setup a signal mapper to avoid creating custom slots for each tab
-    QSignalMapper *_sig_map = new QSignalMapper(this);
+  // Setup a signal mapper to avoid creating custom slots for each tab
+  QSignalMapper *sig_map = new QSignalMapper(this);
 
-    // Setup the shortcut for the first tab : Mode
-    QShortcut *_short_tab1 = new QShortcut(QKeySequence("F1"), this);
-    connect(_short_tab1, SIGNAL(activated()), _sig_map, SLOT(map()));
-    _sig_map->setMapping(_short_tab1, 0);
+  // Setup the shortcut for the first tab : Mode
+  QShortcut *short_tab1 = new QShortcut(QKeySequence("F1"), this);
+  connect(short_tab1, SIGNAL(activated()), sig_map, SLOT(map()));
+  sig_map->setMapping(short_tab1, 0);
 
-    // Setup the shortcut for the second tab : Manipulation
-    QShortcut *_short_tab2 = new QShortcut(QKeySequence("F2"), this);
-    connect(_short_tab2, SIGNAL(activated()), _sig_map, SLOT(map()));
-    _sig_map->setMapping(_short_tab2, 1);
+  // Setup the shortcut for the second tab : Manipulation
+  QShortcut *short_tab2 = new QShortcut(QKeySequence("F2"), this);
+  connect(short_tab2, SIGNAL(activated()), sig_map, SLOT(map()));
+  sig_map->setMapping(short_tab2, 1);
 
-    // Setup the shortcut for the third tab : Walking
-    QShortcut *_short_tab3 = new QShortcut(QKeySequence("F3"), this);
-    connect(_short_tab3, SIGNAL(activated()), _sig_map, SLOT(map()));
-    _sig_map->setMapping(_short_tab3, 2);
+  // Setup the shortcut for the third tab : Walking
+  QShortcut *short_tab3 = new QShortcut(QKeySequence("F3"), this);
+  connect(short_tab3, SIGNAL(activated()), sig_map, SLOT(map()));
+  sig_map->setMapping(short_tab3, 2);
 
-    // Setup the shortcut for the fouth tab : Head control
-    QShortcut *_short_tab4 = new QShortcut(QKeySequence("F4"), this);
-    connect(_short_tab4, SIGNAL(activated()), _sig_map, SLOT(map()));
-    _sig_map->setMapping(_short_tab4, 3);
+  // Setup the shortcut for the fouth tab : Head control
+  QShortcut *short_tab4 = new QShortcut(QKeySequence("F4"), this);
+  connect(short_tab4, SIGNAL(activated()), sig_map, SLOT(map()));
+  sig_map->setMapping(short_tab4, 3);
 
-    // Setup the shortcut for the fouth tab : Motion
-    QShortcut *_short_tab5 = new QShortcut(QKeySequence("F5"), this);
-    connect(_short_tab5, SIGNAL(activated()), _sig_map, SLOT(map()));
-    _sig_map->setMapping(_short_tab5, 4);
+  // Setup the shortcut for the fouth tab : Motion
+  QShortcut *short_tab5 = new QShortcut(QKeySequence("F5"), this);
+  connect(short_tab5, SIGNAL(activated()), sig_map, SLOT(map()));
+  sig_map->setMapping(short_tab5, 4);
 
-    // Wire the signal mapper to the tab widget index change slot
-    connect(_sig_map, SIGNAL(mapped(int)), ui.tabWidget_control, SLOT(setCurrentIndex(int)));
+  // Wire the signal mapper to the tab widget index change slot
+  connect(sig_map, SIGNAL(mapped(int)), ui_.tabWidget_control, SLOT(setCurrentIndex(int)));
 }
 
 // mode control
@@ -298,171 +348,275 @@ void MainWindow::SetUserShortcut()
 /*
 void MainWindow::setMode(bool check)
 {
-    robotis_controller_msgs::JointCtrlModule _control_msg;
+    robotis_controller_msgs::JointCtrlModule control_msg;
 
-    QList<QComboBox *> _combo_children = ui.widget_mode->findChildren<QComboBox *>();
-    for(int ix = 0; ix < _combo_children.length(); ix++)
+    QList<QComboBox *> combo_children = ui.widget_mode->findChildren<QComboBox *>();
+    for(int ix = 0; ix < combo_children.length(); ix++)
     {
-        std::stringstream _stream;
-        std::string _joint;
-        int _id;
+        std::stringstream stream;
+        std::string joint;
+        int id;
 
-        int _control_index = _combo_children.at(ix)->currentIndex();
-        // if(_control_index == QNodeThor3::Control_None) continue;
+        int control_index = combo_children.at(ix)->currentIndex();
+        // if(control_index == QNodeThor3::Control_None) continue;
 
-        std::string _control_mode = _combo_children.at(ix)->currentText().toStdString();
+        std::string control_mode = combo_children.at(ix)->currentText().toStdString();
 
-        if(qnode_thor3.getIDJointNameFromIndex(ix, _id, _joint) == true)
+        if(qnode_thor3.getIDJointNameFromIndex(ix, id, joint) == true)
         {
-            _stream << "[" << (_id < 10 ? "0" : "") << _id << "] "<< _joint <<" : " << _control_mode;
+            stream << "[" << (id < 10 ? "0" : "") << id << "] "<< joint <<" : " << control_mode;
 
-            _control_msg.joint_name.push_back(_joint);
-            _control_msg.module_name.push_back(_control_mode);
+            control_msg.joint_name.push_back(joint);
+            control_msg.module_name.push_back(control_mode);
         }
         else
         {
-            _stream << "id " << ix << " : " << _control_mode;
+            stream << "id " << ix << " : " << control_mode;
         }
 
-        qnode_thor3.log(QNodeThor3::Info, _stream.str());
+        qnode_thor3.log(QNodeThor3::Info, stream.str());
     }
 
     // no control
-    if(_control_msg.joint_name.size() == 0) return;
+    if(control_msg.joint_name.size() == 0) return;
 
     qnode_thor3.log(QNodeThor3::Info, "set mode");
 
-    qnode_thor3.setJointControlMode(_control_msg);
+    qnode_thor3.setJointControlMode(control_msg);
 }
 */
 
-void MainWindow::UpdatePresentJointModule(std::vector<int> mode)
+void MainWindow::updatePresentJointModule(std::vector<int> mode)
 {
-    QList<QComboBox *> _combo_children = ui.widget_mode->findChildren<QComboBox *>();
-    for(int ix = 0; ix < _combo_children.length(); ix++)
+  QList<QComboBox *> combo_children = ui_.widget_mode->findChildren<QComboBox *>();
+  for(int ix = 0; ix < combo_children.length(); ix++)
+  {
+    int control_index = mode.at(ix);
+    combo_children.at(ix)->setCurrentIndex(control_index);
+
+    if(DEBUG)
     {
-        int _control_index = mode.at(ix);
-        _combo_children.at(ix)->setCurrentIndex(_control_index);
+      std::stringstream stream;
+      std::string joint;
+      int id;
 
-        if(DEBUG)
-        {
-            std::stringstream _stream;
-            std::string _joint;
-            int _id;
+      std::string control_mode = combo_children.at(ix)->currentText().toStdString();
 
-            std::string _control_mode = _combo_children.at(ix)->currentText().toStdString();
+      if(qnode_thor3_.getIDJointNameFromIndex(ix, id, joint) == true)
+      {
+        stream << "[" << (id < 10 ? "0" : "") << id << "] "<< joint <<" : " << control_mode;
+      }
+      else
+      {
+        stream << "id " << ix << " : " << control_mode;
+      }
 
-            if(qnode_thor3.GetIDJointNameFromIndex(ix, _id, _joint) == true)
-            {
-                _stream << "[" << (_id < 10 ? "0" : "") << _id << "] "<< _joint <<" : " << _control_mode;
-            }
-            else
-            {
-                _stream << "id " << ix << " : " << _control_mode;
-            }
-
-            qnode_thor3.Log(QNodeThor3::Info, _stream.str());
-        }
+      qnode_thor3_.log(QNodeThor3::Info, stream.str());
     }
+  }
 
-    // set module UI
-    UpdateModuleUI();
+  // set module UI
+  updateModuleUI();
 }
 
-void MainWindow::UpdateModuleUI()
+void MainWindow::updateModuleUI()
 {
-    if(DEBUG) return;
+  if(DEBUG) return;
 
-    for(int index = 0; index < qnode_thor3.GetModuleTableSize(); index++)
+  for(int index = 0; index < qnode_thor3_.getModuleTableSize(); index++)
+  {
+    std::string mode = qnode_thor3_.getModuleName(index);
+    if(mode == "") continue;
+
+    std::map< std::string, QList<QWidget *> >::iterator module_iter = module_ui_table_.find(mode);
+    if(module_iter == module_ui_table_.end()) continue;
+
+    QList<QWidget *> list = module_iter->second;
+    for(int ix = 0; ix < list.size(); ix++)
     {
-        std::string _mode = qnode_thor3.GetModuleName(index);
-        if(_mode == "") continue;
-
-        std::map< std::string, QList<QWidget *> >::iterator _module_iter = module_ui_table_.find(_mode);
-        if(_module_iter == module_ui_table_.end()) continue;
-
-        QList<QWidget *> _list = _module_iter->second;
-        for(int ix = 0; ix < _list.size(); ix++)
-        {
-            bool _is_enable = qnode_thor3.IsUsingModule(_mode);
-            _list.at(ix)->setEnabled(_is_enable);
-        }
+      bool is_enable = qnode_thor3_.isUsingModule(mode);
+      list.at(ix)->setEnabled(is_enable);
     }
+  }
 }
 
-void MainWindow::UpdateHeadJointsAngle(double pan, double tilt)
+void MainWindow::updateHeadJointsAngle(double pan, double tilt)
 {
-    if(ui.head_pan_slider->underMouse() == true) return;
-    if(ui.head_pan_spinbox->underMouse() == true) return;
-    if(ui.head_tilt_slider->underMouse() == true) return;
-    if(ui.head_tilt_spinbox->underMouse() == true) return;
+  if(ui_.head_pan_slider->underMouse() == true) return;
+  if(ui_.head_pan_spinbox->underMouse() == true) return;
+  if(ui_.head_tilt_slider->underMouse() == true) return;
+  if(ui_.head_tilt_spinbox->underMouse() == true) return;
 
-    is_updating_ = true;
+  is_updating_ = true;
 
-    ui.head_pan_slider->setValue( pan * 180.0 / M_PI );
-    // ui.head_pan_spinbox->setValue( pan * 180.0 / M_PI );
-    ui.head_tilt_slider->setValue( tilt * 180.0 / M_PI );
-    // ui.head_tilt_spinbox->setValue( tilt * 180.0 / M_PI );
+  ui_.head_pan_slider->setValue( pan * 180.0 / M_PI );
+  // ui.head_pan_spinbox->setValue( pan * 180.0 / M_PI );
+  ui_.head_tilt_slider->setValue( tilt * 180.0 / M_PI );
+  // ui.head_tilt_spinbox->setValue( tilt * 180.0 / M_PI );
 
-    is_updating_ = false;
+  is_updating_ = false;
 }
 
-void MainWindow::SetHeadJointsAngle()
+void MainWindow::setHeadJointsAngle()
 {
-    if(is_updating_ == true) return;
-    qnode_thor3.SetHeadJoint(ui.head_pan_slider->value() * M_PI / 180, ui.head_tilt_slider->value() * M_PI / 180);
+  if(is_updating_ == true) return;
+  qnode_thor3_.setHeadJoint(ui_.head_pan_slider->value() * M_PI / 180, ui_.head_tilt_slider->value() * M_PI / 180);
 }
 
-void MainWindow::SetHeadJointsAngle(double pan, double tilt)
+void MainWindow::setHeadJointsAngle(double pan, double tilt)
 {
-    qnode_thor3.SetHeadJoint(pan * M_PI / 180, tilt * M_PI / 180);
+  qnode_thor3_.setHeadJoint(pan * M_PI / 180, tilt * M_PI / 180);
 }
 
 // manipulation
-void MainWindow::UpdateCurrJointSpinbox( double value )
+void MainWindow::updateCurrJointSpinbox( double value )
 {
-    ui.joint_spinbox->setValue( value * 180.0 / M_PI );
+  ui_.joint_spinbox->setValue( value * 180.0 / M_PI );
 }
 
-void MainWindow::UpdateCurrPosSpinbox( double x, double y, double z )
+void MainWindow::updateCurrPosSpinbox( double x, double y, double z )
 {
-    ui.pos_x_spinbox->setValue( x );
-    ui.pos_y_spinbox->setValue( y );
-    ui.pos_z_spinbox->setValue( z );
+  ui_.pos_x_spinbox->setValue( x );
+  ui_.pos_y_spinbox->setValue( y );
+  ui_.pos_z_spinbox->setValue( z );
 }
 
-void MainWindow::UpdateCurrOriSpinbox( double x , double y , double z , double w )
+void MainWindow::updateCurrOriSpinbox( double x , double y , double z , double w )
 {
-    Eigen::Quaterniond QR(w,x,y,z);
+  Eigen::Quaterniond QR(w,x,y,z);
 
-    Eigen::MatrixXd R = QR.toRotationMatrix();
+  Eigen::MatrixXd R = QR.toRotationMatrix();
 
-    double roll = atan2( R.coeff(2,1), R.coeff(2,2) ) * 180.0 / M_PI;
-    double pitch = atan2( -R.coeff(2,0), sqrt( pow(R.coeff(2,1),2) + pow(R.coeff(2,2),2) ) ) * 180.0 / M_PI;
-    double yaw = atan2 ( R.coeff(1,0) , R.coeff(0,0) ) * 180.0 / M_PI;
+  double roll = atan2( R.coeff(2,1), R.coeff(2,2) ) * 180.0 / M_PI;
+  double pitch = atan2( -R.coeff(2,0), sqrt( pow(R.coeff(2,1),2) + pow(R.coeff(2,2),2) ) ) * 180.0 / M_PI;
+  double yaw = atan2 ( R.coeff(1,0) , R.coeff(0,0) ) * 180.0 / M_PI;
 
-    ui.ori_roll_spinbox->setValue( roll );
-    ui.ori_pitch_spinbox->setValue( pitch );
-    ui.ori_yaw_spinbox->setValue( yaw );
+  ui_.ori_roll_spinbox->setValue( roll );
+  ui_.ori_pitch_spinbox->setValue( pitch );
+  ui_.ori_yaw_spinbox->setValue( yaw );
 }
 
 // walking
-void MainWindow::SendWalkingCommand(const std::string &command)
+void MainWindow::sendWalkingCommand(const std::string &command)
 {
-    thormang3_foot_step_generator::FootStepCommand _msg;
+  thormang3_foot_step_generator::FootStepCommand msg;
 
-    _msg.command = command;
-    _msg.step_num = ui.A1_spinbox_step_num->value();
-    _msg.step_length = ui.B1_spinbox_f_step_length->value();
-    _msg.side_step_length = ui.C1_spinbox_s_step_length->value();
-    _msg.step_angle_rad = ui.D1_spinbox_r_angle->value() * M_PI / 180;
+  msg.command = command;
+  msg.step_num = ui_.A1_spinbox_step_num->value();
+  msg.step_length = ui_.B1_spinbox_f_step_length->value();
+  msg.side_step_length = ui_.C1_spinbox_s_step_length->value();
+  msg.step_angle_rad = ui_.D1_spinbox_r_angle->value() * M_PI / 180;
 
-    qnode_thor3.SetWalkingCommand(_msg);
+  qnode_thor3_.setWalkingCommand(msg);
 }
 
-void MainWindow::EnableGetStepButton()
+void MainWindow::enableGetStepButton()
 {
-    ui.A0_button_get_step->setEnabled(true);
+  ui_.A0_button_get_step->setEnabled(true);
+}
+
+// Update UI - position
+void MainWindow::updatePointPanel(const geometry_msgs::Point point)
+{
+  is_updating_ = true;
+
+  setPointToMarkerPanel(point);
+
+  ROS_INFO("Update Position Panel");
+  is_updating_ = false;
+}
+
+// Update UI - pose
+void MainWindow::updatePosePanel(const geometry_msgs::Pose pose)
+{
+  is_updating_ = true;
+
+  setPoseToMarkerPanel(pose);
+
+  ROS_INFO("Update Pose Panel");
+  is_updating_ = false;
+}
+
+void MainWindow::getPoseFromMarkerPanel(geometry_msgs::Pose &current)
+{
+  // position
+  current.position.x = ui_.dSpinBox_marker_pos_x->value();
+  current.position.y = ui_.dSpinBox_marker_pos_y->value();
+  current.position.z = ui_.dSpinBox_marker_pos_z->value();
+
+  // orientation
+  Eigen::Vector3d _euler(ui_.dSpinBox_marker_ori_r->value(),
+                         ui_.dSpinBox_marker_ori_p->value(),
+                         ui_.dSpinBox_marker_ori_y->value());
+  Eigen::Quaterniond _q = rpy2quaternion(deg2rad<Eigen::Vector3d>(_euler));
+
+  tf::quaternionEigenToMsg(_q, current.orientation);
+}
+
+void MainWindow::setPoseToMarkerPanel(const geometry_msgs::Pose &current)
+{
+  // position
+  ui_.dSpinBox_marker_pos_x->setValue(current.position.x);
+  ui_.dSpinBox_marker_pos_y->setValue(current.position.y);
+  ui_.dSpinBox_marker_pos_z->setValue(current.position.z);
+
+  // orientation
+  Eigen::Vector3d _euler = rad2deg<Eigen::Vector3d>(quaternion2rpy(current.orientation));
+
+  ui_.dSpinBox_marker_ori_r->setValue(_euler[0]);
+  ui_.dSpinBox_marker_ori_p->setValue(_euler[1]);
+  ui_.dSpinBox_marker_ori_y->setValue(_euler[2]);
+}
+
+void MainWindow::getPointFromMarkerPanel(geometry_msgs::Point &current)
+{
+  // position
+  current.x = ui_.dSpinBox_marker_pos_x->value();
+  current.y = ui_.dSpinBox_marker_pos_y->value();
+  current.z = ui_.dSpinBox_marker_pos_z->value();
+}
+
+void MainWindow::setPointToMarkerPanel(const geometry_msgs::Point &current)
+{
+  // position
+  ui_.dSpinBox_marker_pos_x->setValue(current.x);
+  ui_.dSpinBox_marker_pos_y->setValue(current.y);
+  ui_.dSpinBox_marker_pos_z->setValue(current.z);
+
+  // orientation
+  ui_.dSpinBox_marker_ori_r->setValue(0.0);
+  ui_.dSpinBox_marker_ori_p->setValue(0.0);
+  ui_.dSpinBox_marker_ori_y->setValue(0.0);
+}
+
+// make interactive marker
+void MainWindow::makeInteractiveMarker()
+{
+  geometry_msgs::Pose _current_pose;
+  getPoseFromMarkerPanel(_current_pose);
+
+  qnode_thor3_.makeInteractiveMarker(_current_pose);
+}
+
+// update interactive marker pose from ui
+void MainWindow::updateInteractiveMarker()
+{
+  if(is_updating_ == true) return;
+
+  geometry_msgs::Pose _current_pose;
+  getPoseFromMarkerPanel(_current_pose);
+
+  qnode_thor3_.updateInteractiveMarker(_current_pose);
+}
+
+void MainWindow::clearMarkerPanel()
+{
+  geometry_msgs::Pose _init;
+  updatePosePanel(_init);
+
+  ROS_INFO("Clear Panel");
+
+  qnode_thor3_.clearInteractiveMarker();
 }
 
 /*****************************************************************************
@@ -470,215 +624,267 @@ void MainWindow::EnableGetStepButton()
 *****************************************************************************/
 
 void MainWindow::on_actionAbout_triggered() {
-    QMessageBox::about(this, tr("About ..."),tr("<h2>PACKAGE_NAME Test Program 0.10</h2><p>Copyright Yujin Robot</p><p>This package needs an about description.</p>"));
+  QMessageBox::about(this, tr("About ..."),tr("<h2>PACKAGE_NAME Test Program 0.10</h2><p>Copyright Yujin Robot</p><p>This package needs an about description.</p>"));
 }
 
 /*****************************************************************************
 ** Implementation [Configuration]
 *****************************************************************************/
 
-void MainWindow::InitModeUnit()
+void MainWindow::initModeUnit()
 {
-    int _number_joint = qnode_thor3.GetJointTableSize();
+  int number_joint = qnode_thor3_.getJointTableSize();
 
-    // preset module button
-    QHBoxLayout *_preset_layout = new QHBoxLayout;
-    QSignalMapper *_signalMapper = new QSignalMapper(this);
+  // preset module button
+  QHBoxLayout *preset_layout = new QHBoxLayout;
+  QSignalMapper *signalMapper = new QSignalMapper(this);
 
-    // parse yaml : preset modules
-    for(std::map< int, std::string >::iterator _iter = qnode_thor3.module_table.begin(); _iter != qnode_thor3.module_table.end(); ++_iter)
+  // parse yaml : preset modules
+  for(std::map< int, std::string >::iterator iter = qnode_thor3_.module_table_.begin(); iter != qnode_thor3_.module_table_.end(); ++iter)
+  {
+    std::string preset_name = iter->second;
+    QPushButton *preset_button = new QPushButton(tr(preset_name.c_str()));
+    if(DEBUG) std::cout << "name : " <<  preset_name << std::endl;
+
+    preset_layout->addWidget(preset_button);
+
+    signalMapper->setMapping(preset_button, preset_button->text());
+    QObject::connect(preset_button, SIGNAL(clicked()), signalMapper, SLOT(map()));
+  }
+
+  // QObject::connect(signalMapper, SIGNAL(mapped(QString)), this, SLOT(setPreset(QString)));
+  QObject::connect(signalMapper, SIGNAL(mapped(QString)), this, SLOT(enableModule(QString)));
+
+  ui_.widget_mode_preset->setLayout(preset_layout);
+
+  // joints
+  QGridLayout *grid_mod = new QGridLayout;
+  for(int ix = 0; ix < number_joint; ix++)
+  {
+    std::stringstream stream;
+    std::string joint;
+    int id;
+
+    if(qnode_thor3_.getIDJointNameFromIndex(ix, id, joint) == false) continue;
+
+    stream << "[" << (id < 10 ? "0" : "") << id << "] "<< joint ;
+    QLabel *label = new QLabel(tr(stream.str().c_str()));
+
+    QStringList list;
+    for(int index = 0; index < qnode_thor3_.getModuleTableSize(); index++)
     {
-        std::string _preset_name = _iter->second;
-        QPushButton *_preset_button = new QPushButton(tr(_preset_name.c_str()));
-        if(DEBUG) std::cout << "name : " <<  _preset_name << std::endl;
-
-        _preset_layout->addWidget(_preset_button);
-
-        _signalMapper->setMapping(_preset_button, _preset_button->text());
-        QObject::connect(_preset_button, SIGNAL(clicked()), _signalMapper, SLOT(map()));
+      std::string mode = qnode_thor3_.getModuleName(index);
+      if(mode != "")
+        list << mode.c_str();
     }
 
-    // QObject::connect(_signalMapper, SIGNAL(mapped(QString)), this, SLOT(setPreset(QString)));
-    QObject::connect(_signalMapper, SIGNAL(mapped(QString)), this, SLOT(EnableModule(QString)));
+    QComboBox *combo = new QComboBox();
+    combo->setObjectName(tr(joint.c_str()));
+    combo->addItems(list);
+    combo->setEnabled(false);      // not changable
+    int row = ix / 2 + 1;
+    int col = (ix % 2) * 3;
+    grid_mod->addWidget(label, row, col, 1, 1);
+    grid_mod->addWidget(combo, row, col + 1, 1, 2);
+  }
 
-    ui.widget_mode_preset->setLayout(_preset_layout);
+  // get buttons
+  QPushButton *get_mode_button = new QPushButton(tr("Get Mode"));
+  grid_mod->addWidget(get_mode_button, (number_joint / 2) + 2, 0, 1, 3);
+  QObject::connect(get_mode_button, SIGNAL(clicked(bool)), &qnode_thor3_, SLOT(getJointControlModule()));
 
-    // joints
-    QGridLayout *_grid_mod = new QGridLayout;
-    for(int ix = 0; ix < _number_joint; ix++)
-    {
-        std::stringstream _stream;
-        std::string _joint;
-        int _id;
+  ui_.widget_mode->setLayout(grid_mod);
 
-        if(qnode_thor3.GetIDJointNameFromIndex(ix, _id, _joint) == false) continue;
+  // make module widget table
+  for(int index = 0; index < qnode_thor3_.getModuleTableSize(); index++)
+  {
+    std::string mode = qnode_thor3_.getModuleName(index);
+    if(mode == "") continue;
+    std::string mode_reg = "*" + mode;
 
-        _stream << "[" << (_id < 10 ? "0" : "") << _id << "] "<< _joint ;
-        QLabel *_label = new QLabel(tr(_stream.str().c_str()));
+    QRegExp rx(QRegExp(tr(mode_reg.c_str())));
+    rx.setPatternSyntax(QRegExp::Wildcard);
 
-        QStringList _list;
-        for(int index = 0; index < qnode_thor3.GetModuleTableSize(); index++)
-        {
-            std::string _mode = qnode_thor3.GetModuleName(index);
-            if(_mode != "")
-                _list << _mode.c_str();
-        }
+    QList<QWidget *> list = ui_.centralwidget->findChildren<QWidget *>(rx);
+    module_ui_table_[mode] = list;
 
-        QComboBox *_combo = new QComboBox();
-        _combo->setObjectName(tr(_joint.c_str()));
-        _combo->addItems(_list);
-        _combo->setEnabled(false);      // not changable
-        int _row = ix / 2 + 1;
-        int _col = (ix % 2) * 3;
-        _grid_mod->addWidget(_label, _row, _col, 1, 1);
-        _grid_mod->addWidget(_combo, _row, _col + 1, 1, 2);
-    }
+    if(DEBUG) std::cout << "Module widget : " << mode << " [" << list.size() << "]" << std::endl;
+  }
 
-    // get buttons
-    QPushButton *_get_mode_button = new QPushButton(tr("Get Mode"));
-    _grid_mod->addWidget(_get_mode_button, (_number_joint / 2) + 2, 0, 1, 3);
-    QObject::connect(_get_mode_button, SIGNAL(clicked(bool)), &qnode_thor3, SLOT(GetJointControlModule()));
-
-    ui.widget_mode->setLayout(_grid_mod);
-
-    // make module widget table
-    for(int index = 0; index < qnode_thor3.GetModuleTableSize(); index++)
-    {
-        std::string _mode = qnode_thor3.GetModuleName(index);
-        if(_mode == "") continue;
-        std::string _mode_reg = "*_" + _mode;
-
-        QRegExp _rx(QRegExp(tr(_mode_reg.c_str())));
-        _rx.setPatternSyntax(QRegExp::Wildcard);
-
-        QList<QWidget *> _list = ui.centralwidget->findChildren<QWidget *>(_rx);
-        module_ui_table_[_mode] = _list;
-
-        if(DEBUG) std::cout << "Module widget : " << _mode << " [" << _list.size() << "]" << std::endl;
-    }
-
-    // make motion tab
-    if(qnode_thor3.getModeIndex("action_module") != -1) initMotionUnit();
+  // make motion tab
+  if(qnode_thor3_.getModuleIndex("action_module") != -1) initMotionUnit();
 }
 
 void MainWindow::initMotionUnit()
 {
-    // preset button
-    QGridLayout *_motion_layout = new QGridLayout;
-    QSignalMapper *_signalMapper = new QSignalMapper(this);
+  // preset button
+  QGridLayout *motion_layout = new QGridLayout;
+  QSignalMapper *signalMapper = new QSignalMapper(this);
 
-    // yaml preset
-    int _index = 0;
-    for(std::map< int, std::string >::iterator _iter = qnode_thor3.motion_table.begin(); _iter != qnode_thor3.motion_table.end(); ++_iter)
-    {
-        int _motion_index = _iter->first;
-        std::string _motion_name = _iter->second;
-        QString _q_motion_name = QString::fromStdString(_motion_name);
-        QPushButton *_motion_button = new QPushButton(_q_motion_name);
-        // if(DEBUG) std::cout << "name : " <<  _motion_name << std::endl;
+  // yaml preset
+  int index = 0;
+  for(std::map< int, std::string >::iterator iter = qnode_thor3_.motion_table_.begin(); iter != qnode_thor3_.motion_table_.end(); ++iter)
+  {
+    int motion_index = iter->first;
+    std::string motion_name = iter->second;
+    QString q_motion_name = QString::fromStdString(motion_name);
+    QPushButton *motion_button = new QPushButton(q_motion_name);
+    // if(DEBUG) std::cout << "name : " <<  motion_name << std::endl;
 
-        int _size = (_motion_index < 0) ? 2 : 1;
-        int _row = _index / 4;
-        int _col = _index % 4;
-        _motion_layout->addWidget(_motion_button, _row, _col, 1, _size);
+    int size = (motion_index < 0) ? 2 : 1;
+    int row = index / 4;
+    int col = index % 4;
+    motion_layout->addWidget(motion_button, row, col, 1, size);
 
-        _signalMapper->setMapping(_motion_button, _motion_index);
-        QObject::connect(_motion_button, SIGNAL(clicked()), _signalMapper, SLOT(map()));
+    signalMapper->setMapping(motion_button, motion_index);
+    QObject::connect(motion_button, SIGNAL(clicked()), signalMapper, SLOT(map()));
 
-        _index += _size;
-    }
+    index += size;
+  }
 
-    int _row = _index / 4;
-    _row = (_index % 4 == 0) ? _row : _row + 1;
-    QSpacerItem *_verticalSpacer = new QSpacerItem(20, 400, QSizePolicy::Minimum, QSizePolicy::Expanding);
-    _motion_layout->addItem(_verticalSpacer, _row, 0, 1, 4);
+  int row = index / 4;
+  row = (index % 4 == 0) ? row : row + 1;
+  QSpacerItem *verticalSpacer = new QSpacerItem(20, 400, QSizePolicy::Minimum, QSizePolicy::Expanding);
+  motion_layout->addItem(verticalSpacer, row, 0, 1, 4);
 
-    QObject::connect(_signalMapper, SIGNAL(mapped(int)), &qnode_thor3, SLOT(playMotion(int)));
+  QObject::connect(signalMapper, SIGNAL(mapped(int)), &qnode_thor3_, SLOT(playMotion(int)));
 
-    ui.scroll_widget_motion->setLayout(_motion_layout);
+  ui_.scroll_widget_motion->setLayout(motion_layout);
 }
 
-void MainWindow::EnableModule(QString mode_name)
+void MainWindow::enableModule(QString mode_name)
 {
-    qnode_thor3.EnableControlModule(mode_name.toStdString());
+  qnode_thor3_.enableControlModule(mode_name.toStdString());
 }
 
-void MainWindow::ReadSettings()
+void MainWindow::readSettings()
 {
-    QSettings settings("Qt-Ros Package", "thor3_control");
-    restoreGeometry(settings.value("geometry").toByteArray());
-    restoreState(settings.value("windowState").toByteArray());
+  QSettings settings("Qt-Ros Package", "thor3_control");
+  restoreGeometry(settings.value("geometry").toByteArray());
+  restoreState(settings.value("windowState").toByteArray());
 }
 
-void MainWindow::WriteSettings()
+void MainWindow::writeSettings()
 {
-    QSettings settings("Qt-Ros Package", "thor3_control");
-    settings.setValue("geometry", saveGeometry());
-    settings.setValue("windowState", saveState());
+  QSettings settings("Qt-Ros Package", "thor3_control");
+  settings.setValue("geometry", saveGeometry());
+  settings.setValue("windowState", saveState());
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-    WriteSettings();
-    QMainWindow::closeEvent(event);
+  writeSettings();
+  QMainWindow::closeEvent(event);
 }
 
 /*****************************************************************************
 ** Implementation [Util]
 *****************************************************************************/
-
-Eigen::MatrixXd MainWindow::rx( double s )
+// math : euler & quaternion & rotation mat
+Eigen::Vector3d MainWindow::rotation2rpy(const Eigen::MatrixXd &rotation )
 {
-    Eigen::MatrixXd R(3,3);
+  Eigen::Vector3d _rpy;
 
-    R << 1.0, 	 0.0, 	  0.0,
-            0.0, cos(s), -sin(s),
-            0.0, sin(s),  cos(s);
+  _rpy[0] = atan2( rotation.coeff( 2 , 1 ), rotation.coeff( 2 , 2 ) );
+  _rpy[1] = atan2(-rotation.coeff( 2 , 0 ), sqrt( pow( rotation.coeff( 2 , 1 ) , 2 ) + pow( rotation.coeff( 2 , 2 ) , 2 ) ) );
+  _rpy[2] = atan2( rotation.coeff( 1 , 0 ), rotation.coeff( 0 , 0 ) );
 
-    return R;
+  return _rpy;
 }
 
-Eigen::MatrixXd MainWindow::ry( double s )
+Eigen::MatrixXd MainWindow::rpy2rotation(const double &roll, const double &pitch, const double &yaw )
 {
-    Eigen::MatrixXd R(3,3);
+  Eigen::MatrixXd _rotation = rotationZ( yaw ) * rotationY( pitch ) * rotationX( roll );
 
-    R << cos(s), 0.0, sin(s),
-            0.0, 	 1.0, 	 0.0,
-            -sin(s), 0.0, cos(s);
-
-    return R;
+  return _rotation;
 }
 
-Eigen::MatrixXd MainWindow::rz( double s )
+Eigen::Quaterniond MainWindow::rpy2quaternion(const Eigen::Vector3d &euler)
 {
-    Eigen::MatrixXd R(3,3);
-
-    R << cos(s), -sin(s), 0.0,
-            sin(s),  cos(s), 0.0,
-            0.0,     0.0, 1.0;
-
-    return R;
+  return rpy2quaternion(euler[0], euler[1], euler[2]);
 }
 
-Eigen::MatrixXd MainWindow::rpy2rotation( double r, double p, double y )
+Eigen::Quaterniond MainWindow::rpy2quaternion(const double &roll, const double &pitch, const double &yaw )
 {
-    Eigen::MatrixXd R = rz(y)*ry(p)*rx(r);
+  Eigen::MatrixXd _rotation = rpy2rotation( roll, pitch, yaw );
 
-    return R;
+  Eigen::Matrix3d _rotation3d;
+  _rotation3d = _rotation.block( 0 , 0 , 3 , 3 );
+
+  Eigen::Quaterniond _quaternion;
+
+  _quaternion = _rotation3d;
+
+  return _quaternion;
 }
 
-Eigen::Quaterniond MainWindow::rpy2quaternion( double r, double p, double y )
+Eigen::Quaterniond MainWindow::rotation2quaternion(const Eigen::MatrixXd &rotation )
 {
-    Eigen::MatrixXd R = rpy2rotation(r, p, y);
+  Eigen::Matrix3d _rotation3d;
 
-    Eigen::Matrix3d R_plus;
-    R_plus = R.block(0,0,3,3);
+  _rotation3d = rotation.block( 0 , 0 , 3 , 3 );
 
-    Eigen::Quaterniond QR;
-    QR = R_plus;
+  Eigen::Quaterniond _quaternion;
+  _quaternion = _rotation3d;
 
-    return QR;
+  return _quaternion;
+}
+
+Eigen::Vector3d MainWindow::quaternion2rpy(const Eigen::Quaterniond &quaternion )
+{
+  Eigen::Vector3d _rpy = rotation2rpy( quaternion.toRotationMatrix() );
+
+  return _rpy;
+}
+
+Eigen::Vector3d MainWindow::quaternion2rpy(const geometry_msgs::Quaternion &quaternion)
+{
+  Eigen::Quaterniond _quaternion;
+  tf::quaternionMsgToEigen(quaternion, _quaternion);
+
+  Eigen::Vector3d _rpy = rotation2rpy( _quaternion.toRotationMatrix() );
+
+  return _rpy;
+}
+
+Eigen::MatrixXd MainWindow::quaternion2rotation(const Eigen::Quaterniond &quaternion )
+{
+  Eigen::MatrixXd _rotation = quaternion.toRotationMatrix();
+
+  return _rotation;
+}
+
+Eigen::MatrixXd MainWindow::rotationX(const double &angle )
+{
+  Eigen::MatrixXd _rotation( 3 , 3 );
+
+  _rotation << 1.0,          0.0,           0.0,
+      0.0, cos( angle ), -sin( angle ),
+      0.0, sin( angle ),  cos( angle );
+
+  return _rotation;
+}
+
+Eigen::MatrixXd MainWindow::rotationY(const double &angle )
+{
+  Eigen::MatrixXd _rotation( 3 , 3 );
+
+  _rotation << cos( angle ), 0.0, sin( angle ),
+      0.0, 1.0,          0.0,
+      -sin( angle ), 0.0, cos( angle );
+
+  return _rotation;
+}
+
+Eigen::MatrixXd MainWindow::rotationZ(const double &angle )
+{
+  Eigen::MatrixXd _rotation(3,3);
+
+  _rotation << cos( angle ), -sin( angle ), 0.0,
+      sin( angle ),  cos( angle ), 0.0,
+      0.0,           0.0, 1.0;
+
+  return _rotation;
 }
 
 }  // namespace thor3_control
-
