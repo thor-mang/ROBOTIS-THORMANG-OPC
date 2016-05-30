@@ -1686,7 +1686,7 @@
                  <item row="1" column="3">
                   <widget class="QPushButton" name="button_manipulation_demo_6">
                    <property name="text">
-                    <string>6. Grip Off</string>
+                    <string>7. Grip Off</string>
                    </property>
                   </widget>
                  </item>
@@ -1696,7 +1696,7 @@
                     <bool>true</bool>
                    </property>
                    <property name="text">
-                    <string>5. Grip On</string>
+                    <string>6. Grip On</string>
                    </property>
                    <attribute name="buttonGroup">
                     <string notr="true">buttonGroup_manipulation_demo</string>
@@ -1709,7 +1709,7 @@
                     <bool>true</bool>
                    </property>
                    <property name="text">
-                    <string>4. Send Pose</string>
+                    <string>5. Send Pose</string>
                    </property>
                    <attribute name="buttonGroup">
                     <string notr="true">buttonGroup_manipulation_demo</string>
@@ -1830,12 +1830,12 @@
                   <widget class="QComboBox" name="comboBox_kick_foot">
                    <item>
                     <property name="text">
-                     <string>Right foot</string>
+                     <string>Right Foot</string>
                     </property>
                    </item>
                    <item>
                     <property name="text">
-                     <string>Left foot</string>
+                     <string>Left Foot</string>
                     </property>
                    </item>
                   </widget>

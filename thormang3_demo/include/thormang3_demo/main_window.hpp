@@ -126,6 +126,23 @@ class MainWindow : public QMainWindow {
   void on_button_marker_set_clicked();
   void on_button_marker_clear_clicked();
 
+  // Demo
+  void on_button_manipulation_demo_0_clicked(bool check);
+  void on_button_manipulation_demo_1_clicked(bool check);
+  void on_button_manipulation_demo_2_clicked(bool check);
+  void on_button_manipulation_demo_3_clicked(bool check);
+  void on_button_manipulation_demo_4_clicked(bool check);
+  void on_button_manipulation_demo_5_clicked(bool check);
+  void on_button_manipulation_demo_6_clicked(bool check);
+
+  void on_button_walking_demo_0_clicked(bool check);
+  void on_button_walking_demo_1_clicked(bool check);
+  void on_button_walking_demo_2_clicked(bool check);
+  void on_button_walking_demo_3_clicked(bool check);
+  void on_button_walking_demo_4_clicked(bool check);
+  void on_button_walking_demo_5_clicked(bool check);
+  void on_button_walking_demo_6_clicked(bool check);
+
   /******************************************
     ** Manual connections
     *******************************************/
@@ -162,6 +179,7 @@ class MainWindow : public QMainWindow {
   void updateModuleUI();
   void setHeadJointsAngle(double pan, double tilt);
   void sendWalkingCommand(const std::string &command);
+  void setGripper(const double &angle_deg, const std::string &arm_type);
 
   void makeInteractiveMarker();
   void updateInteractiveMarker();

@@ -203,22 +203,26 @@ void MainWindow::on_despos_button_clicked( bool check )
 
 void MainWindow::on_button_grip_on_clicked(bool check)
 {
-  thormang3_manipulation_module_msgs::JointPose msg;
+//  thormang3_manipulation_module_msgs::JointPose msg;
 
-  msg.name = ui_.gripper_comboBox->currentText().toStdString();
-  msg.value = 60 * M_PI / 180.0 ;
+//  msg.name = ui_.gripper_comboBox->currentText().toStdString();
+//  msg.value = 60 * M_PI / 180.0 ;
 
-  qnode_thor3_.sendDestJointMsg( msg );
+//  qnode_thor3_.sendDestJointMsg( msg );
+
+  setGripper(60, ui_.gripper_comboBox->currentText().toStdString());
 }
 
 void MainWindow::on_button_grip_off_clicked(bool check)
 {
-  thormang3_manipulation_module_msgs::JointPose msg;
+//  thormang3_manipulation_module_msgs::JointPose msg;
 
-  msg.name = ui_.gripper_comboBox->currentText().toStdString();
-  msg.value = 0 * M_PI / 180.0 ;
+//  msg.name = ui_.gripper_comboBox->currentText().toStdString();
+//  msg.value = 0 * M_PI / 180.0 ;
 
-  qnode_thor3_.sendDestJointMsg( msg );
+//  qnode_thor3_.sendDestJointMsg( msg );
+
+  setGripper(0, ui_.gripper_comboBox->currentText().toStdString());
 }
 
 void MainWindow::on_A0_button_fl_clicked(bool check) { sendWalkingCommand("turn left"); }
@@ -294,6 +298,128 @@ void MainWindow::on_dSpinBox_marker_ori_y_valueChanged(double value) { updateInt
 
 void MainWindow::on_button_marker_set_clicked() { makeInteractiveMarker(); }
 void MainWindow::on_button_marker_clear_clicked() { clearMarkerPanel(); }
+
+void MainWindow::on_button_manipulation_demo_0_clicked(bool check)
+{
+  // manipulation mode
+  qnode_thor3_.enableControlModule("manipulation");
+}
+
+void MainWindow::on_button_manipulation_demo_1_clicked(bool check)
+{
+  // manipulation init pose
+  on_inipose_button_clicked(false);
+}
+
+void MainWindow::on_button_manipulation_demo_2_clicked(bool check)
+{
+  // haed control mode
+  qnode_thor3_.enableControlModule("head control");
+
+  usleep(10 * 1000 * 1000);
+
+  // scan
+  qnode_thor3_.assembleLidar();
+}
+
+void MainWindow::on_button_manipulation_demo_3_clicked(bool check)
+{
+  // set interactive marker
+  makeInteractiveMarker();
+}
+
+void MainWindow::on_button_manipulation_demo_4_clicked(bool check)
+{
+  // send pose
+  thormang3_manipulation_module_msgs::KinematicsPose msg;
+
+  // arm group : left_arm_with_torso / right_arm_with_torso
+  std::string arm_group = (ui_.comboBox_arm_group->currentText().toStdString() == "Right Arm") ? "right_arm_with_torso" : "left_arm_with_torso";
+  msg.name = arm_group;
+
+  msg.pose.position.x = ui_.dSpinBox_marker_pos_x->value() + ui_.dSpinBox_offset_x->value();
+  msg.pose.position.y = ui_.dSpinBox_marker_pos_y->value() + ui_.dSpinBox_offset_y->value();
+  msg.pose.position.z = ui_.dSpinBox_marker_pos_z->value() + ui_.dSpinBox_offset_z->value();
+
+  double roll = ui_.dSpinBox_marker_ori_r->value() * M_PI / 180.0;
+  double pitch = ui_.dSpinBox_marker_ori_p->value() * M_PI / 180.0;
+  double yaw = ui_.dSpinBox_marker_ori_y->value() * M_PI / 180.0;
+
+  Eigen::Quaterniond QR = rpy2quaternion( roll, pitch, yaw );
+
+  msg.pose.orientation.x = QR.x();
+  msg.pose.orientation.y = QR.y();
+  msg.pose.orientation.z = QR.z();
+  msg.pose.orientation.w = QR.w();
+
+  qnode_thor3_.sendIkMsg( msg );
+}
+
+void MainWindow::on_button_manipulation_demo_5_clicked(bool check)
+{
+  // grip on : l_arm_grip / r_arm_grip
+  std::string arm_group = (ui_.comboBox_arm_group->currentText().toStdString() == "Right Arm") ? "r_arm_grip" : "l_arm_grip";
+  setGripper(60, arm_group);
+}
+
+void MainWindow::on_button_manipulation_demo_6_clicked(bool check)
+{
+  // grip off : l_arm_grip / r_arm_grip
+  std::string arm_group = (ui_.comboBox_arm_group->currentText().toStdString() == "Right Arm") ? "r_arm_grip" : "l_arm_grip";
+  setGripper(0, arm_group);
+}
+
+void MainWindow::on_button_walking_demo_0_clicked(bool check)
+{
+  // init pose : base
+  qnode_thor3_.moveInitPose();
+}
+
+void MainWindow::on_button_walking_demo_1_clicked(bool check)
+{
+  // haed control mode
+  qnode_thor3_.enableControlModule("head control");
+
+  usleep(10 * 1000 * 1000);
+
+  // scan
+  qnode_thor3_.assembleLidar();
+}
+
+void MainWindow::on_button_walking_demo_2_clicked(bool check)
+{
+  // walking mode
+  qnode_thor3_.enableControlModule("walking");
+}
+
+void MainWindow::on_button_walking_demo_3_clicked(bool check)
+{
+  // set interactive marker
+  makeInteractiveMarker();
+}
+
+void MainWindow::on_button_walking_demo_4_clicked(bool check)
+{
+  // generate foot steps
+  qnode_thor3_.makeFootstepUsingPlanner();
+}
+
+void MainWindow::on_button_walking_demo_5_clicked(bool check)
+{
+  // start walking
+  qnode_thor3_.setWalkingFootsteps();
+
+  // clear foot steps
+  qnode_thor3_.clearFootsteps();
+}
+
+void MainWindow::on_button_walking_demo_6_clicked(bool check)
+{
+  // foot : right kick / left kick
+  std::string kick_command = (ui_.comboBox_kick_foot->currentText().toStdString() == "Right Foot") ? "right kick" : "left kick";
+  sendWalkingCommand(kick_command);
+}
+
 
 /*****************************************************************************
 ** Implemenation [Slots][manually connected]
@@ -494,6 +620,15 @@ void MainWindow::updateCurrOriSpinbox( double x , double y , double z , double w
   ui_.ori_roll_spinbox->setValue( roll );
   ui_.ori_pitch_spinbox->setValue( pitch );
   ui_.ori_yaw_spinbox->setValue( yaw );
+}
+void MainWindow::setGripper(const double &angle_deg, const std::string &arm_type)
+{
+  thormang3_manipulation_module_msgs::JointPose msg;
+
+  msg.name = arm_type;
+  msg.value = angle_deg * M_PI / 180.0 ;
+
+  qnode_thor3_.sendDestJointMsg( msg );
 }
 
 // walking
