@@ -159,6 +159,8 @@ public:
   void updateInteractiveMarker(const geometry_msgs::Pose &pose);
   void getInteractiveMarkerPose();
   void clearInteractiveMarker();
+  void manipulationDemo(const int &index);
+  void kickDemo(const std::string &kick_foot);
 
   std::map< int, std::string > module_table_;
   std::map< int, std::string> motion_table_;

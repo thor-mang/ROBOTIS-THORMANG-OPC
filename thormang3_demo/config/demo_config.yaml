@@ -36,4 +36,4 @@ module_button:
   2 : manipulation_module
   3 : walking_module
   4 : head_control_module
- # 5 : action_module
+  5 : action_module

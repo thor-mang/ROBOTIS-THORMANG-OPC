@@ -975,18 +975,18 @@ void QNodeThor3::setBalanceParameter()
   if(set_balance_param_client_.call(set_balance_param_srv_) == true)
   {
     int _result = set_balance_param_srv_.response.result;
-    if( _result == 0)
+    if( _result == thormang3_walking_module_msgs::SetBalanceParam::Response::NO_ERROR)
     {
       ROS_INFO("[Demo]  : Succeed to set balance param");
       ROS_INFO("[Demo]  : Please wait 2 sec for turning on balance");
     }
     else
     {
-      if(_result & 2)
+      if(_result & thormang3_walking_module_msgs::SetBalanceParam::Response::NOT_ENABLED_WALKING_MODULE)
         ROS_ERROR("[Demo]  : BALANCE_PARAM_ERR::NOT_ENABLED_WALKING_MODULE");
-      if(_result & 32)
+      if(_result & thormang3_walking_module_msgs::SetBalanceParam::Response::PREV_REQUEST_IS_NOT_FINISHED)
         ROS_ERROR("[Demo]  : BALANCE_PARAM_ERR::PREV_REQUEST_IS_NOT_FINISHED");
-      if(_result & 64)
+      if(_result & thormang3_walking_module_msgs::SetBalanceParam::Response::TIME_CONST_IS_ZERO_OR_NEGATIVE)
         ROS_ERROR("[Demo]  : BALANCE_PARAM_ERR::TIME_CONST_IS_ZERO_OR_NEGATIVE");
     }
   }
@@ -1194,7 +1194,9 @@ void QNodeThor3::makeInteractiveMarker(const geometry_msgs::Pose &pose)
   if(frame_id_ == "")
   {
     ROS_ERROR("No frame id!!!");
-    return;
+    // return;
+
+    frame_id_ = "world";
   }
 
   ROS_INFO_STREAM("Make Interactive Marker! - " << pose.position.x << ", " << pose.position.y << ", " << pose.position.z
@@ -1369,6 +1371,75 @@ void QNodeThor3::clearInteractiveMarker()
   // clear and apply
   interactive_marker_server_->clear();
   interactive_marker_server_->applyChanges();
+}
+
+void QNodeThor3::manipulationDemo(const int &index)
+{
+  switch(index)
+  {
+    case 2:
+    {
+      enableControlModule("head control");
+
+      usleep(10 * 1000);
+
+      // scan
+      assembleLidar();
+    }
+
+    default:
+      break;
+
+  }
+}
+
+void QNodeThor3::kickDemo(const std::string &kick_foot)
+{
+  if(kick_foot == "right kick")
+  {
+    if(loadBalanceParameterFromYaml() == false)
+        return;
+
+    double old_hip_swap = set_balance_param_srv_.request.balance_param.hip_roll_swap_angle_rad;
+    set_balance_param_srv_.request.balance_param.hip_roll_swap_angle_rad = 0;
+    set_balance_param_srv_.request.balance_param.cob_x_offset_m -= 0.03;
+    set_balance_param_srv_.request.balance_param.cob_y_offset_m += 0.02;
+    setBalanceParameter();
+
+    thormang3_foot_step_generator::FootStepCommand msg;
+    msg.command = kick_foot;
+    setWalkingCommand(msg);
+
+    usleep(7.2 * 1000 * 1000);
+
+    set_balance_param_srv_.request.balance_param.hip_roll_swap_angle_rad = old_hip_swap;
+    set_balance_param_srv_.request.balance_param.cob_x_offset_m += 0.03;
+    set_balance_param_srv_.request.balance_param.cob_y_offset_m -= 0.02;
+    setBalanceParameter();
+    usleep(2 * 1000*1000);
+  }
+  else if(kick_foot == "left kick")
+  {
+    if(loadBalanceParameterFromYaml() == false)
+        return;
+
+    double old_hip_swap = set_balance_param_srv_.request.balance_param.hip_roll_swap_angle_rad;
+    set_balance_param_srv_.request.balance_param.cob_x_offset_m -= 0.03;
+    set_balance_param_srv_.request.balance_param.cob_y_offset_m -= 0.02;
+    setBalanceParameter();
+
+    thormang3_foot_step_generator::FootStepCommand msg;
+    msg.command = kick_foot;
+    setWalkingCommand(msg);
+
+    usleep(7.2 * 1000 * 1000);
+
+    set_balance_param_srv_.request.balance_param.hip_roll_swap_angle_rad = old_hip_swap;
+    set_balance_param_srv_.request.balance_param.cob_x_offset_m += 0.03;
+    set_balance_param_srv_.request.balance_param.cob_y_offset_m += 0.02;
+    setBalanceParameter();
+    usleep(2 * 1000*1000);
+  }
 }
 
 // LOG

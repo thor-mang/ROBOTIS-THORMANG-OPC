@@ -25,7 +25,9 @@ ros::Subscriber		footsteps_2d_sub;
 
 ROBOTIS::FootStepGenerator thormang3_foot_stp_generator;
 
-void Initialize()
+thormang3_walking_module_msgs::AddStepDataArray     add_step_data_array_srv;
+
+void Initialize(void)
 {
 	ros::NodeHandle _nh;
 
@@ -37,7 +39,7 @@ void Initialize()
 	walking_module_status_msg_sub	= _nh.subscribe("/robotis/status", 10, WalkingModuleStatusMSGCallback);
 
 	walking_command_sub			= _nh.subscribe("/robotis/thormang3_foot_step_generator/walking_command", 0, WalkingCommandCallback);
-	balance_command_sub			= _nh.subscribe("/robotis/thormang3_foot_step_generator/balance_command", 0, BalanceCommandCallback);
+	//balance_command_sub			= _nh.subscribe("/robotis/thormang3_foot_step_generator/balance_command", 0, BalanceCommandCallback);
 	footsteps_2d_sub			= _nh.subscribe("/robotis/thormang3_foot_step_generator/footsteps_2d",    0, Step2DArrayCallback);
 
 }
@@ -65,7 +67,7 @@ void WalkingCommandCallback(const thormang3_foot_step_generator::FootStepCommand
 	ROS_INFO_STREAM("  side_ste_lengh : " << msg->side_step_length );
 	ROS_INFO_STREAM("  step_angle_rad : " << msg->step_angle_rad );
 
-	if(msg->step_num == 0)
+	if((msg->step_num == 0) && ( (msg->command != "left kick") && (msg->command != "right kick") ))
 		return;
 
     thormang3_walking_module_msgs::GetReferenceStepData	_get_ref_stp_data_srv;
@@ -73,10 +75,10 @@ void WalkingCommandCallback(const thormang3_foot_step_generator::FootStepCommand
     thormang3_walking_module_msgs::AddStepDataArray		_add_stp_data_srv;
 
 	//set walking parameter
-	thormang3_foot_stp_generator.fb_step_length_m = msg->step_length;
-	thormang3_foot_stp_generator.rl_step_length_m = msg->side_step_length;
-	thormang3_foot_stp_generator.rotate_step_angle_rad = msg->step_angle_rad;
-	thormang3_foot_stp_generator.num_of_step = 2*(msg->step_num) + 2;
+	thormang3_foot_stp_generator.fb_step_length_m_ = msg->step_length;
+	thormang3_foot_stp_generator.rl_step_length_m_ = msg->side_step_length;
+	thormang3_foot_stp_generator.rotate_step_angle_rad_ = msg->step_angle_rad;
+	thormang3_foot_stp_generator.num_of_step_ = 2*(msg->step_num) + 2;
 
 
 	//get reference step data
@@ -86,42 +88,36 @@ void WalkingCommandCallback(const thormang3_foot_step_generator::FootStepCommand
 	}
 
 	_ref_step_data = _get_ref_stp_data_srv.response.reference_step_data;
-//
-//	std::cout << "ref_body_pose_x     : " << _ref_step_data.position_data.body_pose.z <<std::endl;
-//	std::cout << "ref_body_pose_roll  : " << _ref_step_data.position_data.body_pose.roll <<std::endl;
-//	std::cout << "ref_body_pose_pitch : " << _ref_step_data.position_data.body_pose.pitch <<std::endl;
-//	std::cout << "ref_body_pose_yaw   : " << _ref_step_data.position_data.body_pose.yaw <<std::endl;
-//	std::cout << "right_foot_pose.x		: " <<_ref_step_data.position_data.right_foot_pose.x		<< std::endl;
-//	std::cout << "right_foot_pose.y		: " <<_ref_step_data.position_data.right_foot_pose.y		<< std::endl;
-//	std::cout << "right_foot_pose.z     : " <<_ref_step_data.position_data.right_foot_pose.z     << std::endl;
-//	std::cout << "right_foot_pose.roll  : " <<_ref_step_data.position_data.right_foot_pose.roll  << std::endl;
-//	std::cout << "right_foot_pose.pitch : " <<_ref_step_data.position_data.right_foot_pose.pitch << std::endl;
-//	std::cout << "right_foot_pose.yaw   : " <<_ref_step_data.position_data.right_foot_pose.yaw   << std::endl;
-//	std::cout << "left_foot_pose.x		: " <<_ref_step_data.position_data.left_foot_pose.x		<< std::endl;
-//	std::cout << "left_foot_pose.y		: " <<_ref_step_data.position_data.left_foot_pose.y		<< std::endl;
-//	std::cout << "left_foot_pose.z      : " <<_ref_step_data.position_data.left_foot_pose.z     << std::endl;
-//	std::cout << "left_foot_pose.roll   : " <<_ref_step_data.position_data.left_foot_pose.roll  << std::endl;
-//	std::cout << "left_foot_pose.pitch  : " <<_ref_step_data.position_data.left_foot_pose.pitch << std::endl;
-//	std::cout << "left_foot_pose.yaw    : " <<_ref_step_data.position_data.left_foot_pose.yaw   << std::endl;
+
 
 	//calc step data
 	if(msg->command == "forward") {
-		thormang3_foot_stp_generator.GetStepData( &_add_stp_data_srv.request.step_data_array, _ref_step_data, ForwardWalking);
+		thormang3_foot_stp_generator.getStepData( &_add_stp_data_srv.request.step_data_array, _ref_step_data, ForwardWalking);
 	}
 	else if(msg->command == "backward") {
-		thormang3_foot_stp_generator.GetStepData( &_add_stp_data_srv.request.step_data_array, _ref_step_data, BackwardWalking);
+		thormang3_foot_stp_generator.getStepData( &_add_stp_data_srv.request.step_data_array, _ref_step_data, BackwardWalking);
 	}
 	else if(msg->command == "turn left") {
-		thormang3_foot_stp_generator.GetStepData( &_add_stp_data_srv.request.step_data_array, _ref_step_data, PlusRotatingWalking);
+		thormang3_foot_stp_generator.getStepData( &_add_stp_data_srv.request.step_data_array, _ref_step_data, PlusRotatingWalking);
 	}
 	else if(msg->command == "turn right") {
-		thormang3_foot_stp_generator.GetStepData( &_add_stp_data_srv.request.step_data_array, _ref_step_data, MinusRotatingWalking);
+		thormang3_foot_stp_generator.getStepData( &_add_stp_data_srv.request.step_data_array, _ref_step_data, MinusRotatingWalking);
 	}
 	else if(msg->command == "right") {
-		thormang3_foot_stp_generator.GetStepData( &_add_stp_data_srv.request.step_data_array, _ref_step_data, RightwardWalking);
+		thormang3_foot_stp_generator.getStepData( &_add_stp_data_srv.request.step_data_array, _ref_step_data, RightwardWalking);
 	}
 	else if(msg->command == "left") {
-		thormang3_foot_stp_generator.GetStepData( &_add_stp_data_srv.request.step_data_array, _ref_step_data, LeftwardWalking);
+		thormang3_foot_stp_generator.getStepData( &_add_stp_data_srv.request.step_data_array, _ref_step_data, LeftwardWalking);
+	}
+	else if(msg->command == "right kick") {
+		if(isRunning()== true)
+			return;
+		thormang3_foot_stp_generator.calcRightKickStep(&_add_stp_data_srv.request.step_data_array, _ref_step_data);
+	}
+	else if(msg->command == "left kick") {
+		if(isRunning()== true)
+			return;
+		thormang3_foot_stp_generator.calcLeftKickStep(&_add_stp_data_srv.request.step_data_array, _ref_step_data);
 	}
 	else {
 		ROS_ERROR("[Demo]  : Invalid Command");
@@ -190,7 +186,7 @@ void Step2DArrayCallback(const thormang3_foot_step_generator::Step2DArray::Const
 	_ref_step_data = _get_ref_stp_data_srv.response.reference_step_data;
 
 
-	thormang3_foot_stp_generator.GetStepDataFromStepData2DArray(&_add_stp_data_srv.request.step_data_array, _ref_step_data, msg);
+	thormang3_foot_stp_generator.getStepDataFromStepData2DArray(&_add_stp_data_srv.request.step_data_array, _ref_step_data, msg);
 
 	//set add step data srv fot auto start and remove existing step data
 	_add_stp_data_srv.request.auto_start = true;
@@ -222,123 +218,145 @@ void Step2DArrayCallback(const thormang3_foot_step_generator::Step2DArray::Const
 	}
 }
 
-
-void BalanceCommandCallback(const std_msgs::Bool::ConstPtr &msg)
+bool isRunning(void)
 {
-    thormang3_walking_module_msgs::SetBalanceParam _set_balance_param_srv;
+	thormang3_walking_module_msgs::IsRunning is_running_srv;
+    if(is_running_client.call(is_running_srv) == false) {
+        ROS_ERROR("[Demo]  : Failed to Walking Status");
+        return true;
+    }
+    else {
+        if(is_running_srv.response.is_running == true)
+        {
+            ROS_ERROR("[Demo]  : STEP_DATA_ERR::ROBOT_IS_WALKING_NOW");
+            return true;
+        }
+    }
 
-	if(LoadBalanceParam(_set_balance_param_srv) == false)
-	{
-		return;
-	}
-
-	_set_balance_param_srv.request.updating_duration = 2.0; //1sec
-	if(msg->data == false)
-	{
-		_set_balance_param_srv.request.balance_param.hip_roll_swap_angle_rad = 0;
-		_set_balance_param_srv.request.balance_param.gyro_gain               = 0;
-		_set_balance_param_srv.request.balance_param.foot_roll_angle_gain    = 0;
-		_set_balance_param_srv.request.balance_param.foot_pitch_angle_gain   = 0;
-		_set_balance_param_srv.request.balance_param.foot_x_force_gain       = 0;
-		_set_balance_param_srv.request.balance_param.foot_y_force_gain       = 0;
-		_set_balance_param_srv.request.balance_param.foot_z_force_gain       = 0;
-		_set_balance_param_srv.request.balance_param.foot_roll_torque_gain   = 0;
-		_set_balance_param_srv.request.balance_param.foot_pitch_torque_gain  = 0;
-	}
-
-	if(set_balance_param_client.call(_set_balance_param_srv) == true)
-	{
-		int _result = _set_balance_param_srv.response.result;
-		if( _result == BALANCE_PARAM_ERR::NO_ERROR) {
-			ROS_INFO("[Demo]  : Succeed to set balance param");
-			ROS_INFO("[Demo]  : Please wait 2 sec for turning on balance");
-		}
-		else {
-			if(_result & BALANCE_PARAM_ERR::NOT_ENABLED_WALKING_MODULE)
-				ROS_ERROR("[Demo]  : BALANCE_PARAM_ERR::NOT_ENABLED_WALKING_MODULE");
-			if(_result & BALANCE_PARAM_ERR::PREV_REQUEST_IS_NOT_FINISHED)
-				ROS_ERROR("[Demo]  : BALANCE_PARAM_ERR::PREV_REQUEST_IS_NOT_FINISHED");
-			if(_result & BALANCE_PARAM_ERR::TIME_CONST_IS_ZERO_OR_NEGATIVE)
-				ROS_ERROR("[Demo]  : BALANCE_PARAM_ERR::TIME_CONST_IS_ZERO_OR_NEGATIVE");
-		}
-	}
-	else
-		ROS_ERROR("[Demo]  : Failed to set balance param ");
+    return false;
 }
 
-bool LoadBalanceParam(thormang3_walking_module_msgs::SetBalanceParam& _set_param)
-{
-    ros::NodeHandle _ros_node;
-    std::string _balance_yaml_path = "";
-    _balance_yaml_path = ros::package::getPath("thormang3_foot_step_generator") + "/data/balance_param.yaml";
 
-    YAML::Node _doc;
-	try	{
-		// load yaml
-		_doc = YAML::LoadFile(_balance_yaml_path.c_str());
-	}
-	catch(const std::exception& e) {
-		ROS_ERROR("Failed to load balance param yaml file.");
-		return false;
-	}
 
-	double cob_x_offset_m					= _doc["cob_x_offset_m"].as<double>();
-	double cob_y_offset_m					= _doc["cob_y_offset_m"].as<double>();
-	double hip_roll_swap_angle_rad			= _doc["hip_roll_swap_angle_rad"].as<double>();
-	double gyro_gain						= _doc["gyro_gain"].as<double>();
-	double foot_roll_angle_gain				= _doc["foot_roll_angle_gain"].as<double>();
-	double foot_pitch_angle_gain			= _doc["foot_pitch_angle_gain"].as<double>();
-	double foot_x_force_gain				= _doc["foot_x_force_gain"].as<double>();
-	double foot_y_force_gain				= _doc["foot_y_force_gain"].as<double>();
-	double foot_z_force_gain				= _doc["foot_z_force_gain"].as<double>();
-	double foot_roll_torque_gain			= _doc["foot_roll_torque_gain"].as<double>();
-	double foot_pitch_torque_gain			= _doc["foot_pitch_torque_gain"].as<double>();
-	double foot_roll_angle_time_constant	= _doc["foot_roll_angle_time_constant"].as<double>();
-	double foot_pitch_angle_time_constant	= _doc["foot_pitch_angle_time_constant"].as<double>();
-	double foot_x_force_time_constant		= _doc["foot_x_force_time_constant"].as<double>();
-	double foot_y_force_time_constant		= _doc["foot_y_force_time_constant"].as<double>();
-	double foot_z_force_time_constant		= _doc["foot_z_force_time_constant"].as<double>();
-	double foot_roll_torque_time_constant	= _doc["foot_roll_torque_time_constant"].as<double>();
-	double foot_pitch_torque_time_constant	= _doc["foot_pitch_torque_time_constant"].as<double>();
 
-//	std::cout << "cob_x_offset_m                  : " << cob_x_offset_m					    <<std::endl;
-//	std::cout << "cob_y_offset_m                  : " << cob_y_offset_m					    <<std::endl;
-//	std::cout << "hip_roll_swap_angle_rad         : " << hip_roll_swap_angle_rad			<<std::endl;
-//	std::cout << "gyro_gain                       : " << gyro_gain						    <<std::endl;
-//	std::cout << "foot_roll_angle_gain            : " << foot_roll_angle_gain				<<std::endl;
-//	std::cout << "foot_pitch_angle_gain           : " << foot_pitch_angle_gain			    <<std::endl;
-//	std::cout << "foot_x_force_gain               : " << foot_x_force_gain				    <<std::endl;
-//	std::cout << "foot_y_force_gain               : " << foot_y_force_gain				    <<std::endl;
-//	std::cout << "foot_z_force_gain               : " << foot_z_force_gain				    <<std::endl;
-//	std::cout << "foot_roll_torque_gain           : " << foot_roll_torque_gain			    <<std::endl;
-//	std::cout << "foot_pitch_torque_gain          : " << foot_pitch_torque_gain			    <<std::endl;
-//	std::cout << "foot_roll_angle_time_constant   : " << foot_roll_angle_time_constant	    <<std::endl;
-//	std::cout << "foot_pitch_angle_time_constant  : " << foot_pitch_angle_time_constant	    <<std::endl;
-//	std::cout << "foot_x_force_time_constant      : " << foot_x_force_time_constant		    <<std::endl;
-//	std::cout << "foot_y_force_time_constant      : " << foot_y_force_time_constant		    <<std::endl;
-//	std::cout << "foot_z_force_time_constant      : " << foot_z_force_time_constant		    <<std::endl;
-//	std::cout << "foot_roll_torque_time_constant  : " << foot_roll_torque_time_constant	    <<std::endl;
-//	std::cout << "foot_pitch_torque_time_constant : " << foot_pitch_torque_time_constant	<<std::endl;
-
-	_set_param.request.balance_param.cob_x_offset_m                  = cob_x_offset_m;
-	_set_param.request.balance_param.cob_y_offset_m                  = cob_y_offset_m;
-	_set_param.request.balance_param.hip_roll_swap_angle_rad         = hip_roll_swap_angle_rad;
-	_set_param.request.balance_param.gyro_gain                       = gyro_gain;
-	_set_param.request.balance_param.foot_roll_angle_gain            = foot_roll_angle_gain;
-	_set_param.request.balance_param.foot_pitch_angle_gain           = foot_pitch_angle_gain;
-	_set_param.request.balance_param.foot_x_force_gain               = foot_x_force_gain;
-	_set_param.request.balance_param.foot_y_force_gain               = foot_y_force_gain;
-	_set_param.request.balance_param.foot_z_force_gain               = foot_z_force_gain;
-	_set_param.request.balance_param.foot_roll_torque_gain           = foot_roll_torque_gain;
-	_set_param.request.balance_param.foot_pitch_torque_gain          = foot_pitch_torque_gain;
-	_set_param.request.balance_param.foot_roll_angle_time_constant   = foot_roll_angle_time_constant;
-	_set_param.request.balance_param.foot_pitch_angle_time_constant  = foot_pitch_angle_time_constant;
-	_set_param.request.balance_param.foot_x_force_time_constant      = foot_x_force_time_constant;
-	_set_param.request.balance_param.foot_y_force_time_constant      = foot_y_force_time_constant;
-	_set_param.request.balance_param.foot_z_force_time_constant      = foot_z_force_time_constant;
-	_set_param.request.balance_param.foot_roll_torque_time_constant  = foot_roll_torque_time_constant;
-	_set_param.request.balance_param.foot_pitch_torque_time_constant = foot_pitch_torque_time_constant;
-
-    return true;
-}
-
+//
+//
+//void BalanceCommandCallback(const std_msgs::Bool::ConstPtr &msg)
+//{
+//    thormang3_walking_module_msgs::SetBalanceParam _set_balance_param_srv;
+//
+//	if(LoadBalanceParam(_set_balance_param_srv) == false)
+//	{
+//		return;
+//	}
+//
+//	_set_balance_param_srv.request.updating_duration = 2.0; //1sec
+//	if(msg->data == false)
+//	{
+//		_set_balance_param_srv.request.balance_param.hip_roll_swap_angle_rad = 0;
+//		_set_balance_param_srv.request.balance_param.gyro_gain               = 0;
+//		_set_balance_param_srv.request.balance_param.foot_roll_angle_gain    = 0;
+//		_set_balance_param_srv.request.balance_param.foot_pitch_angle_gain   = 0;
+//		_set_balance_param_srv.request.balance_param.foot_x_force_gain       = 0;
+//		_set_balance_param_srv.request.balance_param.foot_y_force_gain       = 0;
+//		_set_balance_param_srv.request.balance_param.foot_z_force_gain       = 0;
+//		_set_balance_param_srv.request.balance_param.foot_roll_torque_gain   = 0;
+//		_set_balance_param_srv.request.balance_param.foot_pitch_torque_gain  = 0;
+//	}
+//
+//	if(set_balance_param_client.call(_set_balance_param_srv) == true)
+//	{
+//		int _result = _set_balance_param_srv.response.result;
+//		if( _result == BALANCE_PARAM_ERR::NO_ERROR) {
+//			ROS_INFO("[Demo]  : Succeed to set balance param");
+//			ROS_INFO("[Demo]  : Please wait 2 sec for turning on balance");
+//		}
+//		else {
+//			if(_result & BALANCE_PARAM_ERR::NOT_ENABLED_WALKING_MODULE)
+//				ROS_ERROR("[Demo]  : BALANCE_PARAM_ERR::NOT_ENABLED_WALKING_MODULE");
+//			if(_result & BALANCE_PARAM_ERR::PREV_REQUEST_IS_NOT_FINISHED)
+//				ROS_ERROR("[Demo]  : BALANCE_PARAM_ERR::PREV_REQUEST_IS_NOT_FINISHED");
+//			if(_result & BALANCE_PARAM_ERR::TIME_CONST_IS_ZERO_OR_NEGATIVE)
+//				ROS_ERROR("[Demo]  : BALANCE_PARAM_ERR::TIME_CONST_IS_ZERO_OR_NEGATIVE");
+//		}
+//	}
+//	else
+//		ROS_ERROR("[Demo]  : Failed to set balance param ");
+//}
+//
+//bool LoadBalanceParam(thormang3_walking_module_msgs::SetBalanceParam& _set_param)
+//{
+//    ros::NodeHandle _ros_node;
+//    std::string _balance_yaml_path = "";
+//    _balance_yaml_path = ros::package::getPath("thormang3_foot_step_generator") + "/data/balance_param.yaml";
+//
+//    YAML::Node _doc;
+//	try	{
+//		// load yaml
+//		_doc = YAML::LoadFile(_balance_yaml_path.c_str());
+//	}
+//	catch(const std::exception& e) {
+//		ROS_ERROR("Failed to load balance param yaml file.");
+//		return false;
+//	}
+//
+//	double cob_x_offset_m					= _doc["cob_x_offset_m"].as<double>();
+//	double cob_y_offset_m					= _doc["cob_y_offset_m"].as<double>();
+//	double hip_roll_swap_angle_rad			= _doc["hip_roll_swap_angle_rad"].as<double>();
+//	double gyro_gain						= _doc["gyro_gain"].as<double>();
+//	double foot_roll_angle_gain				= _doc["foot_roll_angle_gain"].as<double>();
+//	double foot_pitch_angle_gain			= _doc["foot_pitch_angle_gain"].as<double>();
+//	double foot_x_force_gain				= _doc["foot_x_force_gain"].as<double>();
+//	double foot_y_force_gain				= _doc["foot_y_force_gain"].as<double>();
+//	double foot_z_force_gain				= _doc["foot_z_force_gain"].as<double>();
+//	double foot_roll_torque_gain			= _doc["foot_roll_torque_gain"].as<double>();
+//	double foot_pitch_torque_gain			= _doc["foot_pitch_torque_gain"].as<double>();
+//	double foot_roll_angle_time_constant	= _doc["foot_roll_angle_time_constant"].as<double>();
+//	double foot_pitch_angle_time_constant	= _doc["foot_pitch_angle_time_constant"].as<double>();
+//	double foot_x_force_time_constant		= _doc["foot_x_force_time_constant"].as<double>();
+//	double foot_y_force_time_constant		= _doc["foot_y_force_time_constant"].as<double>();
+//	double foot_z_force_time_constant		= _doc["foot_z_force_time_constant"].as<double>();
+//	double foot_roll_torque_time_constant	= _doc["foot_roll_torque_time_constant"].as<double>();
+//	double foot_pitch_torque_time_constant	= _doc["foot_pitch_torque_time_constant"].as<double>();
+//
+////	std::cout << "cob_x_offset_m                  : " << cob_x_offset_m					    <<std::endl;
+////	std::cout << "cob_y_offset_m                  : " << cob_y_offset_m					    <<std::endl;
+////	std::cout << "hip_roll_swap_angle_rad         : " << hip_roll_swap_angle_rad			<<std::endl;
+////	std::cout << "gyro_gain                       : " << gyro_gain						    <<std::endl;
+////	std::cout << "foot_roll_angle_gain            : " << foot_roll_angle_gain				<<std::endl;
+////	std::cout << "foot_pitch_angle_gain           : " << foot_pitch_angle_gain			    <<std::endl;
+////	std::cout << "foot_x_force_gain               : " << foot_x_force_gain				    <<std::endl;
+////	std::cout << "foot_y_force_gain               : " << foot_y_force_gain				    <<std::endl;
+////	std::cout << "foot_z_force_gain               : " << foot_z_force_gain				    <<std::endl;
+////	std::cout << "foot_roll_torque_gain           : " << foot_roll_torque_gain			    <<std::endl;
+////	std::cout << "foot_pitch_torque_gain          : " << foot_pitch_torque_gain			    <<std::endl;
+////	std::cout << "foot_roll_angle_time_constant   : " << foot_roll_angle_time_constant	    <<std::endl;
+////	std::cout << "foot_pitch_angle_time_constant  : " << foot_pitch_angle_time_constant	    <<std::endl;
+////	std::cout << "foot_x_force_time_constant      : " << foot_x_force_time_constant		    <<std::endl;
+////	std::cout << "foot_y_force_time_constant      : " << foot_y_force_time_constant		    <<std::endl;
+////	std::cout << "foot_z_force_time_constant      : " << foot_z_force_time_constant		    <<std::endl;
+////	std::cout << "foot_roll_torque_time_constant  : " << foot_roll_torque_time_constant	    <<std::endl;
+////	std::cout << "foot_pitch_torque_time_constant : " << foot_pitch_torque_time_constant	<<std::endl;
+//
+//	_set_param.request.balance_param.cob_x_offset_m                  = cob_x_offset_m;
+//	_set_param.request.balance_param.cob_y_offset_m                  = cob_y_offset_m;
+//	_set_param.request.balance_param.hip_roll_swap_angle_rad         = hip_roll_swap_angle_rad;
+//	_set_param.request.balance_param.gyro_gain                       = gyro_gain;
+//	_set_param.request.balance_param.foot_roll_angle_gain            = foot_roll_angle_gain;
+//	_set_param.request.balance_param.foot_pitch_angle_gain           = foot_pitch_angle_gain;
+//	_set_param.request.balance_param.foot_x_force_gain               = foot_x_force_gain;
+//	_set_param.request.balance_param.foot_y_force_gain               = foot_y_force_gain;
+//	_set_param.request.balance_param.foot_z_force_gain               = foot_z_force_gain;
+//	_set_param.request.balance_param.foot_roll_torque_gain           = foot_roll_torque_gain;
+//	_set_param.request.balance_param.foot_pitch_torque_gain          = foot_pitch_torque_gain;
+//	_set_param.request.balance_param.foot_roll_angle_time_constant   = foot_roll_angle_time_constant;
+//	_set_param.request.balance_param.foot_pitch_angle_time_constant  = foot_pitch_angle_time_constant;
+//	_set_param.request.balance_param.foot_x_force_time_constant      = foot_x_force_time_constant;
+//	_set_param.request.balance_param.foot_y_force_time_constant      = foot_y_force_time_constant;
+//	_set_param.request.balance_param.foot_z_force_time_constant      = foot_z_force_time_constant;
+//	_set_param.request.balance_param.foot_roll_torque_time_constant  = foot_roll_torque_time_constant;
+//	_set_param.request.balance_param.foot_pitch_torque_time_constant = foot_pitch_torque_time_constant;
+//
+//    return true;
+//}
+//

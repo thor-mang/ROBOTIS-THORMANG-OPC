@@ -134,6 +134,7 @@ class MainWindow : public QMainWindow {
   void on_button_manipulation_demo_4_clicked(bool check);
   void on_button_manipulation_demo_5_clicked(bool check);
   void on_button_manipulation_demo_6_clicked(bool check);
+  void on_button_manipulation_demo_7_clicked(bool check);
 
   void on_button_walking_demo_0_clicked(bool check);
   void on_button_walking_demo_1_clicked(bool check);
@@ -142,6 +143,7 @@ class MainWindow : public QMainWindow {
   void on_button_walking_demo_4_clicked(bool check);
   void on_button_walking_demo_5_clicked(bool check);
   void on_button_walking_demo_6_clicked(bool check);
+  void on_button_walking_demo_7_clicked(bool check);
 
   /******************************************
     ** Manual connections

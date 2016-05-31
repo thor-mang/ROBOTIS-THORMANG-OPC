@@ -35,15 +35,17 @@
 #include "FootStepGenerator.h"
 
 
-void Initialize();
+void Initialize(void);
 
 void WalkingModuleStatusMSGCallback(const robotis_controller_msgs::StatusMsg::ConstPtr& msg);
 
 void WalkingCommandCallback(const thormang3_foot_step_generator::FootStepCommand::ConstPtr& msg);
 void Step2DArrayCallback(const thormang3_foot_step_generator::Step2DArray::ConstPtr& msg);
 
-bool LoadBalanceParam(thormang3_walking_module_msgs::SetBalanceParam& _set_param);
-void BalanceCommandCallback(const std_msgs::Bool::ConstPtr &msg);
+bool isRunning(void);
+
+//bool LoadBalanceParam(thormang3_walking_module_msgs::SetBalanceParam& _set_param);
+//void BalanceCommandCallback(const std_msgs::Bool::ConstPtr &msg);
 
 
 

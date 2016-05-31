@@ -2,6 +2,7 @@
 
 <launch>
   <arg name="args" default=""/>
+  <arg name="footstep_planner" default="true" />
   <param name="demo_config" value="$(find thormang3_demo)/config/demo_config.yaml"/>
   
   <node name="thormang3_demo_opc" pkg="thormang3_demo" type="thormang3_demo" output="screen" args="$(arg args)">
@@ -9,4 +10,7 @@
   </node>
   
   <node name="thormang3_foot_step_generator" pkg="thormang3_foot_step_generator" type="thormang3_foot_step_generator_node" output="screen"/>
+  
+  <include file="$(find footstep_planner)/launch/thormang3_footstep_planner.launch" if="$(arg footstep_planner)"/> 
+  
 </launch>

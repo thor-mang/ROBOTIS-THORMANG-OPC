@@ -301,34 +301,51 @@ void MainWindow::on_button_marker_clear_clicked() { clearMarkerPanel(); }
 
 void MainWindow::on_button_manipulation_demo_0_clicked(bool check)
 {
-  // manipulation mode
-  qnode_thor3_.enableControlModule("manipulation");
+  // init pose : base
+  qnode_thor3_.moveInitPose();
 }
 
 void MainWindow::on_button_manipulation_demo_1_clicked(bool check)
+{
+  // manipulation mode
+  qnode_thor3_.enableControlModule("manipulation_module");
+}
+
+void MainWindow::on_button_manipulation_demo_2_clicked(bool check)
 {
   // manipulation init pose
   on_inipose_button_clicked(false);
 }
 
-void MainWindow::on_button_manipulation_demo_2_clicked(bool check)
+void MainWindow::on_button_manipulation_demo_3_clicked(bool check)
 {
-  // haed control mode
-  qnode_thor3_.enableControlModule("head control");
+  // head control mode
+  qnode_thor3_.enableControlModule("head_control_module");
 
-  usleep(10 * 1000 * 1000);
+  usleep(10 * 1000);
 
   // scan
   qnode_thor3_.assembleLidar();
 }
 
-void MainWindow::on_button_manipulation_demo_3_clicked(bool check)
+void MainWindow::on_button_manipulation_demo_4_clicked(bool check)
 {
   // set interactive marker
-  makeInteractiveMarker();
+  geometry_msgs::Pose _current_pose;
+  getPoseFromMarkerPanel(_current_pose);
+
+  // set default value
+  if(_current_pose.position.x == 0 && _current_pose.position.y == 0 && _current_pose.position.z == 0)
+  {
+    _current_pose.position.x = 0.305;
+    _current_pose.position.y = (ui_.comboBox_arm_group->currentText().toStdString() == "Right Arm") ? -0.3 : 0.3;
+    _current_pose.position.z = 0.8;
+  }
+
+  qnode_thor3_.makeInteractiveMarker(_current_pose);
 }
 
-void MainWindow::on_button_manipulation_demo_4_clicked(bool check)
+void MainWindow::on_button_manipulation_demo_5_clicked(bool check)
 {
   // send pose
   thormang3_manipulation_module_msgs::KinematicsPose msg;
@@ -353,16 +370,20 @@ void MainWindow::on_button_manipulation_demo_4_clicked(bool check)
   msg.pose.orientation.w = QR.w();
 
   qnode_thor3_.sendIkMsg( msg );
+
+  // clear marker and foot steps
+  qnode_thor3_.clearInteractiveMarker();
+  qnode_thor3_.clearFootsteps();
 }
 
-void MainWindow::on_button_manipulation_demo_5_clicked(bool check)
+void MainWindow::on_button_manipulation_demo_6_clicked(bool check)
 {
   // grip on : l_arm_grip / r_arm_grip
   std::string arm_group = (ui_.comboBox_arm_group->currentText().toStdString() == "Right Arm") ? "r_arm_grip" : "l_arm_grip";
   setGripper(60, arm_group);
 }
 
-void MainWindow::on_button_manipulation_demo_6_clicked(bool check)
+void MainWindow::on_button_manipulation_demo_7_clicked(bool check)
 {
   // grip off : l_arm_grip / r_arm_grip
   std::string arm_group = (ui_.comboBox_arm_group->currentText().toStdString() == "Right Arm") ? "r_arm_grip" : "l_arm_grip";
@@ -377,10 +398,10 @@ void MainWindow::on_button_walking_demo_0_clicked(bool check)
 
 void MainWindow::on_button_walking_demo_1_clicked(bool check)
 {
-  // haed control mode
-  qnode_thor3_.enableControlModule("head control");
+  // head control mode
+  qnode_thor3_.enableControlModule("head_control_module");
 
-  usleep(10 * 1000 * 1000);
+  usleep(10 * 1000);
 
   // scan
   qnode_thor3_.assembleLidar();
@@ -389,7 +410,12 @@ void MainWindow::on_button_walking_demo_1_clicked(bool check)
 void MainWindow::on_button_walking_demo_2_clicked(bool check)
 {
   // walking mode
-  qnode_thor3_.enableControlModule("walking");
+  qnode_thor3_.enableControlModule("walking_module");
+
+  usleep(10 * 1000);
+
+  // balance on
+  qnode_thor3_.setWalkingBalance(true);
 }
 
 void MainWindow::on_button_walking_demo_3_clicked(bool check)
@@ -400,8 +426,26 @@ void MainWindow::on_button_walking_demo_3_clicked(bool check)
 
 void MainWindow::on_button_walking_demo_4_clicked(bool check)
 {
+  double y_offset = (ui_.comboBox_kick_foot->currentText().toStdString() == "Right Foot") ? 0.093 : -0.093;
+
+  geometry_msgs::Pose target;
+  target.position.x = ui_.dSpinBox_marker_pos_x->value();
+  target.position.y = ui_.dSpinBox_marker_pos_y->value() + y_offset;
+  target.position.z = ui_.dSpinBox_marker_pos_z->value();
+
+  double roll = ui_.dSpinBox_marker_ori_r->value() * M_PI / 180.0;
+  double pitch = ui_.dSpinBox_marker_ori_p->value() * M_PI / 180.0;
+  double yaw = ui_.dSpinBox_marker_ori_y->value() * M_PI / 180.0;
+
+  Eigen::Quaterniond QR = rpy2quaternion( roll, pitch, yaw );
+
+  target.orientation.x = QR.x();
+  target.orientation.y = QR.y();
+  target.orientation.z = QR.z();
+  target.orientation.w = QR.w();
+
   // generate foot steps
-  qnode_thor3_.makeFootstepUsingPlanner();
+  qnode_thor3_.makeFootstepUsingPlanner(target);
 }
 
 void MainWindow::on_button_walking_demo_5_clicked(bool check)
@@ -409,15 +453,27 @@ void MainWindow::on_button_walking_demo_5_clicked(bool check)
   // start walking
   qnode_thor3_.setWalkingFootsteps();
 
-  // clear foot steps
+  // clear marker and foot steps
+  qnode_thor3_.clearInteractiveMarker();
   qnode_thor3_.clearFootsteps();
 }
 
 void MainWindow::on_button_walking_demo_6_clicked(bool check)
 {
+  // head control mode
+  qnode_thor3_.enableControlModule("head_control_module");
+
+  usleep(10 * 1000);
+
+  // scan
+  qnode_thor3_.assembleLidar();
+}
+
+void MainWindow::on_button_walking_demo_7_clicked(bool check)
+{
   // foot : right kick / left kick
   std::string kick_command = (ui_.comboBox_kick_foot->currentText().toStdString() == "Right Foot") ? "right kick" : "left kick";
-  sendWalkingCommand(kick_command);
+  qnode_thor3_.kickDemo(kick_command);
 }
 
 
