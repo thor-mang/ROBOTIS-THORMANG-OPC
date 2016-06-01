@@ -99,64 +99,82 @@ bool parseMotionScript(int motion_script_index)
         return false;
     }
 
-
     int cmd_num = 1;
-    while(true)
+    std::string cmd_key = "";
+    try
     {
-        //check cmd exist
-        std::string cmd_key = "cmd" + convertIntToString(cmd_num);
-        YAML::Node motion_script_cmd_doc = motion_script_doc[cmd_key];
-        if(motion_script_cmd_doc == NULL)
-        {
-            break;
-        }
 
-        //check validity of cmd_name
-        motion_script_cmd temp_cmd;
-        if(motion_script_cmd_doc["cmd_name"] == NULL)
-        {
-            std::string status_msg = cmd_key + " of " + "script" + convertIntToString(motion_script_index) + "is invalid.";
-            ROS_ERROR_STREAM(status_msg);
-            return false;
-        }
+    	while(true)
+    	{
+    		//check cmd exist
+    		cmd_key = "cmd" + convertIntToString(cmd_num);
+    		YAML::Node motion_script_cmd_doc = motion_script_doc[cmd_key];
+    		if(motion_script_cmd_doc == NULL)
+    		{
+    			break;
+    		}
 
-        //check  validity of cmd_arg
-        temp_cmd.cmd_name = motion_script_cmd_doc["cmd_name"].as<std::string>();
-        if((temp_cmd.cmd_name != "wait") && (motion_script_cmd_doc["cmd_arg"] == NULL))
-        {
-            std::string status_msg = cmd_key + " of " + "script" + convertIntToString(motion_script_index) + "is invalid.";
-            ROS_ERROR_STREAM(status_msg);
-            return false;
-        }
+    		//check validity of cmd_name
+    		motion_script_cmd temp_cmd;
+    		if(motion_script_cmd_doc["cmd_name"] == NULL)
+    		{
+    			std::string status_msg = cmd_key + " of " + "script" + convertIntToString(motion_script_index) + " is invalid.";
+    			ROS_ERROR_STREAM(status_msg);
+    			return false;
+    		}
 
+    		//check  validity of cmd_arg
+    		temp_cmd.cmd_name = motion_script_cmd_doc["cmd_name"].as<std::string>();
+    		if((temp_cmd.cmd_name != "wait") && (motion_script_cmd_doc["cmd_arg"] == NULL))
+    		{
+    			std::string status_msg = cmd_key + " of " + "script" + convertIntToString(motion_script_index) + " is invalid.";
+    			ROS_ERROR_STREAM(status_msg);
+    			return false;
+    		}
 
-        if(temp_cmd.cmd_name == MOTION_PLAY_CMD_NAME)
-        {
-            temp_cmd.cmd_arg_int = convertStringToInt(motion_script_cmd_doc["cmd_arg"].as<std::string>());
-        }
-        else if(temp_cmd.cmd_name == MP3_PLAY_CMD_NAME)
-        {
-            temp_cmd.cmd_arg_str = motion_script_cmd_doc["cmd_arg"].as<std::string>();
-        }
-        else if(temp_cmd.cmd_name == WAIT_MOTION_CMD_NAME)
-        {
-            temp_cmd.cmd_arg_str = "";
-            temp_cmd.cmd_arg_int = 0;
-        }
-        else if(temp_cmd.cmd_name == SLEEP_CMD_NAME)
-        {
-            temp_cmd.cmd_arg_int = convertStringToInt(motion_script_cmd_doc["cmd_arg"].as<std::string>());
-        }
-        else
-        {
-            std::string status_msg = cmd_key + " of " + "script" + convertIntToString(motion_script_index) + "is invalid.";
-            ROS_ERROR_STREAM(status_msg);
-            motion_script_data.clear();
-            return false;
-        }
+    		//get cmd_arg
+    		if(temp_cmd.cmd_name == MOTION_PLAY_CMD_NAME)
+    		{
+    			temp_cmd.cmd_arg_int = motion_script_cmd_doc["cmd_arg"].as<int>();
+    		}
+    		else if(temp_cmd.cmd_name == MP3_PLAY_CMD_NAME)
+    		{
+    			temp_cmd.cmd_arg_str = motion_script_cmd_doc["cmd_arg"].as<std::string>();
+    		}
+    		else if(temp_cmd.cmd_name == WAIT_MOTION_CMD_NAME)
+    		{
+    			temp_cmd.cmd_arg_str = "";
+    			temp_cmd.cmd_arg_int = 0;
+    		}
+    		else if(temp_cmd.cmd_name == SLEEP_CMD_NAME)
+    		{
+    			temp_cmd.cmd_arg_int = motion_script_cmd_doc["cmd_arg"].as<int>();
+    			if(temp_cmd.cmd_arg_int < 0 )
+    			{
+        			std::string status_msg = cmd_key + " of " + "script" + convertIntToString(motion_script_index) + " is invalid.";
+        			ROS_ERROR_STREAM(status_msg);
+        			motion_script_data.clear();
+        			return false;
+    			}
+    		}
+    		else
+    		{
+    			std::string status_msg = cmd_key + " of " + "script" + convertIntToString(motion_script_index) + " is invalid.";
+    			ROS_ERROR_STREAM(status_msg);
+    			motion_script_data.clear();
+    			return false;
+    		}
 
-        motion_script_data.push_back(temp_cmd);
-        cmd_num++;
+    		motion_script_data.push_back(temp_cmd);
+    		cmd_num++;
+    	}
+    }
+    catch(const std::exception& e)
+    {
+		std::string status_msg = cmd_key + " of " + "script" + convertIntToString(motion_script_index) + " is invalid.";
+		ROS_ERROR_STREAM(status_msg);
+		motion_script_data.clear();
+    	return false;
     }
 
     return true;
