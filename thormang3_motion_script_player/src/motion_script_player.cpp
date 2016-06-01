@@ -215,9 +215,10 @@ void motionScriptPlayThreadFunc(int motion_script_index)
             }
             else
             {
+            	boost::this_thread::interruption_point();
                 continue;
             }
-            boost::this_thread::sleep(boost::posix_time::milliseconds(1));
+            boost::this_thread::interruption_point();
         }
 
     }
@@ -236,17 +237,24 @@ void motionScriptNumberCallback(const std_msgs::Int32::ConstPtr& msg)
         action_page_num_msg.data = msg->data;
         action_page_num_pub.publish(action_page_num_msg);
 
-        if((motion_script_play_thread != 0) && (motion_script_play_thread->get_thread_info()->done == false))
+        if((motion_script_play_thread != 0)	&& (motion_script_play_thread->get_thread_info() != 0))
         {
-            motion_script_play_thread->interrupt();
-            motion_script_play_thread->join();
+        	if(motion_script_play_thread->get_thread_info()->done == false)
+        	{
+        		motion_script_play_thread->interrupt();
+        		motion_script_play_thread->join();
+        	}
         }
     }
     else
     {
-        if((motion_script_play_thread == 0) || (motion_script_play_thread->get_thread_info() == 0))
+        if((motion_script_play_thread == 0))
         {
             motion_script_play_thread = new boost::thread(motionScriptPlayThreadFunc, msg->data);
+        }
+        else if(motion_script_play_thread->get_thread_info() == 0)
+        {
+        	motion_script_play_thread = new boost::thread(motionScriptPlayThreadFunc, msg->data);
         }
         else if(motion_script_play_thread->get_thread_info()->done == true)
         {
