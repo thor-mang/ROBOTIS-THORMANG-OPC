@@ -59,6 +59,7 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
 {
   // code to DEBUG
   DEBUG = false;
+  DEMO_MODE = false;
 
   if(argc >= 2)
   {
@@ -67,6 +68,11 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
       DEBUG = true;
     else
       DEBUG = false;
+
+    if(debug_code == "demo")
+      DEMO_MODE = true;
+    else
+      DEMO_MODE = false;
   }
 
   ui_.setupUi(this); // Calling this incidentally connects all ui's triggers to on_...() callbacks in this class.
@@ -145,6 +151,14 @@ void MainWindow::on_button_ft_save_clicked(bool check)
 {
   qnode_thor3_.initFTCommand("ft_save");
   qnode_thor3_.log(QNodeThor3::Info, "Save FT config data.");
+}
+
+void MainWindow::on_tabWidget_control_currentChanged(int index)
+{
+  if(DEMO_MODE == false) return;
+  std::string tab_name = ui_.tabWidget_control->tabText(ui_.tabWidget_control->currentIndex()).toStdString();
+  if(tab_name != "Demo")
+    ui_.tabWidget_control->currentWidget()->setEnabled(false);
 }
 
 // Manipulation
@@ -476,6 +490,17 @@ void MainWindow::on_button_walking_demo_7_clicked(bool check)
   qnode_thor3_.kickDemo(kick_command);
 }
 
+void MainWindow::on_button_motion_demo_0_clicked(bool check)
+{
+  // init pose : base
+  qnode_thor3_.moveInitPose();
+}
+
+void MainWindow::on_button_motion_demo_1_clicked(bool check)
+{
+  // action mode
+  qnode_thor3_.enableControlModule("action_module");
+}
 
 /*****************************************************************************
 ** Implemenation [Slots][manually connected]
@@ -922,7 +947,9 @@ void MainWindow::initMotionUnit()
 {
   // preset button
   QGridLayout *motion_layout = new QGridLayout;
+  QGridLayout *demo_motion_layout = new QGridLayout;
   QSignalMapper *signalMapper = new QSignalMapper(this);
+  QSignalMapper *demo_signalMapper = new QSignalMapper(this);
 
   // yaml preset
   int index = 0;
@@ -932,15 +959,19 @@ void MainWindow::initMotionUnit()
     std::string motion_name = iter->second;
     QString q_motion_name = QString::fromStdString(motion_name);
     QPushButton *motion_button = new QPushButton(q_motion_name);
+    QPushButton *demo_motion_button = new QPushButton(q_motion_name);
     // if(DEBUG) std::cout << "name : " <<  motion_name << std::endl;
 
     int size = (motion_index < 0) ? 2 : 1;
     int row = index / 4;
     int col = index % 4;
     motion_layout->addWidget(motion_button, row, col, 1, size);
+    demo_motion_layout->addWidget(demo_motion_button, row, col, 1, size);
 
     signalMapper->setMapping(motion_button, motion_index);
     QObject::connect(motion_button, SIGNAL(clicked()), signalMapper, SLOT(map()));
+    demo_signalMapper->setMapping(demo_motion_button, motion_index);
+    QObject::connect(demo_motion_button, SIGNAL(clicked()), demo_signalMapper, SLOT(map()));
 
     index += size;
   }
@@ -949,10 +980,15 @@ void MainWindow::initMotionUnit()
   row = (index % 4 == 0) ? row : row + 1;
   QSpacerItem *verticalSpacer = new QSpacerItem(20, 400, QSizePolicy::Minimum, QSizePolicy::Expanding);
   motion_layout->addItem(verticalSpacer, row, 0, 1, 4);
+  QSpacerItem *demo_verticalSpacer = new QSpacerItem(20, 400, QSizePolicy::Minimum, QSizePolicy::Expanding);
+  demo_motion_layout->addItem(demo_verticalSpacer, row, 0, 1, 4);
+
 
   QObject::connect(signalMapper, SIGNAL(mapped(int)), this, SLOT(playMotion(int)));
+  QObject::connect(demo_signalMapper, SIGNAL(mapped(int)), this, SLOT(playMotion(int)));
 
   ui_.scroll_widget_motion->setLayout(motion_layout);
+  ui_.scroll_widget_demo_motion->setLayout(demo_motion_layout);
 }
 
 void MainWindow::enableModule(QString mode_name)

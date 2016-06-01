@@ -81,6 +81,8 @@ class MainWindow : public QMainWindow {
   void on_button_ft_calc_clicked(bool check);
   void on_button_ft_save_clicked(bool check);
 
+  void on_tabWidget_control_currentChanged(int index);
+
   // Manipulation
   void on_inipose_button_clicked( bool check );
   void on_currjoint_button_clicked( bool check );
@@ -145,6 +147,9 @@ class MainWindow : public QMainWindow {
   void on_button_walking_demo_6_clicked(bool check);
   void on_button_walking_demo_7_clicked(bool check);
 
+  void on_button_motion_demo_0_clicked(bool check);
+  void on_button_motion_demo_1_clicked(bool check);
+
   /******************************************
     ** Manual connections
     *******************************************/
@@ -173,6 +178,7 @@ class MainWindow : public QMainWindow {
   Ui::MainWindowDesign ui_;
   QNodeThor3 qnode_thor3_;
   bool DEBUG;
+  bool DEMO_MODE;
   bool is_updating_;
   std::map< std::string, QList<QWidget *> > module_ui_table_;
 
