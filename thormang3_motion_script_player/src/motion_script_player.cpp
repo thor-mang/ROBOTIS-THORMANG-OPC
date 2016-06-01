@@ -244,7 +244,7 @@ void motionScriptNumberCallback(const std_msgs::Int32::ConstPtr& msg)
     }
     else
     {
-        if(motion_script_play_thread == 0)
+        if((motion_script_play_thread == 0) || (motion_script_play_thread->get_thread_info() == 0))
         {
             motion_script_play_thread = new boost::thread(motionScriptPlayThreadFunc, msg->data);
         }
