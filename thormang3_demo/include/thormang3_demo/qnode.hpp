@@ -154,6 +154,9 @@ public:
   void makeFootstepUsingPlanner(geometry_msgs::Pose foot_target);
   void visualizePreviewFootsteps(bool clear);
 
+  // motion
+  void playMotion(int motion_index, bool to_actionScript = true);
+
   // demo
   void makeInteractiveMarker(const geometry_msgs::Pose &pose);
   void updateInteractiveMarker(const geometry_msgs::Pose &pose);
@@ -170,7 +173,6 @@ public Q_SLOTS:
   void getJointPose( std::string joint_name );
   void getKinematicsPose (std::string group_name );
   void getKinematicsPoseCallback(const geometry_msgs::Pose::ConstPtr &msg);
-  void playMotion(int motion_index);
   void setCurrentControlUI(int mode);
 
 Q_SIGNALS:
@@ -269,6 +271,7 @@ private:
 
   // Action
   ros::Publisher motion_index_pub_;
+  ros::Publisher motion_page_pub_;
 
   ros::Time start_time_;
 

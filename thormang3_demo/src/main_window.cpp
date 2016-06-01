@@ -203,24 +203,24 @@ void MainWindow::on_despos_button_clicked( bool check )
 
 void MainWindow::on_button_grip_on_clicked(bool check)
 {
-//  thormang3_manipulation_module_msgs::JointPose msg;
+  //  thormang3_manipulation_module_msgs::JointPose msg;
 
-//  msg.name = ui_.gripper_comboBox->currentText().toStdString();
-//  msg.value = 60 * M_PI / 180.0 ;
+  //  msg.name = ui_.gripper_comboBox->currentText().toStdString();
+  //  msg.value = 60 * M_PI / 180.0 ;
 
-//  qnode_thor3_.sendDestJointMsg( msg );
+  //  qnode_thor3_.sendDestJointMsg( msg );
 
   setGripper(60, ui_.gripper_comboBox->currentText().toStdString());
 }
 
 void MainWindow::on_button_grip_off_clicked(bool check)
 {
-//  thormang3_manipulation_module_msgs::JointPose msg;
+  //  thormang3_manipulation_module_msgs::JointPose msg;
 
-//  msg.name = ui_.gripper_comboBox->currentText().toStdString();
-//  msg.value = 0 * M_PI / 180.0 ;
+  //  msg.name = ui_.gripper_comboBox->currentText().toStdString();
+  //  msg.value = 0 * M_PI / 180.0 ;
 
-//  qnode_thor3_.sendDestJointMsg( msg );
+  //  qnode_thor3_.sendDestJointMsg( msg );
 
   setGripper(0, ui_.gripper_comboBox->currentText().toStdString());
 }
@@ -516,10 +516,15 @@ void MainWindow::setUserShortcut()
   connect(short_tab4, SIGNAL(activated()), sig_map, SLOT(map()));
   sig_map->setMapping(short_tab4, 3);
 
-  // Setup the shortcut for the fouth tab : Motion
+  // Setup the shortcut for the fifth tab : Motion
   QShortcut *short_tab5 = new QShortcut(QKeySequence("F5"), this);
   connect(short_tab5, SIGNAL(activated()), sig_map, SLOT(map()));
   sig_map->setMapping(short_tab5, 4);
+
+  // Demo tab
+  QShortcut *short_tab6 = new QShortcut(QKeySequence("F6"), this);
+  connect(short_tab6, SIGNAL(activated()), sig_map, SLOT(map()));
+  sig_map->setMapping(short_tab6, 5);
 
   // Wire the signal mapper to the tab widget index change slot
   connect(sig_map, SIGNAL(mapped(int)), ui_.tabWidget_control, SLOT(setCurrentIndex(int)));
@@ -648,6 +653,13 @@ void MainWindow::setHeadJointsAngle()
 void MainWindow::setHeadJointsAngle(double pan, double tilt)
 {
   qnode_thor3_.setHeadJoint(pan * M_PI / 180, tilt * M_PI / 180);
+}
+
+void MainWindow::playMotion(int motion_index)
+{
+  bool to_action_script = ui_.checkBox_action_script->isChecked();
+
+  qnode_thor3_.playMotion(motion_index, to_action_script);
 }
 
 // manipulation
@@ -938,7 +950,7 @@ void MainWindow::initMotionUnit()
   QSpacerItem *verticalSpacer = new QSpacerItem(20, 400, QSizePolicy::Minimum, QSizePolicy::Expanding);
   motion_layout->addItem(verticalSpacer, row, 0, 1, 4);
 
-  QObject::connect(signalMapper, SIGNAL(mapped(int)), &qnode_thor3_, SLOT(playMotion(int)));
+  QObject::connect(signalMapper, SIGNAL(mapped(int)), this, SLOT(playMotion(int)));
 
   ui_.scroll_widget_motion->setLayout(motion_layout);
 }

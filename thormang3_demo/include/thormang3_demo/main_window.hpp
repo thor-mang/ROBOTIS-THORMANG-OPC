@@ -167,6 +167,7 @@ class MainWindow : public QMainWindow {
 
  protected Q_SLOTS:
   void setHeadJointsAngle();
+  void playMotion(int motion_index);
 
  private:
   Ui::MainWindowDesign ui_;

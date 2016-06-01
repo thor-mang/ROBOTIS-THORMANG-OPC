@@ -128,6 +128,7 @@ bool QNodeThor3::init()
 
   // Action
   motion_index_pub_ = nh.advertise<std_msgs::Int32>("/robotis/demo/motion_index", 0);
+  motion_page_pub_ = nh.advertise<std_msgs::Int32>("/robotis/action/page_num", 0);
 
   // Config
   std::string default_path = ros::package::getPath("thormang3_demo") +"/config/demo_config.yaml";
@@ -1089,7 +1090,7 @@ void QNodeThor3::turnOffBalance()
 
 
 // Motion
-void QNodeThor3::playMotion(int motion_index)
+void QNodeThor3::playMotion(int motion_index, bool to_actionScript)
 {
   if(motion_table_.find(motion_index) == motion_table_.end())
   {
@@ -1117,7 +1118,10 @@ void QNodeThor3::playMotion(int motion_index)
   std_msgs::Int32 motion_msg;
   motion_msg.data = motion_index;
 
-  motion_index_pub_.publish(motion_msg);
+  if(to_actionScript == true)
+    motion_index_pub_.publish(motion_msg);
+  else
+    motion_page_pub_.publish(motion_msg);
 
   log(Info, ss.str());
 }
@@ -1398,7 +1402,7 @@ void QNodeThor3::kickDemo(const std::string &kick_foot)
   if(kick_foot == "right kick")
   {
     if(loadBalanceParameterFromYaml() == false)
-        return;
+      return;
 
     double old_hip_swap = set_balance_param_srv_.request.balance_param.hip_roll_swap_angle_rad;
     set_balance_param_srv_.request.balance_param.hip_roll_swap_angle_rad = 0;
@@ -1421,7 +1425,7 @@ void QNodeThor3::kickDemo(const std::string &kick_foot)
   else if(kick_foot == "left kick")
   {
     if(loadBalanceParameterFromYaml() == false)
-        return;
+      return;
 
     double old_hip_swap = set_balance_param_srv_.request.balance_param.hip_roll_swap_angle_rad;
     set_balance_param_srv_.request.balance_param.cob_x_offset_m -= 0.03;

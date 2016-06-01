@@ -3,18 +3,18 @@ motion:
   -1 : STOP
 #  0 : .
 #  1 : .
-#  2 : . 
-#  3 : .
-#  4 : .
-#  5 : .  
-  6 : Hello with hand
-  7 : Hello with head
-  8 : Looking around
-  9 : .
-  10 : .
-  11 : .
-  12 : .
-  13 : .
+  2 : Hello 
+  3 : Thank you
+  4 : Yes
+  5 : No 
+  6 : Cheer up
+  7 : Clap
+#  8 : Looking around
+  9 : Ready to Handshake
+  10 : Start Handshake
+  11 : Finish Handshake
+  12 : Scan
+  13 : Ceremony
   14 : .
   15 : .
   16 : .

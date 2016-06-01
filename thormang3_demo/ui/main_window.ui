@@ -1528,6 +1528,16 @@
           </attribute>
           <layout class="QVBoxLayout" name="verticalLayout_8">
            <item>
+            <widget class="QCheckBox" name="checkBox_action_script">
+             <property name="text">
+              <string>Action Script</string>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
             <widget class="QScrollArea" name="scrollArea">
              <property name="widgetResizable">
               <bool>true</bool>
@@ -1538,7 +1548,7 @@
                 <x>0</x>
                 <y>0</y>
                 <width>684</width>
-                <height>545</height>
+                <height>517</height>
                </rect>
               </property>
              </widget>
