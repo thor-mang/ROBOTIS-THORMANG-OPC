@@ -127,7 +127,7 @@ bool QNodeThor3::init()
   set_walking_balance_pub = nh.advertise<std_msgs::Bool>("/robotis/thormang3_foot_step_generator/balance_command", 0);
 
   // Action
-  motion_index_pub_ = nh.advertise<std_msgs::Int32>("/robotis/demo/motion_index", 0);
+  motion_index_pub_ = nh.advertise<std_msgs::Int32>("/robotis/demo/action_index", 0);
   motion_page_pub_ = nh.advertise<std_msgs::Int32>("/robotis/action/page_num", 0);
 
   // Config
