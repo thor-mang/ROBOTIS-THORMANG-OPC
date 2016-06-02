@@ -10,8 +10,8 @@
     <remap from="/robotis/demo/pose" to="/pose_panel/pose" />
   </node>
   
-  <node name="thormang3_foot_step_generator" pkg="thormang3_foot_step_generator" type="thormang3_foot_step_generator_node" output="screen"/>
-  <node name="thormang3_motion_script_player" pkg="thormang3_motion_script_player" type="thormang3_motion_script_player"     output="screen"/>
+  <node name="thormang3_foot_step_generator"  pkg="thormang3_foot_step_generator"  type="thormang3_foot_step_generator_node" output="screen"/>
+  <node name="thormang3_action_script_player" pkg="thormang3_action_script_player" type="thormang3_action_script_player"     output="screen"/>
   
   <include file="$(find footstep_planner)/launch/thormang3_footstep_planner.launch" if="$(arg footstep_planner)"/> 
   

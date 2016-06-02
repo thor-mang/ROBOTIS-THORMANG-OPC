@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package>
-  <name>thormang3_motion_script_player</name>
+  <name>thormang3_action_script_player</name>
   <version>0.1.0</version>
-  <description>The thormang3_motion_script_player package</description>
+  <description>The thormang3_action_script_player package</description>
 
   <maintainer email="hjsong@robotis.com">robotis</maintainer>
 
