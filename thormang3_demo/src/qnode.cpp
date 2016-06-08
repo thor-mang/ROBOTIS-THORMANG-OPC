@@ -71,7 +71,7 @@ bool QNodeThor3::init()
 
     status_msg_sub_ = _nh.subscribe("robotis/status", 10, &QNodeThor3::StatusMsgCallback, this);
     current_module_control_sub_ = _nh.subscribe("robotis/present_joint_ctrl_modules", 10, &QNodeThor3::RefreshCurrentJointControlCallback, this);
-    current_joint_states_sub_ = _nh.subscribe("robotis/present_joint_states", 10, &QNodeThor3::UpdateHeadJointStatesCallback, this);
+    current_joint_states_sub_ = _nh.subscribe("robotis/joints/present_joint_states", 10, &QNodeThor3::UpdateHeadJointStatesCallback, this);
 
     get_module_control_client_ = _nh.serviceClient<robotis_controller_msgs::GetJointModule>("robotis/get_present_joint_ctrl_modules");
 
