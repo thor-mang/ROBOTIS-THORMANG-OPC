@@ -526,7 +526,7 @@
                  <item row="2" column="1">
                   <widget class="QPushButton" name="B1_button_stop">
                    <property name="enabled">
-                    <bool>false</bool>
+                    <bool>true</bool>
                    </property>
                    <property name="minimumSize">
                     <size>
@@ -541,7 +541,7 @@
                     </size>
                    </property>
                    <property name="text">
-                    <string/>
+                    <string>S</string>
                    </property>
                   </widget>
                  </item>
@@ -1179,13 +1179,6 @@
                 </property>
                </widget>
               </item>
-              <item row="12" column="0" colspan="3">
-               <widget class="QPushButton" name="despos_button">
-                <property name="text">
-                 <string>Set Destination Position</string>
-                </property>
-               </widget>
-              </item>
               <item row="3" column="0">
                <widget class="QDoubleSpinBox" name="pos_y_spinbox">
                 <property name="suffix">
@@ -1304,6 +1297,20 @@
                <widget class="Line" name="line_2">
                 <property name="orientation">
                  <enum>Qt::Vertical</enum>
+                </property>
+               </widget>
+              </item>
+              <item row="12" column="1" colspan="2">
+               <widget class="QPushButton" name="despos_button">
+                <property name="text">
+                 <string>Set Destination Position</string>
+                </property>
+               </widget>
+              </item>
+              <item row="12" column="0">
+               <widget class="QPushButton" name="get_despos_button">
+                <property name="text">
+                 <string>Get From Interacrive Marker</string>
                 </property>
                </widget>
               </item>
@@ -1574,7 +1581,7 @@
                 <x>0</x>
                 <y>0</y>
                 <width>796</width>
-                <height>296</height>
+                <height>298</height>
                </rect>
               </property>
              </widget>
@@ -1997,7 +2004,7 @@
                    <x>0</x>
                    <y>0</y>
                    <width>770</width>
-                   <height>104</height>
+                   <height>107</height>
                   </rect>
                  </property>
                 </widget>
@@ -2164,7 +2171,7 @@
   </connection>
  </connections>
  <buttongroups>
-  <buttongroup name="buttonGroup_walking_demo"/>
   <buttongroup name="buttonGroup_manipulation_demo"/>
+  <buttongroup name="buttonGroup_walking_demo"/>
  </buttongroups>
 </ui>

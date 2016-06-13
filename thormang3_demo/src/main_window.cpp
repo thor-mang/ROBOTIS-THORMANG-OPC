@@ -186,6 +186,17 @@ void MainWindow::on_desjoint_button_clicked( bool check )
   qnode_thor3_.sendDestJointMsg( msg );
 }
 
+void MainWindow::on_get_despos_button_clicked( bool check )
+{
+  updateCurrPosSpinbox(ui_.dSpinBox_marker_pos_x->value(),
+                       ui_.dSpinBox_marker_pos_y->value(),
+                       ui_.dSpinBox_marker_pos_z->value());
+
+  updateCurrOriSpinbox(ui_.dSpinBox_marker_ori_r->value(),
+                       ui_.dSpinBox_marker_ori_p->value(),
+                       ui_.dSpinBox_marker_ori_y->value());
+}
+
 void MainWindow::on_currpos_button_clicked( bool check )
 {
   qnode_thor3_.getKinematicsPose( ui_.group_combobox->currentText().toStdString() );
@@ -245,7 +256,7 @@ void MainWindow::on_A1_button_f_clicked(bool check) { sendWalkingCommand("forwar
 void MainWindow::on_A2_button_fr_clicked(bool check) { sendWalkingCommand("turn right"); }
 
 void MainWindow::on_B0_button_l_clicked(bool check) { sendWalkingCommand("left"); }
-void MainWindow::on_B1_button_stop_clicked(bool check) { }  // disable
+void MainWindow::on_B1_button_stop_clicked(bool check) { sendWalkingCommand("stop"); }
 void MainWindow::on_B2_button_r_clicked(bool check) { sendWalkingCommand("right"); }
 
 void MainWindow::on_C0_button_bl_clicked(bool check) { }    // disable
@@ -714,6 +725,14 @@ void MainWindow::updateCurrOriSpinbox( double x , double y , double z , double w
   ui_.ori_pitch_spinbox->setValue( pitch );
   ui_.ori_yaw_spinbox->setValue( yaw );
 }
+
+void MainWindow::updateCurrOriSpinbox( double r , double p , double y )
+{
+  ui_.ori_roll_spinbox->setValue( r );
+  ui_.ori_pitch_spinbox->setValue( p );
+  ui_.ori_yaw_spinbox->setValue( y );
+}
+
 void MainWindow::setGripper(const double &angle_deg, const std::string &arm_type)
 {
   thormang3_manipulation_module_msgs::JointPose msg;

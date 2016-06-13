@@ -87,6 +87,7 @@ class MainWindow : public QMainWindow {
   void on_inipose_button_clicked( bool check );
   void on_currjoint_button_clicked( bool check );
   void on_desjoint_button_clicked( bool check );
+  void on_get_despos_button_clicked( bool check );
   void on_currpos_button_clicked( bool check );
   void on_despos_button_clicked( bool check );
   void on_button_grip_on_clicked(bool check);
@@ -162,6 +163,7 @@ class MainWindow : public QMainWindow {
   void updateCurrJointSpinbox( double value );
   void updateCurrPosSpinbox( double x , double y , double z  );
   void updateCurrOriSpinbox( double x , double y , double z , double w );
+  void updateCurrOriSpinbox( double r , double p , double y );
 
   // Walking
   void enableGetStepButton();
