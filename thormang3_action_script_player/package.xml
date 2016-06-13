@@ -4,11 +4,11 @@
   <version>0.1.0</version>
   <description>The thormang3_action_script_player package</description>
 
-  <maintainer email="hjsong@robotis.com">robotis</maintainer>
+  <maintainer email="hjsong@robotis.com">ROBOTIS</maintainer>
 
-  <license>GPLv2</license>
+  <license>BSD</license>
 
-  <author email="hjsong@robotis.com">robotis</author>
+  <author email="hjsong@robotis.com">ROBOTIS</author>
 
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>roscpp</build_depend>
