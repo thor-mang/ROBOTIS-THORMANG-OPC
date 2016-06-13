@@ -53,7 +53,7 @@
 #include "thormang3_walking_module_msgs/RobotPose.h"
 #include "thormang3_walking_module_msgs/GetReferenceStepData.h"
 #include "thormang3_walking_module_msgs/AddStepDataArray.h"
-#include "thormang3_walking_module_msgs/WalkingStart.h"
+#include "thormang3_walking_module_msgs/StartWalking.h"
 #include "thormang3_walking_module_msgs/SetBalanceParam.h"
 #include "thormang3_walking_module_msgs/IsRunning.h"
 #include "thormang3_walking_module_msgs/RemoveExistingStepData.h"

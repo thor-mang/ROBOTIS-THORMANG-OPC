@@ -39,6 +39,7 @@
 #define THORMANG3_FOOT_STEP_GENERATOR_ROBOTIS_FOOT_STEP_GENERATOR_H_
 
 #include <ros/ros.h>
+#include <Eigen/Dense>
 #include "thormang3_walking_module_msgs/AddStepDataArray.h"
 #include "thormang3_foot_step_generator/Step2DArray.h"
 
@@ -94,6 +95,11 @@ public:
   double default_y_feet_offset_m_;
 
 private:
+  Eigen::MatrixXd getTransformationXYZRPY(double position_x, double position_y, double position_z, double roll, double pitch, double yaw);
+  void getPosefromTransformMatrix(const Eigen::MatrixXd &matTransform, double *position_x, double *position_y, double *position_z, double *roll, double *pitch, double *yaw);
+  thormang3_walking_module_msgs::PoseXYZRPY getPosefromTransformMatrix(const Eigen::MatrixXd &matTransform);
+  Eigen::MatrixXd getInverseTransformation(Eigen::MatrixXd transform);
+
   int previous_step_type_;
   thormang3_walking_module_msgs::AddStepDataArray::Request::_step_data_array_type step_data_array_;
 

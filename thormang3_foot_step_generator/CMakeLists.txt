@@ -4,12 +4,15 @@ project(thormang3_foot_step_generator)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   roslib
+  cmake_modules
   std_msgs
   geometry_msgs
   message_generation
   robotis_controller_msgs
   thormang3_walking_module_msgs
 )
+
+find_package(Eigen REQUIRED)
 
 add_message_files(
    FILES
@@ -31,6 +34,7 @@ catkin_package(
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
+  ${Eigen_INCLUDE_DIRS}
 )
 
 add_executable(thormang3_foot_step_generator_node 

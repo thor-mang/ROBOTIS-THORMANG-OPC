@@ -146,15 +146,21 @@ void walkingCommandCallback(const thormang3_foot_step_generator::FootStepCommand
   }
   else if(msg->command == "right kick")
   {
-    if(isRunning()== true)
+    if(isRunning() == true)
       return;
-    thormang3_foot_stp_generator.calcRightKickStep(&add_stp_data_srv.request.step_data_array, ref_step_data);
+
+    thormang3_foot_stp_generator.calcRightKickStep( &add_stp_data_srv.request.step_data_array, ref_step_data);
   }
   else if(msg->command == "left kick")
   {
-    if(isRunning()== true)
+    if(isRunning() == true)
       return;
-    thormang3_foot_stp_generator.calcLeftKickStep(&add_stp_data_srv.request.step_data_array, ref_step_data);
+
+    thormang3_foot_stp_generator.calcLeftKickStep( &add_stp_data_srv.request.step_data_array, ref_step_data);
+  }
+  else if(msg->command == "stop")
+  {
+    thormang3_foot_stp_generator.getStepData( &add_stp_data_srv.request.step_data_array, ref_step_data, STOP_WALKING);
   }
   else
   {
@@ -162,7 +168,7 @@ void walkingCommandCallback(const thormang3_foot_step_generator::FootStepCommand
     return;
   }
 
-  //set add step data srv fot auto start and remove existing step data
+  //set add step data srv for auto start and remove existing step data
   add_stp_data_srv.request.auto_start = true;
   add_stp_data_srv.request.remove_existing_step_data = true;
 
