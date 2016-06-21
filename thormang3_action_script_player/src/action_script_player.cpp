@@ -51,17 +51,17 @@
 
 
 
-ros::Subscriber    action_script_num_sub;
-ros::Publisher     action_page_num_pub;
-ros::Publisher     sound_file_name_pub;
-ros::ServiceClient is_running_client;
+ros::Subscriber    g_action_script_num_sub;
+ros::Publisher     g_action_page_num_pub;
+ros::Publisher     g_sound_file_name_pub;
+ros::ServiceClient g_is_running_client;
 
-thormang3_action_module_msgs::IsRunning  is_running_srv;
+thormang3_action_module_msgs::IsRunning  g_is_running_srv;
 
-boost::thread   *action_script_play_thread;
+boost::thread   *g_action_script_play_thread;
 
 
-std::string action_script_file_path;
+std::string g_action_script_file_path;
 
 typedef struct
 {
@@ -87,12 +87,12 @@ int convertStringToInt(std::string str)
 
 bool isActionRunning(void)
 {
-  if(is_running_client.call(is_running_srv) == false) {
+  if(g_is_running_client.call(g_is_running_srv) == false) {
     ROS_ERROR("Failed to get action status");
     return true;
   }
   else {
-    if(is_running_srv.response.is_running == true)
+    if(g_is_running_srv.response.is_running == true)
     {
       return true;
     }
@@ -110,7 +110,7 @@ bool parseActionScript(int action_script_index)
   try
   {
     // load yaml
-    action_script_file_doc = YAML::LoadFile(action_script_file_path.c_str());
+    action_script_file_doc = YAML::LoadFile(g_action_script_file_path.c_str());
   }
   catch(const std::exception& e)
   {
@@ -133,7 +133,6 @@ bool parseActionScript(int action_script_index)
   std::string cmd_key = "";
   try
   {
-
     while(true)
     {
       //check cmd exist
@@ -237,15 +236,16 @@ void actionScriptPlayThreadFunc(int action_script_index)
       std_msgs::Int32   action_page_num_msg;
       std_msgs::String  sound_file_name_msg;
 
+      boost::this_thread::interruption_point();
       if(cmd_name == ACTION_PLAY_CMD_NAME)
       {
         action_page_num_msg.data = action_script_data[action_script_data_idx].cmd_arg_int;
-        action_page_num_pub.publish(action_page_num_msg);
+        g_action_page_num_pub.publish(action_page_num_msg);
       }
       else if(cmd_name == MP3_PLAY_CMD_NAME)
       {
         sound_file_name_msg.data = action_script_data[action_script_data_idx].cmd_arg_str;
-        sound_file_name_pub.publish(sound_file_name_msg);
+        g_sound_file_name_pub.publish(sound_file_name_msg);
       }
       else if(cmd_name == WAIT_ACTION_PLAY_FINISH_CMD_NAME)
       {
@@ -266,7 +266,6 @@ void actionScriptPlayThreadFunc(int action_script_index)
         boost::this_thread::interruption_point();
         continue;
       }
-      boost::this_thread::interruption_point();
     }
 
   }
@@ -283,31 +282,40 @@ void actionScriptNumberCallback(const std_msgs::Int32::ConstPtr& msg)
   {
     std_msgs::Int32   action_page_num_msg;
     action_page_num_msg.data = msg->data;
-    action_page_num_pub.publish(action_page_num_msg);
+    g_action_page_num_pub.publish(action_page_num_msg);
 
-    if((action_script_play_thread != 0)	&& (action_script_play_thread->get_thread_info() != 0))
+//    if((g_action_script_play_thread != 0)	&& (g_action_script_play_thread->get_thread_info() != 0))
+//    {
+//      if(g_action_script_play_thread->get_thread_info()->done == false)
+//      {
+//        g_action_script_play_thread->interrupt();
+//        g_action_script_play_thread->join();
+//      }
+//    }
+    if((g_action_script_play_thread != 0))
     {
-      if(action_script_play_thread->get_thread_info()->done == false)
-      {
-        action_script_play_thread->interrupt();
-        action_script_play_thread->join();
-      }
+      g_action_script_play_thread->interrupt();
+      g_action_script_play_thread->join();
+      delete g_action_script_play_thread;
+      g_action_script_play_thread = 0;
     }
   }
   else
   {
-    if((action_script_play_thread == 0))
+    if((g_action_script_play_thread == 0))
     {
-      action_script_play_thread = new boost::thread(actionScriptPlayThreadFunc, msg->data);
+      g_action_script_play_thread = new boost::thread(actionScriptPlayThreadFunc, msg->data);
     }
-    else if(action_script_play_thread->get_thread_info() == 0)
+//    else if(g_action_script_play_thread->get_thread_info() == 0)
+//    {
+//      g_action_script_play_thread = new boost::thread(actionScriptPlayThreadFunc, msg->data);
+//    }
+    //else if(g_action_script_play_thread->get_thread_info()->done == true)
+    //else if(g_action_script_play_thread->get_id() == false)
+    else if(g_action_script_play_thread->timed_join(boost::posix_time::milliseconds(32)) == true)
     {
-      action_script_play_thread = new boost::thread(actionScriptPlayThreadFunc, msg->data);
-    }
-    else if(action_script_play_thread->get_thread_info()->done == true)
-    {
-      delete action_script_play_thread;
-      action_script_play_thread = new boost::thread(actionScriptPlayThreadFunc, msg->data);
+      delete g_action_script_play_thread;
+      g_action_script_play_thread = new boost::thread(actionScriptPlayThreadFunc, msg->data);
     }
     else
     {
@@ -322,18 +330,18 @@ int main(int argc, char **argv)
   ros::init(argc, argv, "THORMANG3_ACTION_SCRIPT_PLAYER");
   ros::NodeHandle ros_node_handle;
 
-  action_script_play_thread = 0;
+  g_action_script_play_thread = 0;
 
-  action_script_num_sub = ros_node_handle.subscribe("/robotis/demo/action_index", 1, &actionScriptNumberCallback);
-  action_page_num_pub   = ros_node_handle.advertise<std_msgs::Int32>("/robotis/action/page_num", 0);
-  sound_file_name_pub   = ros_node_handle.advertise<std_msgs::String>("/play_sound_file", 0);
-  is_running_client     = ros_node_handle.serviceClient<thormang3_action_module_msgs::IsRunning>("/robotis/action/is_running");
+  g_action_script_num_sub = ros_node_handle.subscribe("/robotis/demo/action_index", 1, &actionScriptNumberCallback);
+  g_action_page_num_pub   = ros_node_handle.advertise<std_msgs::Int32>("/robotis/action/page_num", 0);
+  g_sound_file_name_pub   = ros_node_handle.advertise<std_msgs::String>("/play_sound_file", 0);
+  g_is_running_client     = ros_node_handle.serviceClient<thormang3_action_module_msgs::IsRunning>("/robotis/action/is_running");
 
   //Setting action script file path
   std::string temp_action_script_file_path = ros::package::getPath("thormang3_action_script_player") + "/script/action_script.yaml";
-  if(ros_node_handle.getParam("action_script_file_path", action_script_file_path) == false)
+  if(ros_node_handle.getParam("action_script_file_path", g_action_script_file_path) == false)
   {
-    action_script_file_path = temp_action_script_file_path;
+    g_action_script_file_path = temp_action_script_file_path;
     ROS_WARN("Failed to get action script_file_path.");
     ROS_WARN("The default action script file path will be used.");
   }

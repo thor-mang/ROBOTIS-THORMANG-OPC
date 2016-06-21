@@ -51,6 +51,7 @@
 #define LEFT_ROTATING_WALKING  (5)
 #define RIGHT_ROTATING_WALKING (6)
 
+#define MINIMUM_STEP_TIME_SEC  (0.4)
 
 namespace thormang3
 {
@@ -61,11 +62,7 @@ public:
   FootStepGenerator();
   ~FootStepGenerator();
 
-  bool calcStep(const thormang3_walking_module_msgs::StepData& ref_step_data, int previous_step_type,  int desired_step_type);
-  void calcFBStep(const thormang3_walking_module_msgs::StepData& ref_step_data, int direction);
-  void calcRLStep(const thormang3_walking_module_msgs::StepData& ref_step_data, int direction);
-  void calcRoStep(const thormang3_walking_module_msgs::StepData& ref_step_data, int direction);
-  void calcStopStep(const thormang3_walking_module_msgs::StepData& ref_step_data, int direction);
+  void initialize();
 
   void calcRightKickStep(thormang3_walking_module_msgs::AddStepDataArray::Request::_step_data_array_type* step_data_array,
       const thormang3_walking_module_msgs::StepData& ref_step_data);
@@ -94,14 +91,24 @@ public:
 
   double default_y_feet_offset_m_;
 
+  int previous_step_type_;
+
 private:
+  bool calcStep(const thormang3_walking_module_msgs::StepData& ref_step_data, int previous_step_type,  int desired_step_type);
+
+  void calcFBStep(const thormang3_walking_module_msgs::StepData& ref_step_data, int direction);
+  void calcRLStep(const thormang3_walking_module_msgs::StepData& ref_step_data, int direction);
+  void calcRoStep(const thormang3_walking_module_msgs::StepData& ref_step_data, int direction);
+  void calcStopStep(const thormang3_walking_module_msgs::StepData& ref_step_data, int direction);
+
   Eigen::MatrixXd getTransformationXYZRPY(double position_x, double position_y, double position_z, double roll, double pitch, double yaw);
   void getPosefromTransformMatrix(const Eigen::MatrixXd &matTransform, double *position_x, double *position_y, double *position_z, double *roll, double *pitch, double *yaw);
   thormang3_walking_module_msgs::PoseXYZRPY getPosefromTransformMatrix(const Eigen::MatrixXd &matTransform);
   Eigen::MatrixXd getInverseTransformation(Eigen::MatrixXd transform);
 
-  int previous_step_type_;
   thormang3_walking_module_msgs::AddStepDataArray::Request::_step_data_array_type step_data_array_;
+
+  //int previous_step_type_;
 
 };
 
