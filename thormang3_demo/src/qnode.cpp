@@ -784,9 +784,9 @@ void QNodeThor3::setWalkingFootsteps()
     thormang3_foot_step_generator::Step2D step;
 
     int type = preview_foot_types_[ix];
-    if(type == humanoid_nav_msgs::StepTarget::right) step.moving_foot = thormang3_foot_step_generator::Step2D::RFootMove;
-    else if(type == humanoid_nav_msgs::StepTarget::left) step.moving_foot = thormang3_foot_step_generator::Step2D::LFootMove;
-    else step.moving_foot = thormang3_foot_step_generator::Step2D::NFootMove;
+    if(type == humanoid_nav_msgs::StepTarget::right) step.moving_foot = thormang3_foot_step_generator::Step2D::RIGHT_FOOT_SWING;
+    else if(type == humanoid_nav_msgs::StepTarget::left) step.moving_foot = thormang3_foot_step_generator::Step2D::LEFT_FOOT_SWING;
+    else step.moving_foot = thormang3_foot_step_generator::Step2D::STANDING;
 
     step.step2d = preview_foot_steps_[ix];
 

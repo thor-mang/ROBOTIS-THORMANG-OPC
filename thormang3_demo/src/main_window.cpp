@@ -750,6 +750,7 @@ void MainWindow::sendWalkingCommand(const std::string &command)
 
   msg.command = command;
   msg.step_num = ui_.A1_spinbox_step_num->value();
+  msg.step_time = ui_.AB1_spinbox_step_time->value();
   msg.step_length = ui_.B1_spinbox_f_step_length->value();
   msg.side_step_length = ui_.C1_spinbox_s_step_length->value();
   msg.step_angle_rad = ui_.D1_spinbox_r_angle->value() * M_PI / 180;

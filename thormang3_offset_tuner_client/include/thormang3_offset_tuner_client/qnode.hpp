@@ -15,6 +15,7 @@
 /*****************************************************************************
 ** Includes
 *****************************************************************************/
+#ifndef Q_MOC_RUN
 
 #include <ros/ros.h>
 #include <string>
@@ -29,6 +30,8 @@
 #include "thormang3_offset_tuner_msgs/JointTorqueOnOffArray.h"
 
 #include "thormang3_offset_tuner_msgs/GetPresentJointOffsetData.h"
+
+#endif  // Q_MOC_RUN
 
 /*****************************************************************************
 ** Namespaces

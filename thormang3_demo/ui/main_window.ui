@@ -396,7 +396,7 @@
           <bool>true</bool>
          </property>
          <property name="currentIndex">
-          <number>5</number>
+          <number>1</number>
          </property>
          <widget class="QWidget" name="tab_mode">
           <attribute name="title">
@@ -653,14 +653,14 @@
                    </property>
                   </widget>
                  </item>
-                 <item row="3" column="0">
+                 <item row="4" column="0">
                   <widget class="QLabel" name="B0_label_f_step_length">
                    <property name="text">
                     <string>Front Step Length</string>
                    </property>
                   </widget>
                  </item>
-                 <item row="3" column="1">
+                 <item row="4" column="1">
                   <widget class="QDoubleSpinBox" name="B1_spinbox_f_step_length">
                    <property name="suffix">
                     <string> m</string>
@@ -679,14 +679,14 @@
                    </property>
                   </widget>
                  </item>
-                 <item row="4" column="0">
+                 <item row="5" column="0">
                   <widget class="QLabel" name="C0_label_s_step_length">
                    <property name="text">
                     <string>Side Step Length</string>
                    </property>
                   </widget>
                  </item>
-                 <item row="4" column="1">
+                 <item row="5" column="1">
                   <widget class="QDoubleSpinBox" name="C1_spinbox_s_step_length">
                    <property name="suffix">
                     <string> m</string>
@@ -705,14 +705,14 @@
                    </property>
                   </widget>
                  </item>
-                 <item row="5" column="0">
+                 <item row="6" column="0">
                   <widget class="QLabel" name="D0_label_r_angle">
                    <property name="text">
                     <string>Rotation Angle</string>
                    </property>
                   </widget>
                  </item>
-                 <item row="5" column="1">
+                 <item row="6" column="1">
                   <widget class="QDoubleSpinBox" name="D1_spinbox_r_angle">
                    <property name="suffix">
                     <string> ˚</string>
@@ -728,6 +728,29 @@
                    </property>
                    <property name="value">
                     <double>5.000000000000000</double>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="3" column="0">
+                  <widget class="QLabel" name="AB0_label_step_time">
+                   <property name="text">
+                    <string>Step Time</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="3" column="1">
+                  <widget class="QDoubleSpinBox" name="AB1_spinbox_step_time">
+                   <property name="suffix">
+                    <string> s</string>
+                   </property>
+                   <property name="maximum">
+                    <double>10.000000000000000</double>
+                   </property>
+                   <property name="singleStep">
+                    <double>0.010000000000000</double>
+                   </property>
+                   <property name="value">
+                    <double>1.000000000000000</double>
                    </property>
                   </widget>
                  </item>
