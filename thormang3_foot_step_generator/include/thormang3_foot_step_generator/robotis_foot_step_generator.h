@@ -91,8 +91,6 @@ public:
 
   double default_y_feet_offset_m_;
 
-  int previous_step_type_;
-
 private:
   bool calcStep(const thormang3_walking_module_msgs::StepData& ref_step_data, int previous_step_type,  int desired_step_type);
 
@@ -108,7 +106,7 @@ private:
 
   thormang3_walking_module_msgs::AddStepDataArray::Request::_step_data_array_type step_data_array_;
 
-  //int previous_step_type_;
+  int previous_step_type_;
 
 };
 
