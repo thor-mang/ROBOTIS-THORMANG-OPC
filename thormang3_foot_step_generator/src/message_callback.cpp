@@ -309,7 +309,6 @@ void walkingCommandCallback(const thormang3_foot_step_generator::FootStepCommand
       if(add_stp_data_srv_result & thormang3_walking_module_msgs::AddStepDataArray::Response::ROBOT_IS_WALKING_NOW)
         ROS_ERROR("[Demo]  : STEP_DATA_ERR::ROBOT_IS_WALKING_NOW");
 
-
       g_foot_stp_generator.initialize();
 
       return;

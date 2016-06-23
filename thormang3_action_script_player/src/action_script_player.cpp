@@ -43,7 +43,9 @@
 #include <yaml-cpp/yaml.h>
 #include "robotis_controller_msgs/StatusMsg.h"
 #include "thormang3_action_module_msgs/IsRunning.h"
+#include "thormang3_action_module_msgs/StartAction.h"
 
+#define JOINT_NAME_KEY                    "joint_name"
 #define ACTION_PLAY_CMD_NAME              "play"
 #define MP3_PLAY_CMD_NAME                 "mp3"
 #define WAIT_ACTION_PLAY_FINISH_CMD_NAME  "wait"
@@ -53,6 +55,7 @@
 
 ros::Subscriber    g_action_script_num_sub;
 ros::Publisher     g_action_page_num_pub;
+ros::Publisher     g_start_action_pub;
 ros::Publisher     g_sound_file_name_pub;
 ros::ServiceClient g_is_running_client;
 
@@ -70,7 +73,8 @@ typedef struct
   int         cmd_arg_int;
 } action_script_cmd;
 
-std::vector<action_script_cmd> action_script_data;
+std::vector<std::string>       g_joint_name_list;
+std::vector<action_script_cmd> g_action_script_data;
 
 std::string convertIntToString(int n)
 {
@@ -104,7 +108,7 @@ bool isActionRunning(void)
 
 bool parseActionScript(int action_script_index)
 {
-  action_script_data.clear();
+  g_action_script_data.clear();
 
   YAML::Node action_script_file_doc;
   try
@@ -133,6 +137,11 @@ bool parseActionScript(int action_script_index)
   std::string cmd_key = "";
   try
   {
+    g_joint_name_list.clear();
+    YAML::Node joint_name_doc = action_script_doc[JOINT_NAME_KEY];
+    if(joint_name_doc != NULL)
+      g_joint_name_list = joint_name_doc.as< std::vector<std::string> >();
+
     while(true)
     {
       //check cmd exist
@@ -182,7 +191,7 @@ bool parseActionScript(int action_script_index)
         {
           std::string status_msg = "cmd#" + convertIntToString(cmd_num) + " of " + "script#" + convertIntToString(action_script_index) + " is invalid.";
           ROS_ERROR_STREAM(status_msg);
-          action_script_data.clear();
+          g_action_script_data.clear();
           return false;
         }
       }
@@ -190,11 +199,11 @@ bool parseActionScript(int action_script_index)
       {
         std::string status_msg = "cmd#" + convertIntToString(cmd_num) + " of " + "script#" + convertIntToString(action_script_index) + " is invalid.";
         ROS_ERROR_STREAM(status_msg);
-        action_script_data.clear();
+        g_action_script_data.clear();
         return false;
       }
 
-      action_script_data.push_back(temp_cmd);
+      g_action_script_data.push_back(temp_cmd);
       cmd_num++;
     }
   }
@@ -202,7 +211,7 @@ bool parseActionScript(int action_script_index)
   {
     std::string status_msg = "cmd#" + convertIntToString(cmd_num) + " of " + "script#" + convertIntToString(action_script_index) + " is invalid.";
     ROS_ERROR_STREAM(status_msg);
-    action_script_data.clear();
+    g_action_script_data.clear();
     return false;
   }
 
@@ -230,21 +239,36 @@ void actionScriptPlayThreadFunc(int action_script_index)
     if(parseActionScript(action_script_index) == false)
       return;
 
-    for(unsigned int action_script_data_idx = 0; action_script_data_idx < action_script_data.size(); action_script_data_idx++)
+    std_msgs::Int32   action_page_num_msg;
+    std_msgs::String  sound_file_name_msg;
+    thormang3_action_module_msgs::StartAction start_action_msg;
+    if(g_joint_name_list.size() != 0)
     {
-      std::string cmd_name = action_script_data[action_script_data_idx].cmd_name;
-      std_msgs::Int32   action_page_num_msg;
-      std_msgs::String  sound_file_name_msg;
+      for(unsigned int joint_name_idx = 0; joint_name_idx < g_joint_name_list.size(); joint_name_idx++)
+        start_action_msg.joint_name_array.push_back(g_joint_name_list[joint_name_idx]);
+    }
+
+    for(unsigned int action_script_data_idx = 0; action_script_data_idx < g_action_script_data.size(); action_script_data_idx++)
+    {
+      std::string cmd_name = g_action_script_data[action_script_data_idx].cmd_name;
 
       boost::this_thread::interruption_point();
       if(cmd_name == ACTION_PLAY_CMD_NAME)
       {
-        action_page_num_msg.data = action_script_data[action_script_data_idx].cmd_arg_int;
-        g_action_page_num_pub.publish(action_page_num_msg);
+        if(g_joint_name_list.size() != 0)
+        {
+          start_action_msg.page_num = g_action_script_data[action_script_data_idx].cmd_arg_int;
+          g_start_action_pub.publish(start_action_msg);
+        }
+        else
+        {
+          action_page_num_msg.data  = g_action_script_data[action_script_data_idx].cmd_arg_int;
+          g_action_page_num_pub.publish(action_page_num_msg);
+        }
       }
       else if(cmd_name == MP3_PLAY_CMD_NAME)
       {
-        sound_file_name_msg.data = action_script_data[action_script_data_idx].cmd_arg_str;
+        sound_file_name_msg.data = g_action_script_data[action_script_data_idx].cmd_arg_str;
         g_sound_file_name_pub.publish(sound_file_name_msg);
       }
       else if(cmd_name == WAIT_ACTION_PLAY_FINISH_CMD_NAME)
@@ -259,7 +283,7 @@ void actionScriptPlayThreadFunc(int action_script_index)
       }
       else if(cmd_name == SLEEP_CMD_NAME)
       {
-        boost::this_thread::sleep(boost::posix_time::milliseconds(action_script_data[action_script_data_idx].cmd_arg_int));
+        boost::this_thread::sleep(boost::posix_time::milliseconds(g_action_script_data[action_script_data_idx].cmd_arg_int));
       }
       else
       {
@@ -332,8 +356,9 @@ int main(int argc, char **argv)
 
   g_action_script_play_thread = 0;
 
-  g_action_script_num_sub = ros_node_handle.subscribe("/robotis/demo/action_index", 1, &actionScriptNumberCallback);
+  g_action_script_num_sub = ros_node_handle.subscribe("/robotis/demo/action_index", 0, &actionScriptNumberCallback);
   g_action_page_num_pub   = ros_node_handle.advertise<std_msgs::Int32>("/robotis/action/page_num", 0);
+  g_start_action_pub      = ros_node_handle.advertise<thormang3_action_module_msgs::StartAction>("/robotis/action/start_action", 0);
   g_sound_file_name_pub   = ros_node_handle.advertise<std_msgs::String>("/play_sound_file", 0);
   g_is_running_client     = ros_node_handle.serviceClient<thormang3_action_module_msgs::IsRunning>("/robotis/action/is_running");
 
