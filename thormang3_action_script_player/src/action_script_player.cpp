@@ -351,7 +351,7 @@ void actionScriptNumberCallback(const std_msgs::Int32::ConstPtr& msg)
 
 int main(int argc, char **argv)
 {
-  ros::init(argc, argv, "THORMANG3_ACTION_SCRIPT_PLAYER");
+  ros::init(argc, argv, "thormang3_action_script_player");
   ros::NodeHandle ros_node_handle;
 
   g_action_script_play_thread = 0;
