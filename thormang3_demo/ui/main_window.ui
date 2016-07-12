@@ -14,7 +14,7 @@
    <string>Thormang3 Demo GUI</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="../resources/images.qrc">
+   <iconset resource="../../../ROBOTIS-OP2/op2_demo/resources/images.qrc">
     <normaloff>:/images/icon.png</normaloff>:/images/icon.png</iconset>
   </property>
   <property name="locale">
@@ -396,7 +396,7 @@
           <bool>true</bool>
          </property>
          <property name="currentIndex">
-          <number>1</number>
+          <number>5</number>
          </property>
          <widget class="QWidget" name="tab_mode">
           <attribute name="title">
@@ -2109,7 +2109,7 @@
   </action>
  </widget>
  <resources>
-  <include location="../resources/images.qrc"/>
+  <include location="../../../ROBOTIS-OP2/op2_demo/resources/images.qrc"/>
  </resources>
  <connections>
   <connection>
@@ -2194,7 +2194,7 @@
   </connection>
  </connections>
  <buttongroups>
-  <buttongroup name="buttonGroup_manipulation_demo"/>
   <buttongroup name="buttonGroup_walking_demo"/>
+  <buttongroup name="buttonGroup_manipulation_demo"/>
  </buttongroups>
 </ui>

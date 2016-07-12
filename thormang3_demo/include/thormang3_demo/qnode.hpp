@@ -88,7 +88,7 @@
 ** Namespaces
 *****************************************************************************/
 
-namespace thor3_control
+namespace thormang3_demo
 {
 
 /*****************************************************************************
@@ -100,7 +100,8 @@ class QNodeThor3 : public QThread
   Q_OBJECT
 
 public:
-  enum LogLevel {
+  enum LogLevel
+  {
     Debug = 0,
     Info = 1,
     Warn = 2,
@@ -108,13 +109,13 @@ public:
     Fatal = 4
   };
 
-  enum ModuleIndex
-  {
-    Control_None = 0,
-    Control_Walking = 1,
-    Control_Manipulation = 2,
-    Control_Head = 3,
-  };
+//  enum ModuleIndex
+//  {
+//    Control_None = 0,
+//    Control_Walking = 1,
+//    Control_Manipulation = 2,
+//    Control_Head = 3,
+//  };
 
   QNodeThor3(int argc, char** argv );
   virtual ~QNodeThor3();
@@ -134,7 +135,7 @@ public:
   int getModuleTableSize();
   int getJointTableSize();
   void clearUsingModule();
-  bool isUsingModule(std::string module_name);
+  bool isUsingModule(const std::string &module_name);
   void moveInitPose();
   void initFTCommand(std::string command);
 
@@ -153,14 +154,14 @@ public:
   void setWalkingFootsteps();
   void clearFootsteps();
   void makeFootstepUsingPlanner();
-  void makeFootstepUsingPlanner(geometry_msgs::Pose foot_target);
+  void makeFootstepUsingPlanner(const geometry_msgs::Pose &target_foot_pose);
   void visualizePreviewFootsteps(bool clear);
 
   // motion
-  void playMotion(int motion_index, bool to_actionScript = true);
+  void playMotion(int motion_index, bool to_action_script = true);
 
   // demo
-  void makeInteractiveMarker(const geometry_msgs::Pose &pose);
+  void makeInteractiveMarker(const geometry_msgs::Pose &marker_pose);
   void updateInteractiveMarker(const geometry_msgs::Pose &pose);
   void getInteractiveMarkerPose();
   void clearInteractiveMarker();
@@ -198,13 +199,14 @@ Q_SIGNALS:
   void updateDemoPose(const geometry_msgs::Pose pose);
 
 private:
-  enum
+  enum Control_Index
   {
     MODE_UI = 0,
     WALKING_UI = 1,
     MANIPULATION_UI = 2,
     HEAD_CONTROL_UI = 3,
-    MOTION = 4,
+    MOTION_UI = 4,
+    DEMO_UI = 5,
   };
 
   void parseJointNameFromYaml(const std::string &path);
@@ -223,17 +225,17 @@ private:
 
   int init_argc_;
   char** init_argv_;
-  bool DEBUG;
+  bool debug_print_;
   int current_control_ui_;
 
   // demo : interactive marker
-  ros::Subscriber clicked_point_sub_;
+  ros::Subscriber rviz_clicked_point_sub_;
   std::string frame_id_;
   std::string marker_name_;
   geometry_msgs::Pose pose_from_ui_;
   geometry_msgs::Pose current_pose_;
   boost::shared_ptr<interactive_markers::InteractiveMarkerServer> interactive_marker_server_;
-  thormang3_walking_module_msgs::SetBalanceParam      set_balance_param_srv_;
+  thormang3_walking_module_msgs::SetBalanceParam set_balance_param_srv_;
 
   ros::Publisher init_pose_pub_;
   ros::Publisher init_ft_pub_;
@@ -254,38 +256,34 @@ private:
   ros::Subscriber current_joint_states_sub_;
 
   // Manipulation
-  ros::Publisher send_ini_pose_msg_pub;
-  ros::Publisher send_des_joint_msg_pub;
-  ros::Publisher send_ik_msg_pub;
-  ros::Subscriber kenematics_pose_sub;
-  ros::ServiceClient get_joint_pose_client;
-  ros::ServiceClient get_kinematics_pose_client;
+  ros::Publisher send_ini_pose_msg_pub_;
+  ros::Publisher send_des_joint_msg_pub_;
+  ros::Publisher send_ik_msg_pub_;
+  ros::Subscriber kenematics_pose_sub_;
+  ros::ServiceClient get_joint_pose_client_;
+  ros::ServiceClient get_kinematics_pose_client_;
 
   // Walking
-  ros::ServiceClient humanoidFootStepClient;
+  ros::ServiceClient humanoid_footstep_client_;
   ros::ServiceClient set_balance_param_client_;
-  ros::Publisher set_walking_command_pub;
-  ros::Publisher set_walking_footsteps_pub;
-  ros::Publisher set_walking_balance_pub;
+  ros::Publisher set_walking_command_pub_;
+  ros::Publisher set_walking_footsteps_pub_;
+  ros::Publisher set_walking_balance_pub_;
 
-  std::vector<geometry_msgs::Pose2D>  preview_foot_steps_;
-  std::vector<int>                    preview_foot_types_;
+  std::vector<geometry_msgs::Pose2D> preview_foot_steps_;
+  std::vector<int> preview_foot_types_;
 
   // Action
   ros::Publisher motion_index_pub_;
   ros::Publisher motion_page_pub_;
 
   ros::Time start_time_;
-
   QStringListModel logging_model_;
   std::map<int, std::string> id_joint_table_;
   std::map<std::string, int> joint_id_table_;
-
   std::map<int, std::string> index_mode_table_;
   std::map<std::string, int> mode_index_table_;
-
   std::map<std::string, bool> using_mode_table_;
-
 };
 
 }  // namespace thormang3_demo

@@ -42,7 +42,8 @@
 ** Namespaces
 *****************************************************************************/
 
-namespace thor3_control {
+namespace thormang3_demo
+{
 
 /*****************************************************************************
 ** Implementation
@@ -54,23 +55,26 @@ QNodeThor3::QNodeThor3(int argc, char** argv )
   , marker_name_("THORMANG3_demo_marker")
 {
   // code to DEBUG
-  DEBUG = false;
+  debug_print_ = false;
 
   if(argc >= 2)
   {
     std::string debug_code(argv[1]);
     if(debug_code == "debug")
-      DEBUG = true;
+      debug_print_ = true;
     else
-      DEBUG = false;
+      debug_print_ = false;
   }
 }
 
-QNodeThor3::~QNodeThor3() {
-  if(ros::isStarted()) {
+QNodeThor3::~QNodeThor3()
+{
+  if(ros::isStarted())
+  {
     ros::shutdown(); // explicitly needed since we use ros::start();
     ros::waitForShutdown();
   }
+
   wait();
 }
 
@@ -78,7 +82,8 @@ bool QNodeThor3::init()
 {
   ros::init(init_argc_, init_argv_, "thormang3_demo");
 
-  if ( ! ros::master::check() ) {
+  if (ros::master::check() == false)
+  {
     return false;
   }
 
@@ -87,58 +92,60 @@ bool QNodeThor3::init()
   ros::NodeHandle nh;
 
   // Add your ros communications here.
-  move_lidar_pub_     = nh.advertise<std_msgs::String>("/robotis/head_control/move_lidar", 0);
-  module_control_pub_  = nh.advertise<robotis_controller_msgs::JointCtrlModule>("/robotis/set_joint_ctrl_modules", 0);
-  module_control_preset_pub_ = nh.advertise<std_msgs::String>("/robotis/enable_ctrl_module", 0);
-  init_pose_pub_      = nh.advertise<std_msgs::String>("/robotis/base/ini_pose", 0);
-  init_ft_pub_        = nh.advertise<std_msgs::String>("/robotis/feet_ft/ft_calib_command", 0);
-  set_head_joint_angle_pub_ = nh.advertise<sensor_msgs::JointState>("/robotis/head_control/set_joint_states", 0);
-
-  init_ft_foot_sub_ = nh.subscribe("/robotis/feet_ft/both_ft_value", 10, &QNodeThor3::initFTFootCallback, this);
-
   status_msg_sub_ = nh.subscribe("/robotis/status", 10, &QNodeThor3::statusMsgCallback, this);
   current_module_control_sub_ = nh.subscribe("/robotis/present_joint_ctrl_modules", 10, &QNodeThor3::refreshCurrentJointControlCallback, this);
   current_joint_states_sub_ = nh.subscribe("/robotis/present_joint_states", 10, &QNodeThor3::updateHeadJointStatesCallback, this);
 
   get_module_control_client_ = nh.serviceClient<robotis_controller_msgs::GetJointModule>("/robotis/get_present_joint_ctrl_modules");
 
-  humanoidFootStepClient = nh.serviceClient<humanoid_nav_msgs::PlanFootsteps>("plan_footsteps");
-  marker_pub_ = nh.advertise<visualization_msgs::MarkerArray>("/robotis/demo/foot_step_marker", 0);
-  pose_sub_ = nh.subscribe("/robotis/demo/pose", 10, &QNodeThor3::poseCallback, this);
+  move_lidar_pub_ = nh.advertise<std_msgs::String>("/robotis/head_control/move_lidar", 0);
+  module_control_pub_ = nh.advertise<robotis_controller_msgs::JointCtrlModule>("/robotis/set_joint_ctrl_modules", 0);
+  module_control_preset_pub_ = nh.advertise<std_msgs::String>("/robotis/enable_ctrl_module", 0);
+  init_pose_pub_ = nh.advertise<std_msgs::String>("/robotis/base/ini_pose", 0);
+  init_ft_pub_ = nh.advertise<std_msgs::String>("/robotis/feet_ft/ft_calib_command", 0);
+
+  init_ft_foot_sub_ = nh.subscribe("/robotis/feet_ft/both_ft_value", 10, &QNodeThor3::initFTFootCallback, this);
 
   // demo
-  clicked_point_sub_ = nh.subscribe("clicked_point", 0, &QNodeThor3::pointStampedCallback, this);
+  rviz_clicked_point_sub_ = nh.subscribe("clicked_point", 0, &QNodeThor3::pointStampedCallback, this);
   interactive_marker_server_.reset( new interactive_markers::InteractiveMarkerServer("THORMANG_Pose","",false) );
 
   // Manipulation
-  kenematics_pose_sub = nh.subscribe("/thormang3_demo/ik_target_pose", 10, &QNodeThor3::getKinematicsPoseCallback, this);
+  kenematics_pose_sub_ = nh.subscribe("/thormang3_demo/ik_target_pose", 10, &QNodeThor3::getKinematicsPoseCallback, this);
 
-  send_ini_pose_msg_pub = nh.advertise<std_msgs::String>("/robotis/manipulation/ini_pose_msg", 0);
-  send_des_joint_msg_pub = nh.advertise<thormang3_manipulation_module_msgs::JointPose>("/robotis/manipulation/joint_pose_msg", 0);
-  send_ik_msg_pub = nh.advertise<thormang3_manipulation_module_msgs::KinematicsPose>("/robotis/manipulation/kinematics_pose_msg", 0);
+  send_ini_pose_msg_pub_ = nh.advertise<std_msgs::String>("/robotis/manipulation/ini_pose_msg", 0);
+  send_des_joint_msg_pub_ = nh.advertise<thormang3_manipulation_module_msgs::JointPose>("/robotis/manipulation/joint_pose_msg", 0);
+  send_ik_msg_pub_ = nh.advertise<thormang3_manipulation_module_msgs::KinematicsPose>("/robotis/manipulation/kinematics_pose_msg", 0);
 
-  get_joint_pose_client = nh.serviceClient<thormang3_manipulation_module_msgs::GetJointPose>("/robotis/manipulation/get_joint_pose");
-  get_kinematics_pose_client = nh.serviceClient<thormang3_manipulation_module_msgs::GetKinematicsPose>("/robotis/manipulation/get_kinematics_pose");
+  get_joint_pose_client_ = nh.serviceClient<thormang3_manipulation_module_msgs::GetJointPose>("/robotis/manipulation/get_joint_pose");
+  get_kinematics_pose_client_ = nh.serviceClient<thormang3_manipulation_module_msgs::GetKinematicsPose>("/robotis/manipulation/get_kinematics_pose");
 
   // Walking
   set_balance_param_client_   = nh.serviceClient<thormang3_walking_module_msgs::SetBalanceParam>("/robotis/walking/set_balance_param");
-  set_walking_command_pub = nh.advertise<thormang3_foot_step_generator::FootStepCommand>("/robotis/thormang3_foot_step_generator/walking_command", 0);
-  set_walking_footsteps_pub = nh.advertise<thormang3_foot_step_generator::Step2DArray>("/robotis/thormang3_foot_step_generator/footsteps_2d", 0);
-  set_walking_balance_pub = nh.advertise<std_msgs::Bool>("/robotis/thormang3_foot_step_generator/balance_command", 0);
+  set_walking_command_pub_ = nh.advertise<thormang3_foot_step_generator::FootStepCommand>("/robotis/thormang3_foot_step_generator/walking_command", 0);
+  set_walking_footsteps_pub_ = nh.advertise<thormang3_foot_step_generator::Step2DArray>("/robotis/thormang3_foot_step_generator/footsteps_2d", 0);
+  set_walking_balance_pub_ = nh.advertise<std_msgs::Bool>("/robotis/thormang3_foot_step_generator/balance_command", 0);
+
+  humanoid_footstep_client_ = nh.serviceClient<humanoid_nav_msgs::PlanFootsteps>("plan_footsteps");
+  marker_pub_ = nh.advertise<visualization_msgs::MarkerArray>("/robotis/demo/foot_step_marker", 0);
+  pose_sub_ = nh.subscribe("/robotis/demo/pose", 10, &QNodeThor3::poseCallback, this);
+
+  // Head control
+  set_head_joint_angle_pub_ = nh.advertise<sensor_msgs::JointState>("/robotis/head_control/set_joint_states", 0);
 
   // Action
   motion_index_pub_ = nh.advertise<std_msgs::Int32>("/robotis/demo/action_index", 0);
   motion_page_pub_ = nh.advertise<std_msgs::Int32>("/robotis/action/page_num", 0);
 
   // Config
-  std::string default_path = ros::package::getPath("thormang3_demo") +"/config/demo_config.yaml";
-  std::string path = nh.param<std::string>("demo_config", default_path);
-  parseJointNameFromYaml(path);
+  std::string default_config_path = ros::package::getPath("thormang3_demo") +"/config/demo_config.yaml";
+  std::string config_path = nh.param<std::string>("demo_config", default_config_path);
+  parseJointNameFromYaml(config_path);
 
   std::string motion_path = ros::package::getPath("thormang3_demo") +"/config/motion.yaml";
   parseMotionMapFromYaml(motion_path);
 
-  // start time
+  // set start time
   start_time_ = ros::Time::now();
 
   // start qthread
@@ -151,7 +158,7 @@ void QNodeThor3::run()
 {
   ros::Rate loop_rate(1);
 
-  while ( ros::ok() )
+  while (ros::ok())
   {
     ros::spinOnce();
     loop_rate.sleep();
@@ -179,27 +186,27 @@ void QNodeThor3::parseJointNameFromYaml(const std::string &path)
 
   // parse id_joint table
   YAML::Node id_sub_node = doc["id_joint"];
-  for(YAML::iterator it = id_sub_node.begin() ; it != id_sub_node.end() ; ++it)
+  for(YAML::iterator yaml_it = id_sub_node.begin() ; yaml_it != id_sub_node.end() ; ++yaml_it)
   {
     int id;
     std::string joint_name;
 
-    id = it->first.as<int>();
-    joint_name = it->second.as<std::string>();
+    id = yaml_it->first.as<int>();
+    joint_name = yaml_it->second.as<std::string>();
 
     id_joint_table_[id] = joint_name;
     joint_id_table_[joint_name] = id;
 
-    if(DEBUG) std::cout << "ID : " << id << " - " << joint_name << std::endl;
+    ROS_DEBUG_STREAM_COND(debug_print_, "Joint ID : " << id << " - " << joint_name);
   }
 
   // parse module
   std::vector< std::string > modules = doc["module_list"].as< std::vector<std::string> >();
 
   int module_index = 0;
-  for(std::vector<std::string>::iterator it = modules.begin() ; it != modules.end() ; ++it)
+  for(std::vector<std::string>::iterator module_it = modules.begin() ; module_it != modules.end() ; ++module_it)
   {
-    std::string module_name = *it ;
+    std::string module_name = *module_it ;
 
     index_mode_table_[module_index]    = module_name;
     mode_index_table_[module_name]     = module_index++;
@@ -210,16 +217,17 @@ void QNodeThor3::parseJointNameFromYaml(const std::string &path)
 
   // parse module_joint preset
   YAML::Node sub_node = doc["module_button"];
-  for(YAML::iterator it = sub_node.begin() ; it != sub_node.end() ; ++it)
+  for(YAML::iterator button_it = sub_node.begin() ; button_it != sub_node.end() ; ++button_it)
   {
     int key;
     std::string module_name;
 
-    key = it->first.as<int>();
-    module_name = it->second.as<std::string>();
+    key = button_it->first.as<int>();
+    module_name = button_it->second.as<std::string>();
 
     module_table_[key] = module_name;
-    if(DEBUG) std::cout << "Preset : " << module_name << std::endl;
+
+    ROS_DEBUG_STREAM_COND(debug_print_, "Preset : " << module_name);
   }
 }
 
@@ -239,58 +247,62 @@ void QNodeThor3::parseMotionMapFromYaml(const std::string &path)
 
   // parse motion_table
   YAML::Node motion_sub_node = doc["motion"];
-  for(YAML::iterator it = motion_sub_node.begin() ; it != motion_sub_node.end() ; ++it)
+  for(YAML::iterator motion_it = motion_sub_node.begin() ; motion_it != motion_sub_node.end() ; ++motion_it)
   {
     int motion_index;
     std::string motion_name;
 
-    motion_index = it->first.as<int>();
-    motion_name = it->second.as<std::string>();
+    motion_index = motion_it->first.as<int>();
+    motion_name = motion_it->second.as<std::string>();
 
     motion_table_[motion_index] = motion_name;
 
-    if(DEBUG) std::cout << "Motion Index : " << motion_index << " - " << motion_name << std::endl;
+    ROS_DEBUG_STREAM_COND(debug_print_, "Motion Index : " << motion_index << " - " << motion_name);
   }
 }
 
 // joint id -> joint name
 bool QNodeThor3::getJointNameFromID(const int &id, std::string &joint_name)
 {
-  std::map<int, std::string>::iterator iter;
+  std::map<int, std::string>::iterator map_it;
 
-  iter = id_joint_table_.find(id);
-  if(iter == id_joint_table_.end()) return false;
+  map_it = id_joint_table_.find(id);
+  if(map_it == id_joint_table_.end())
+    return false;
 
-  joint_name = iter->second;
+  joint_name = map_it->second;
   return true;
 }
 
 // joint name -> joint id
 bool QNodeThor3::getIDFromJointName(const std::string &joint_name, int &id)
 {
-  std::map<std::string, int>::iterator iter;
+  std::map<std::string, int>::iterator map_it;
 
-  iter = joint_id_table_.find(joint_name);
-  if(iter == joint_id_table_.end()) return false;
+  map_it = joint_id_table_.find(joint_name);
+  if(map_it == joint_id_table_.end())
+    return false;
 
-  id = iter->second;
+  id = map_it->second;
   return true;
 }
 
 // map index -> joint id & joint name
 bool QNodeThor3::getIDJointNameFromIndex(const int &index, int &id, std::string &joint_name)
 {
-  std::map<int, std::string>::iterator iter;
+  std::map<int, std::string>::iterator map_it;
+
   int count = 0;
-  for(iter = id_joint_table_.begin(); iter != id_joint_table_.end(); ++iter, count++)
+  for(map_it = id_joint_table_.begin(); map_it != id_joint_table_.end(); ++map_it, count++)
   {
     if(index == count)
     {
-      id = iter->first;
-      joint_name = iter->second;
+      id = map_it->first;
+      joint_name = map_it->second;
       return true;
     }
   }
+
   return false;
 }
 
@@ -298,22 +310,22 @@ bool QNodeThor3::getIDJointNameFromIndex(const int &index, int &id, std::string 
 std::string QNodeThor3::getModuleName(const int &index)
 {
   std::string mode = "";
-  std::map<int, std::string>::iterator iter = index_mode_table_.find(index);
+  std::map<int, std::string>::iterator map_it = index_mode_table_.find(index);
 
-  if(iter != index_mode_table_.end())
-    mode = iter->second;
+  if(map_it != index_mode_table_.end())
+    mode = map_it->second;
 
   return mode;
 }
 
-// mode(module) name -> mode(module) index
+// mode(module) name -> mode(module) index, fail to find out :u
 int QNodeThor3::getModuleIndex(const std::string &mode_name)
 {
   int mode_index = -1;
-  std::map<std::string, int>::iterator iter = mode_index_table_.find(mode_name);
+  std::map<std::string, int>::iterator map_it = mode_index_table_.find(mode_name);
 
-  if(iter != mode_index_table_.end())
-    mode_index = iter->second;
+  if(map_it != mode_index_table_.end())
+    mode_index = map_it->second;
 
   return mode_index;
 }
@@ -332,17 +344,18 @@ int QNodeThor3::getJointTableSize()
 
 void QNodeThor3::clearUsingModule()
 {
-  for(std::map<std::string, bool>::iterator iter = using_mode_table_.begin(); iter != using_mode_table_.end(); ++iter)
-    iter->second = false;
+  for(std::map<std::string, bool>::iterator map_it = using_mode_table_.begin(); map_it != using_mode_table_.end(); ++map_it)
+    map_it->second = false;
 }
 
-bool QNodeThor3::isUsingModule(std::string module_name)
+bool QNodeThor3::isUsingModule(const std::string &module_name)
 {
-  std::map<std::string, bool>::iterator iter = using_mode_table_.find(module_name);
+  std::map<std::string, bool>::iterator map_it = using_mode_table_.find(module_name);
 
-  if(iter == using_mode_table_.end()) return false;
+  if(map_it == using_mode_table_.end())
+    return false;
 
-  return iter->second;
+  return map_it->second;
 }
 
 void QNodeThor3::setCurrentControlUI(int mode)
@@ -352,7 +365,7 @@ void QNodeThor3::setCurrentControlUI(int mode)
   ROS_INFO("Current UI : %d", mode);
 }
 
-// move ini pose : base module
+// move to init pose : base module
 void QNodeThor3::moveInitPose()
 {
   std_msgs::String init_msg;
@@ -369,7 +382,6 @@ void QNodeThor3::initFTCommand(std::string command)
   ft_msg.data = command;
 
   init_ft_pub_.publish(ft_msg);
-
 }
 
 // move head to assemble 3d lidar(pointcloud)
@@ -402,12 +414,12 @@ void QNodeThor3::getJointControlModule()
   std::map<std::string, int> service_map;
 
   // get_joint.request
-  std::map<int, std::string>::iterator iter;
+  std::map<int, std::string>::iterator map_it;
   int index = 0;
-  for(iter = id_joint_table_.begin(); iter != id_joint_table_.end(); ++iter, index++)
+  for(map_it = id_joint_table_.begin(); map_it != id_joint_table_.end(); ++map_it, index++)
   {
-    get_joint.request.joint_name.push_back(iter->second);
-    service_map[iter->second] = index;
+    get_joint.request.joint_name.push_back(map_it->second);
+    service_map[map_it->second] = index;
   }
 
   if(get_module_control_client_.call(get_joint))
@@ -434,7 +446,8 @@ void QNodeThor3::getJointControlModule()
       if(service_iter == mode_index_table_.end())
         continue;
 
-      // ROS_INFO_STREAM("joint[" << ix << "] : " << service_iter->second);
+      ROS_DEBUG_STREAM_COND(debug_print_, "joint[" << ix << "] : " << service_iter->second);
+
       modules.at(index) = service_iter->second;
 
       std::map<std::string, bool>::iterator module_iter = using_mode_table_.find(module_name);
@@ -480,12 +493,13 @@ void QNodeThor3::refreshCurrentJointControlCallback(const robotis_controller_msg
     int id = 0;
     std::string joint_name= "";
 
-    if(getIDJointNameFromIndex(ix, id, joint_name) == false) continue;
+    if(getIDJointNameFromIndex(ix, id, joint_name) == false)
+      continue;
 
     std::map<std::string, int>::iterator module_iter = joint_module.find(joint_name);
     if(module_iter == joint_module.end()) continue;
 
-    // ROS_INFO_STREAM("joint[" << ix << "] : " << module_iter->second);
+    ROS_DEBUG_STREAM_COND(debug_print_, "joint[" << ix << "] : " << module_iter->second);
     modules.at(ix) = module_iter->second;
   }
 
@@ -498,25 +512,25 @@ void QNodeThor3::refreshCurrentJointControlCallback(const robotis_controller_msg
 void QNodeThor3::updateHeadJointStatesCallback(const sensor_msgs::JointState::ConstPtr &msg)
 {
   double head_pan, head_tilt;
-  int get = 0;
+  int count_getting_joint = 0;
 
   for(int ix = 0; ix < msg->name.size(); ix++)
   {
     if(msg->name[ix] == "head_y")
     {
       head_pan = - msg->position[ix];
-      get += 1;
+      count_getting_joint += 1;
     }
     else if(msg->name[ix] == "head_p")
     {
       head_tilt = - msg->position[ix];
-      get += 1;
+      count_getting_joint += 1;
     }
 
-    if(get == 2) break;
+    if(count_getting_joint == 2) break;
   }
 
-  if(get > 0)
+  if(count_getting_joint > 0)
     Q_EMIT updateHeadJointsAngle(head_pan, head_tilt);
 }
 
@@ -546,14 +560,14 @@ void QNodeThor3::setHeadJoint(double pan, double tilt)
 // Manipulation
 void QNodeThor3::sendInitPoseMsg( std_msgs::String msg )
 {
-  send_ini_pose_msg_pub.publish( msg );
+  send_ini_pose_msg_pub_.publish( msg );
 
   log( Info , "Send Ini. Pose" );
 }
 
 void QNodeThor3::sendDestJointMsg( thormang3_manipulation_module_msgs::JointPose msg )
 {
-  send_des_joint_msg_pub.publish( msg );
+  send_des_joint_msg_pub_.publish( msg );
 
   log( Info , "Set Des. Joint Vale" );
 
@@ -570,10 +584,9 @@ void QNodeThor3::sendDestJointMsg( thormang3_manipulation_module_msgs::JointPose
 
 void QNodeThor3::sendIkMsg( thormang3_manipulation_module_msgs::KinematicsPose msg )
 {
-  send_ik_msg_pub.publish( msg );
+  send_ik_msg_pub_.publish( msg );
 
   log( Info , "Solve Inverse Kinematics" );
-
   log( Info , "Set Des. End Effector's Pose : " );
 
   std::stringstream log_msgs;
@@ -617,7 +630,7 @@ void QNodeThor3::getJointPose( std::string joint_name )
   log( Info , log_msg.str() );
 
   //response
-  if( get_joint_pose_client.call( get_joint_pose ) )
+  if( get_joint_pose_client_.call( get_joint_pose ) )
   {
     double joint_value = get_joint_pose.response.joint_value;
 
@@ -657,7 +670,7 @@ void QNodeThor3::getKinematicsPose (std::string group_name )
   log( Info , log_msg.str() );
 
   //response
-  if ( get_kinematics_pose_client.call( get_kinematics_pose ) )
+  if ( get_kinematics_pose_client_.call( get_kinematics_pose ) )
   {
     double pos_x = get_kinematics_pose.response.group_pose.position.x;
     double pos_y = get_kinematics_pose.response.group_pose.position.y;
@@ -707,7 +720,7 @@ void QNodeThor3::getKinematicsPoseCallback(const geometry_msgs::Pose::ConstPtr &
 // Walking
 void QNodeThor3::setWalkingCommand(thormang3_foot_step_generator::FootStepCommand msg)
 {
-  set_walking_command_pub.publish(msg);
+  set_walking_command_pub_.publish(msg);
 
   std::stringstream ss;
   ss << "Set Walking Command : " << msg.command << std::endl;
@@ -721,18 +734,10 @@ void QNodeThor3::setWalkingCommand(thormang3_foot_step_generator::FootStepComman
 
 void QNodeThor3::setWalkingBalance(bool on_command)
 {
-  //  std_msgs::Bool msg;
-  //  msg.data = on_command;
-
-  //  set_walking_balance_pub.publish(msg);
-
-  //  std::stringstream ss;
-  //  ss << "Set Walking Balance : " << (on_command ? "True" : "False");
-
-  //  log(Info, ss.str());
-
-  if(on_command == true) turnOnBalance();
-  else turnOffBalance();
+  if(on_command == true)
+    turnOnBalance();
+  else
+    turnOffBalance();
 }
 
 void QNodeThor3::setWalkingBalanceParam(const double &gyro_gain, const double &ft_gain_ratio, const double &imu_time_const, const double &ft_time_const)
@@ -784,16 +789,20 @@ void QNodeThor3::setWalkingFootsteps()
     thormang3_foot_step_generator::Step2D step;
 
     int type = preview_foot_types_[ix];
-    if(type == humanoid_nav_msgs::StepTarget::right) step.moving_foot = thormang3_foot_step_generator::Step2D::RIGHT_FOOT_SWING;
-    else if(type == humanoid_nav_msgs::StepTarget::left) step.moving_foot = thormang3_foot_step_generator::Step2D::LEFT_FOOT_SWING;
-    else step.moving_foot = thormang3_foot_step_generator::Step2D::STANDING;
+    if(type == humanoid_nav_msgs::StepTarget::right)
+      step.moving_foot = thormang3_foot_step_generator::Step2D::RIGHT_FOOT_SWING;
+    else if(type == humanoid_nav_msgs::StepTarget::left)
+      step.moving_foot = thormang3_foot_step_generator::Step2D::LEFT_FOOT_SWING;
+    else
+      step.moving_foot = thormang3_foot_step_generator::Step2D::STANDING;
 
     step.step2d = preview_foot_steps_[ix];
 
     footsteps.footsteps_2d.push_back(step);
   }
 
-  set_walking_footsteps_pub.publish(footsteps);
+  set_walking_footsteps_pub_.publish(footsteps);
+
   log(Info, "Set command to walk using footsteps");
 
   clearFootsteps();
@@ -801,6 +810,7 @@ void QNodeThor3::setWalkingFootsteps()
 
 void QNodeThor3::clearFootsteps()
 {
+  // clear foot step marker array
   visualizePreviewFootsteps(true);
 
   preview_foot_steps_.clear();
@@ -812,18 +822,18 @@ void QNodeThor3::makeFootstepUsingPlanner()
   makeFootstepUsingPlanner(pose_from_ui_);
 }
 
-void QNodeThor3::makeFootstepUsingPlanner(geometry_msgs::Pose foot_target)
+void QNodeThor3::makeFootstepUsingPlanner(const geometry_msgs::Pose &target_foot_pose)
 {
   //foot step service
   humanoid_nav_msgs::PlanFootsteps get_step;
 
   geometry_msgs::Pose2D start;
   geometry_msgs::Pose2D goal;
-  goal.x = foot_target.position.x;
-  goal.y = foot_target.position.y;
+  goal.x = target_foot_pose.position.x;
+  goal.y = target_foot_pose.position.y;
 
   Eigen::Quaterniond goal_orientation;
-  tf::quaternionMsgToEigen(foot_target.orientation, goal_orientation);
+  tf::quaternionMsgToEigen(target_foot_pose.orientation, goal_orientation);
 
   Eigen::Vector3d forward, f_x(1, 0, 0);
   forward = goal_orientation.toRotationMatrix() * f_x;
@@ -845,22 +855,22 @@ void QNodeThor3::makeFootstepUsingPlanner(geometry_msgs::Pose foot_target)
   preview_foot_steps_.clear();
   preview_foot_types_.clear();
 
-  if(humanoidFootStepClient.call(get_step))
+  if(humanoid_footstep_client_.call(get_step))
   {
     if(get_step.response.result)
     {
       for(int ix = 0; ix < get_step.response.footsteps.size(); ix++)
       {
         // foot step log
-        std::stringstream msg;
+        std::stringstream msg_stream;
         int foot_type = get_step.response.footsteps[ix].leg;
-        std::string foot = foot_type == humanoid_nav_msgs::StepTarget::right ? "right" : "left";
+        std::string foot = (foot_type == humanoid_nav_msgs::StepTarget::right) ? "right" : "left";
         geometry_msgs::Pose2D foot_pose = get_step.response.footsteps[ix].pose;
 
         // log footsteps
-        msg << "Foot Step #" << ix + 1 << " [ " << foot << "] - ["
-            << foot_pose.x << ", " << foot_pose.y << " | " << (foot_pose.theta * 180 / M_PI) << "]";
-        log(Info, msg.str());
+        msg_stream << "Foot Step #" << ix + 1 << " [ " << foot << "] - ["
+                   << foot_pose.x << ", " << foot_pose.y << " | " << (foot_pose.theta * 180 / M_PI) << "]";
+        log(Info, msg_stream.str());
 
         preview_foot_steps_.push_back(foot_pose);
         preview_foot_types_.push_back(foot_type);
@@ -898,7 +908,7 @@ void QNodeThor3::visualizePreviewFootsteps(bool clear)
 
   rviz_marker.id = 1;
   rviz_marker.type = visualization_msgs::Marker::CUBE;
-  rviz_marker.action = !clear ? visualization_msgs::Marker::ADD : visualization_msgs::Marker::DELETE;
+  rviz_marker.action = (clear == false) ? visualization_msgs::Marker::ADD : visualization_msgs::Marker::DELETE;
 
   rviz_marker.scale.x = 0.216;
   rviz_marker.scale.y = 0.144;
@@ -907,30 +917,30 @@ void QNodeThor3::visualizePreviewFootsteps(bool clear)
   double alpha = 0.7;
   double height = -0.723;
 
-  for(int ix = preview_foot_types_.size(); ix > 0; ix--)
+  for(int ix = preview_foot_types_.size() - 1; ix >= 0; ix--)
   {
     // foot step marker array
     rviz_marker.id += 10;
 
     if(!clear)
     {
-      Eigen::Vector3d marker_position(preview_foot_steps_[ix - 1].x, preview_foot_steps_[ix - 1].y, height);
+      Eigen::Vector3d marker_position(preview_foot_steps_[ix].x, preview_foot_steps_[ix].y, height);
       Eigen::Vector3d marker_position_offset;
 
-      Eigen::Vector3d toward(1, 0, 0), direction(cos(preview_foot_steps_[ix - 1].theta), sin(preview_foot_steps_[ix - 1].theta), 0);
+      Eigen::Vector3d toward(1, 0, 0), direction(cos(preview_foot_steps_[ix].theta), sin(preview_foot_steps_[ix].theta), 0);
       Eigen::Quaterniond marker_orientation(Eigen::Quaterniond::FromTwoVectors(toward, direction));
 
-      if(DEBUG)
+      if(debug_print_)
       {
         std::stringstream msg;
-        msg << "Foot Step #" << ix << " [ " << preview_foot_types_[ix - 1] << "] - ["
+        msg << "Foot Step #" << ix << " [ " << preview_foot_types_[ix] << "] - ["
             << rviz_marker.pose.position.x << ", " << rviz_marker.pose.position.y << "]";
         log(Info, msg.str());
       }
       alpha *= 0.9;
 
       // set foot step color
-      if(preview_foot_types_[ix - 1] == humanoid_nav_msgs::StepTarget::left)             // left
+      if(preview_foot_types_[ix] == humanoid_nav_msgs::StepTarget::left)             // left
       {
         rviz_marker.color.r = 0.0;
         rviz_marker.color.g = 0.0;
@@ -941,7 +951,7 @@ void QNodeThor3::visualizePreviewFootsteps(bool clear)
         marker_position_offset = marker_orientation.toRotationMatrix() * offset_y;
 
       }
-      else if(preview_foot_types_[ix - 1] == humanoid_nav_msgs::StepTarget::right)       //right
+      else if(preview_foot_types_[ix] == humanoid_nav_msgs::StepTarget::right)       //right
       {
         rviz_marker.color.r = 1.0;
         rviz_marker.color.g = 0.0;
@@ -964,16 +974,21 @@ void QNodeThor3::visualizePreviewFootsteps(bool clear)
   }
 
   // publish foot step marker array
-  if(clear == false) log(Info, "Visualize Preview Footstep Marker Array");
-  else log(Info, "Clear Visualize Preview Footstep Marker Array");
+  if(clear == false)
+    log(Info, "Visualize Preview Footstep Marker Array");
+  else
+    log(Info, "Clear Visualize Preview Footstep Marker Array");
 
   marker_pub_.publish(marker_array);
 }
 
-
 void QNodeThor3::setBalanceParameter()
 {
-  if(set_balance_param_client_.call(set_balance_param_srv_) == true)
+  bool service_result = false;
+
+  // call service
+  service_result = set_balance_param_client_.call(set_balance_param_srv_);
+  if(service_result == true)
   {
     int _result = set_balance_param_srv_.response.result;
     if( _result == thormang3_walking_module_msgs::SetBalanceParam::Response::NO_ERROR)
@@ -1056,10 +1071,11 @@ bool QNodeThor3::loadBalanceParameterFromYaml()
 
 void QNodeThor3::turnOnBalance()
 {
-  if(loadBalanceParameterFromYaml() == false)
-  {
+  // load param from yaml file
+  bool result_load = loadBalanceParameterFromYaml();
+
+  if(result_load == false)
     return;
-  }
 
   setBalanceParameter();
 
@@ -1068,10 +1084,11 @@ void QNodeThor3::turnOnBalance()
 
 void QNodeThor3::turnOffBalance()
 {
-  if(loadBalanceParameterFromYaml() == false)
-  {
+  // load param from yaml file
+  bool result_load = loadBalanceParameterFromYaml();
+
+  if(result_load == false)
     return;
-  }
 
   set_balance_param_srv_.request.updating_duration                             = 2.0;
   set_balance_param_srv_.request.balance_param.gyro_gain                       = 0.0;
@@ -1090,7 +1107,7 @@ void QNodeThor3::turnOffBalance()
 
 
 // Motion
-void QNodeThor3::playMotion(int motion_index, bool to_actionScript)
+void QNodeThor3::playMotion(int motion_index, bool to_action_script)
 {
   if(motion_table_.find(motion_index) == motion_table_.end())
   {
@@ -1098,32 +1115,32 @@ void QNodeThor3::playMotion(int motion_index, bool to_actionScript)
     return;
   }
 
-  std::stringstream ss;
+  std::stringstream log_stream;
   switch(motion_index)
   {
     case -2:
-      ss << "Break Motion";
+      log_stream << "BRAKE Motion";
       break;
 
     case -1:
-      ss << "STOP Motion";
+      log_stream << "STOP Motion";
       break;
 
     default:
       std::string motion_name = motion_table_[motion_index];
-      ss << "Play Motion : [" << motion_index << "] " << motion_name;
+      log_stream << "Play Motion : [" << motion_index << "] " << motion_name;
   }
 
   // publish motion index
   std_msgs::Int32 motion_msg;
   motion_msg.data = motion_index;
 
-  if(to_actionScript == true)
+  if(to_action_script == true)
     motion_index_pub_.publish(motion_msg);
   else
     motion_page_pub_.publish(motion_msg);
 
-  log(Info, ss.str());
+  log(Info, log_stream.str());
 }
 
 void QNodeThor3::poseCallback(const geometry_msgs::Pose::ConstPtr &msg)
@@ -1155,7 +1172,7 @@ void QNodeThor3::poseCallback(const geometry_msgs::Pose::ConstPtr &msg)
 // demo
 void QNodeThor3::pointStampedCallback(const geometry_msgs::PointStamped::ConstPtr &msg)
 {
-  ROS_INFO("clicked_point");
+  ROS_INFO("get position from rviz");
 
   frame_id_ = msg->header.frame_id;
 
@@ -1188,12 +1205,15 @@ void QNodeThor3::interactiveMarkerFeedback(const visualization_msgs::Interactive
 
     case visualization_msgs::InteractiveMarkerFeedback::MOUSE_UP:
       break;
+
+    default:
+      break;
   }
 
   interactive_marker_server_->applyChanges();
 }
 
-void QNodeThor3::makeInteractiveMarker(const geometry_msgs::Pose &pose)
+void QNodeThor3::makeInteractiveMarker(const geometry_msgs::Pose &marker_pose)
 {
   if(frame_id_ == "")
   {
@@ -1203,135 +1223,140 @@ void QNodeThor3::makeInteractiveMarker(const geometry_msgs::Pose &pose)
     frame_id_ = "world";
   }
 
-  ROS_INFO_STREAM("Make Interactive Marker! - " << pose.position.x << ", " << pose.position.y << ", " << pose.position.z
-                  << " [" <<  pose.orientation.x << ", " << pose.orientation.y << ", " << pose.orientation.z << " | " << pose.orientation.w << "]");
+  ROS_INFO_STREAM("Make Interactive Marker! - " << marker_pose.position.x
+                  << ", " << marker_pose.position.y
+                  << ", " << marker_pose.position.z
+                  << " [" <<  marker_pose.orientation.x
+                  << ", " << marker_pose.orientation.y
+                  << ", " << marker_pose.orientation.z
+                  << " | " << marker_pose.orientation.w << "]");
 
   interactive_marker_server_->clear();
 
-  visualization_msgs::InteractiveMarker _interactive_marker;
-  _interactive_marker.pose = pose;    // set pose
+  visualization_msgs::InteractiveMarker interactive_marker;
+  interactive_marker.pose = marker_pose;    // set pose
 
 
   // Visualize Interactive Marker
-  _interactive_marker.header.frame_id = frame_id_;
-  _interactive_marker.scale = 0.3;
+  interactive_marker.header.frame_id = frame_id_;
+  interactive_marker.scale = 0.3;
 
-  _interactive_marker.name = marker_name_; //"pose_marker";
-  _interactive_marker.description = "3D Pose Control";
+  interactive_marker.name = marker_name_; //"pose_marker";
+  interactive_marker.description = "3D Pose Control";
 
   // ----- center marker
-  visualization_msgs::InteractiveMarkerControl _interactive_marker_control;
+  visualization_msgs::InteractiveMarkerControl center_marker_control;
 
-  _interactive_marker_control.always_visible = true;
+  center_marker_control.always_visible = true;
+  center_marker_control.interaction_mode = visualization_msgs::InteractiveMarkerControl::NONE;
 
-  visualization_msgs::Marker _marker;
+  visualization_msgs::Marker marker;
 
-  _marker.type = visualization_msgs::Marker::CUBE;
+  marker.type = visualization_msgs::Marker::CUBE;
 
   // center cube
-  _marker.scale.x = 0.03;
-  _marker.scale.y = 0.03;
-  _marker.scale.z = 0.03;
+  marker.scale.x = 0.03;
+  marker.scale.y = 0.03;
+  marker.scale.z = 0.03;
 
-  _marker.color.r = 1.0;
-  _marker.color.g = 0.5;
-  _marker.color.b = 0.5;
-  _marker.color.a = 1.0;
+  marker.color.r = 1.0;
+  marker.color.g = 0.5;
+  marker.color.b = 0.5;
+  marker.color.a = 1.0;
 
-  _interactive_marker_control.markers.push_back(_marker);
+  center_marker_control.markers.push_back(marker);
 
   // axis x
-  _marker.pose.position.x = 0.05;
-  _marker.pose.position.y = 0.0;
-  _marker.pose.position.z = 0.0;
+  marker.pose.position.x = 0.05;
+  marker.pose.position.y = 0.0;
+  marker.pose.position.z = 0.0;
 
-  _marker.scale.x = 0.1;
-  _marker.scale.y = 0.01;
-  _marker.scale.z = 0.01;
+  marker.scale.x = 0.1;
+  marker.scale.y = 0.01;
+  marker.scale.z = 0.01;
 
-  _marker.color.r = 1.0;
-  _marker.color.g = 0.0;
-  _marker.color.b = 0.0;
-  _marker.color.a = 1.0;
+  marker.color.r = 1.0;
+  marker.color.g = 0.0;
+  marker.color.b = 0.0;
+  marker.color.a = 1.0;
 
-  _interactive_marker_control.markers.push_back(_marker);
+  center_marker_control.markers.push_back(marker);
 
   // axis y
-  _marker.pose.position.x = 0.0;
-  _marker.pose.position.y = 0.05;
-  _marker.pose.position.z = 0.0;
+  marker.pose.position.x = 0.0;
+  marker.pose.position.y = 0.05;
+  marker.pose.position.z = 0.0;
 
-  _marker.scale.x = 0.01;
-  _marker.scale.y = 0.1;
-  _marker.scale.z = 0.01;
+  marker.scale.x = 0.01;
+  marker.scale.y = 0.1;
+  marker.scale.z = 0.01;
 
-  _marker.color.r = 0.0;
-  _marker.color.g = 1.0;
-  _marker.color.b = 0.0;
-  _marker.color.a = 1.0;
+  marker.color.r = 0.0;
+  marker.color.g = 1.0;
+  marker.color.b = 0.0;
+  marker.color.a = 1.0;
 
-  _interactive_marker_control.markers.push_back(_marker);
+  center_marker_control.markers.push_back(marker);
 
   // axis z
-  _marker.pose.position.x = 0.0;
-  _marker.pose.position.y = 0.0;
-  _marker.pose.position.z = 0.05;
+  marker.pose.position.x = 0.0;
+  marker.pose.position.y = 0.0;
+  marker.pose.position.z = 0.05;
 
-  _marker.scale.x = 0.01;
-  _marker.scale.y = 0.01;
-  _marker.scale.z = 0.1;
+  marker.scale.x = 0.01;
+  marker.scale.y = 0.01;
+  marker.scale.z = 0.1;
 
-  _marker.color.r = 0.0;
-  _marker.color.g = 0.0;
-  _marker.color.b = 1.0;
-  _marker.color.a = 1.0;
+  marker.color.r = 0.0;
+  marker.color.g = 0.0;
+  marker.color.b = 1.0;
+  marker.color.a = 1.0;
 
-  _interactive_marker_control.markers.push_back(_marker);
+  center_marker_control.markers.push_back(marker);
 
-  _interactive_marker.controls.push_back(_interactive_marker_control);
+  interactive_marker.controls.push_back(center_marker_control);
 
   // ----- controller
-  visualization_msgs::InteractiveMarkerControl _interactive_control;
-  _interactive_marker.controls[0].interaction_mode = visualization_msgs::InteractiveMarkerControl::NONE;
+  visualization_msgs::InteractiveMarkerControl interactive_control;
 
   // move and rotate along axis x : default
-  _interactive_control.orientation.x = 1;
-  _interactive_control.orientation.y = 0;
-  _interactive_control.orientation.z = 0;
-  _interactive_control.orientation.w = 1;
-  _interactive_control.name = "rotate";
-  _interactive_control.interaction_mode = visualization_msgs::InteractiveMarkerControl::ROTATE_AXIS;
-  _interactive_marker.controls.push_back(_interactive_control);
-  _interactive_control.name = "move";
-  _interactive_control.interaction_mode = visualization_msgs::InteractiveMarkerControl::MOVE_AXIS;
-  _interactive_marker.controls.push_back(_interactive_control);
+  interactive_control.orientation.x = 1;
+  interactive_control.orientation.y = 0;
+  interactive_control.orientation.z = 0;
+  interactive_control.orientation.w = 1;
+  interactive_control.name = "rotate";
+  interactive_control.interaction_mode = visualization_msgs::InteractiveMarkerControl::ROTATE_AXIS;
+  interactive_marker.controls.push_back(interactive_control);
+  interactive_control.name = "move";
+  interactive_control.interaction_mode = visualization_msgs::InteractiveMarkerControl::MOVE_AXIS;
+  interactive_marker.controls.push_back(interactive_control);
 
   // move and rotate along axis y
-  _interactive_control.orientation.x = 0;
-  _interactive_control.orientation.y = 1;
-  _interactive_control.orientation.z = 0;
-  _interactive_control.orientation.w = 1;
-  _interactive_control.name = "rotate";
-  _interactive_control.interaction_mode = visualization_msgs::InteractiveMarkerControl::ROTATE_AXIS;
-  _interactive_marker.controls.push_back(_interactive_control);
-  _interactive_control.name = "move";
-  _interactive_control.interaction_mode = visualization_msgs::InteractiveMarkerControl::MOVE_AXIS;
-  _interactive_marker.controls.push_back(_interactive_control);
+  interactive_control.orientation.x = 0;
+  interactive_control.orientation.y = 1;
+  interactive_control.orientation.z = 0;
+  interactive_control.orientation.w = 1;
+  interactive_control.name = "rotate";
+  interactive_control.interaction_mode = visualization_msgs::InteractiveMarkerControl::ROTATE_AXIS;
+  interactive_marker.controls.push_back(interactive_control);
+  interactive_control.name = "move";
+  interactive_control.interaction_mode = visualization_msgs::InteractiveMarkerControl::MOVE_AXIS;
+  interactive_marker.controls.push_back(interactive_control);
 
   // move and rotate along axis z
-  _interactive_control.orientation.x = 0;
-  _interactive_control.orientation.y = 0;
-  _interactive_control.orientation.z = 1;
-  _interactive_control.orientation.w = 1;
-  _interactive_control.name = "rotate";
-  _interactive_control.interaction_mode = visualization_msgs::InteractiveMarkerControl::ROTATE_AXIS;
-  _interactive_marker.controls.push_back(_interactive_control);
-  _interactive_control.name = "move";
-  _interactive_control.interaction_mode = visualization_msgs::InteractiveMarkerControl::MOVE_AXIS;
-  _interactive_marker.controls.push_back(_interactive_control);
+  interactive_control.orientation.x = 0;
+  interactive_control.orientation.y = 0;
+  interactive_control.orientation.z = 1;
+  interactive_control.orientation.w = 1;
+  interactive_control.name = "rotate";
+  interactive_control.interaction_mode = visualization_msgs::InteractiveMarkerControl::ROTATE_AXIS;
+  interactive_marker.controls.push_back(interactive_control);
+  interactive_control.name = "move";
+  interactive_control.interaction_mode = visualization_msgs::InteractiveMarkerControl::MOVE_AXIS;
+  interactive_marker.controls.push_back(interactive_control);
 
-  interactive_marker_server_->insert(_interactive_marker);
-  interactive_marker_server_->setCallback(_interactive_marker.name, boost::bind(&QNodeThor3::interactiveMarkerFeedback, this, _1));
+  interactive_marker_server_->insert(interactive_marker);
+  interactive_marker_server_->setCallback(interactive_marker.name, boost::bind(&QNodeThor3::interactiveMarkerFeedback, this, _1));
 
   interactive_marker_server_->applyChanges();
 }
@@ -1340,14 +1365,17 @@ void QNodeThor3::updateInteractiveMarker(const geometry_msgs::Pose &pose)
 {
   ROS_INFO("Update Interactive Marker Pose");
 
-  visualization_msgs::InteractiveMarker _interactive_marker;
-  if(!(interactive_marker_server_->get(marker_name_, _interactive_marker)))
+  visualization_msgs::InteractiveMarker interactive_marker;
+  bool result_getting = false;
+
+  result_getting = interactive_marker_server_->get(marker_name_, interactive_marker);
+  if(result_getting == false)
   {
     ROS_ERROR("No Interactive marker to set pose");
     return;
   }
 
-  interactive_marker_server_->setPose(_interactive_marker.name, pose);
+  interactive_marker_server_->setPose(interactive_marker.name, pose);
   interactive_marker_server_->applyChanges();
 }
 
@@ -1377,31 +1405,12 @@ void QNodeThor3::clearInteractiveMarker()
   interactive_marker_server_->applyChanges();
 }
 
-void QNodeThor3::manipulationDemo(const int &index)
-{
-  switch(index)
-  {
-    case 2:
-    {
-      enableControlModule("head control");
-
-      usleep(10 * 1000);
-
-      // scan
-      assembleLidar();
-    }
-
-    default:
-      break;
-
-  }
-}
-
 void QNodeThor3::kickDemo(const std::string &kick_foot)
 {
   if(kick_foot == "right kick")
   {
-    if(loadBalanceParameterFromYaml() == false)
+    bool result = loadBalanceParameterFromYaml();
+    if(result == false)
       return;
 
     double old_hip_swap = set_balance_param_srv_.request.balance_param.hip_roll_swap_angle_rad;
@@ -1414,17 +1423,21 @@ void QNodeThor3::kickDemo(const std::string &kick_foot)
     msg.command = kick_foot;
     setWalkingCommand(msg);
 
+    // wait for kick
     usleep(7.2 * 1000 * 1000);
 
     set_balance_param_srv_.request.balance_param.hip_roll_swap_angle_rad = old_hip_swap;
     set_balance_param_srv_.request.balance_param.cob_x_offset_m += 0.03;
     set_balance_param_srv_.request.balance_param.cob_y_offset_m -= 0.02;
     setBalanceParameter();
-    usleep(2 * 1000*1000);
+
+    // wait for recovering balance
+    usleep(2 * 1000 * 1000);
   }
   else if(kick_foot == "left kick")
   {
-    if(loadBalanceParameterFromYaml() == false)
+    bool result = loadBalanceParameterFromYaml();
+    if(result == false)
       return;
 
     double old_hip_swap = set_balance_param_srv_.request.balance_param.hip_roll_swap_angle_rad;
@@ -1436,13 +1449,16 @@ void QNodeThor3::kickDemo(const std::string &kick_foot)
     msg.command = kick_foot;
     setWalkingCommand(msg);
 
+    // wait for kick
     usleep(7.2 * 1000 * 1000);
 
     set_balance_param_srv_.request.balance_param.hip_roll_swap_angle_rad = old_hip_swap;
     set_balance_param_srv_.request.balance_param.cob_x_offset_m += 0.03;
     set_balance_param_srv_.request.balance_param.cob_y_offset_m += 0.02;
     setBalanceParameter();
-    usleep(2 * 1000*1000);
+
+    // wait for recovering balance
+    usleep(2 * 1000 * 1000);
   }
 }
 
@@ -1507,6 +1523,7 @@ void QNodeThor3::log( const LogLevel &level, const std::string &msg, std::string
 
   QVariant new_row(QString(logging_model_msg.str().c_str()));
   logging_model_.setData(logging_model_.index(logging_model_.rowCount()-1),new_row);
+
   Q_EMIT loggingUpdated(); // used to readjust the scrollbar
 }
 
@@ -1517,4 +1534,4 @@ void QNodeThor3::clearLog()
   logging_model_.removeRows(0, logging_model_.rowCount());
 }
 
-}  // namespace thor3_control
+}  // namespace thormang3_demo

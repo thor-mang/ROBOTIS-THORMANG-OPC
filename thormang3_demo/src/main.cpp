@@ -49,7 +49,7 @@ int main(int argc, char **argv) {
     ** Qt
     **********************/
     QApplication app(argc, argv);
-    thor3_control::MainWindow w(argc,argv);
+    thormang3_demo::MainWindow w(argc,argv);
     w.show();
     app.connect(&app, SIGNAL(lastWindowClosed()), &app, SLOT(quit()));
     int result = app.exec();

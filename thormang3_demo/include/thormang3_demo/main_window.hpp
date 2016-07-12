@@ -46,7 +46,7 @@
 ** Namespace
 *****************************************************************************/
 
-namespace thor3_control {
+namespace thormang3_demo {
 
 /*****************************************************************************
 ** Interface [MainWindow]
@@ -177,12 +177,8 @@ class MainWindow : public QMainWindow {
   void playMotion(int motion_index);
 
  private:
-  Ui::MainWindowDesign ui_;
-  QNodeThor3 qnode_thor3_;
-  bool DEBUG;
-  bool DEMO_MODE;
-  bool is_updating_;
-  std::map< std::string, QList<QWidget *> > module_ui_table_;
+  const double GRIPPER_ON_ANGLE = 60;
+  const double GRIPPER_OFF_ANGLE = 0;
 
   void setUserShortcut();
   void initModeUnit();
@@ -214,18 +210,27 @@ class MainWindow : public QMainWindow {
   Eigen::MatrixXd rotationX(const double &angle );
   Eigen::MatrixXd rotationY(const double &angle );
   Eigen::MatrixXd rotationZ(const double &angle );
+
+  Ui::MainWindowDesign ui_;
+  QNodeThor3 qnode_thor3_;
+  bool debug_print_;
+  bool demo_mode_;
+  bool is_updating_;
+  std::map< std::string, QList<QWidget *> > module_ui_table_;
 };
 
-template <typename T> T deg2rad(T deg)
+template <typename T>
+T deg2rad(T deg)
 {
     return deg * M_PI / 180;
 }
 
-template <typename T> T rad2deg(T rad)
+template <typename T>
+T rad2deg(T rad)
 {
     return rad * 180 / M_PI;
 }
 
-}  // namespace thor3_control
+}  // namespace thormang3_demo
 
 #endif // thormang3_demo_MAIN_WINDOW_H
