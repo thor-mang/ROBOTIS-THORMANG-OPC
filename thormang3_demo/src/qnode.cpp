@@ -1,66 +1,64 @@
 /*******************************************************************************
-* Copyright (c) 2016, ROBOTIS CO., LTD.
-* All rights reserved.
-*
-* Redistribution and use in source and binary forms, with or without
-* modification, are permitted provided that the following conditions are met:
-*
-* * Redistributions of source code must retain the above copyright notice, this
-*   list of conditions and the following disclaimer.
-*
-* * Redistributions in binary form must reproduce the above copyright notice,
-*   this list of conditions and the following disclaimer in the documentation
-*   and/or other materials provided with the distribution.
-*
-* * Neither the name of ROBOTIS nor the names of its
-*   contributors may be used to endorse or promote products derived from
-*   this software without specific prior written permission.
-*
-* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-* AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-* IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-* DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-* FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-* DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-* SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-* CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-* OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-* OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*******************************************************************************/
-
+ * Copyright (c) 2016, ROBOTIS CO., LTD.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * * Redistributions of source code must retain the above copyright notice, this
+ *   list of conditions and the following disclaimer.
+ *
+ * * Redistributions in binary form must reproduce the above copyright notice,
+ *   this list of conditions and the following disclaimer in the documentation
+ *   and/or other materials provided with the distribution.
+ *
+ * * Neither the name of ROBOTIS nor the names of its
+ *   contributors may be used to endorse or promote products derived from
+ *   this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *******************************************************************************/
 
 /* Author: Kayman Jung */
 
-
 /*****************************************************************************
-** Includes
-*****************************************************************************/
+ ** Includes
+ *****************************************************************************/
 
 #include "../include/thormang3_demo/qnode.hpp"
 
 /*****************************************************************************
-** Namespaces
-*****************************************************************************/
+ ** Namespaces
+ *****************************************************************************/
 
 namespace thormang3_demo
 {
 
 /*****************************************************************************
-** Implementation
-*****************************************************************************/
+ ** Implementation
+ *****************************************************************************/
 
-QNodeThor3::QNodeThor3(int argc, char** argv )
-  : init_argc_(argc)
-  , init_argv_(argv)
-  , marker_name_("THORMANG3_demo_marker")
+QNodeThor3::QNodeThor3(int argc, char** argv)
+    : init_argc_(argc),
+      init_argv_(argv),
+      marker_name_("THORMANG3_demo_marker")
 {
   // code to DEBUG
   debug_print_ = false;
 
-  if(argc >= 2)
+  if (argc >= 2)
   {
     std::string debug_code(argv[1]);
-    if(debug_code == "debug")
+    if (debug_code == "debug")
       debug_print_ = true;
     else
       debug_print_ = false;
@@ -69,9 +67,9 @@ QNodeThor3::QNodeThor3(int argc, char** argv )
 
 QNodeThor3::~QNodeThor3()
 {
-  if(ros::isStarted())
+  if (ros::isStarted())
   {
-    ros::shutdown(); // explicitly needed since we use ros::start();
+    ros::shutdown();  // explicitly needed since we use ros::start();
     ros::waitForShutdown();
   }
 
@@ -87,16 +85,19 @@ bool QNodeThor3::init()
     return false;
   }
 
-  ros::start(); // explicitly needed since our nodehandle is going out of scope.
+  ros::start();  // explicitly needed since our nodehandle is going out of scope.
 
   ros::NodeHandle nh;
 
   // Add your ros communications here.
   status_msg_sub_ = nh.subscribe("/robotis/status", 10, &QNodeThor3::statusMsgCallback, this);
-  current_module_control_sub_ = nh.subscribe("/robotis/present_joint_ctrl_modules", 10, &QNodeThor3::refreshCurrentJointControlCallback, this);
-  current_joint_states_sub_ = nh.subscribe("/robotis/present_joint_states", 10, &QNodeThor3::updateHeadJointStatesCallback, this);
+  current_module_control_sub_ = nh.subscribe("/robotis/present_joint_ctrl_modules", 10,
+                                             &QNodeThor3::refreshCurrentJointControlCallback, this);
+  current_joint_states_sub_ = nh.subscribe("/robotis/present_joint_states", 10,
+                                           &QNodeThor3::updateHeadJointStatesCallback, this);
 
-  get_module_control_client_ = nh.serviceClient<robotis_controller_msgs::GetJointModule>("/robotis/get_present_joint_ctrl_modules");
+  get_module_control_client_ = nh.serviceClient<robotis_controller_msgs::GetJointModule>(
+      "/robotis/get_present_joint_ctrl_modules");
 
   move_lidar_pub_ = nh.advertise<std_msgs::String>("/robotis/head_control/move_lidar", 0);
   module_control_pub_ = nh.advertise<robotis_controller_msgs::JointCtrlModule>("/robotis/set_joint_ctrl_modules", 0);
@@ -108,22 +109,30 @@ bool QNodeThor3::init()
 
   // demo
   rviz_clicked_point_sub_ = nh.subscribe("clicked_point", 0, &QNodeThor3::pointStampedCallback, this);
-  interactive_marker_server_.reset( new interactive_markers::InteractiveMarkerServer("THORMANG_Pose","",false) );
+  interactive_marker_server_.reset(new interactive_markers::InteractiveMarkerServer("THORMANG_Pose", "", false));
 
   // Manipulation
-  kenematics_pose_sub_ = nh.subscribe("/thormang3_demo/ik_target_pose", 10, &QNodeThor3::getKinematicsPoseCallback, this);
+  kenematics_pose_sub_ = nh.subscribe("/thormang3_demo/ik_target_pose", 10, &QNodeThor3::getKinematicsPoseCallback,
+                                      this);
 
   send_ini_pose_msg_pub_ = nh.advertise<std_msgs::String>("/robotis/manipulation/ini_pose_msg", 0);
-  send_des_joint_msg_pub_ = nh.advertise<thormang3_manipulation_module_msgs::JointPose>("/robotis/manipulation/joint_pose_msg", 0);
-  send_ik_msg_pub_ = nh.advertise<thormang3_manipulation_module_msgs::KinematicsPose>("/robotis/manipulation/kinematics_pose_msg", 0);
+  send_des_joint_msg_pub_ = nh.advertise<thormang3_manipulation_module_msgs::JointPose>(
+      "/robotis/manipulation/joint_pose_msg", 0);
+  send_ik_msg_pub_ = nh.advertise<thormang3_manipulation_module_msgs::KinematicsPose>(
+      "/robotis/manipulation/kinematics_pose_msg", 0);
 
-  get_joint_pose_client_ = nh.serviceClient<thormang3_manipulation_module_msgs::GetJointPose>("/robotis/manipulation/get_joint_pose");
-  get_kinematics_pose_client_ = nh.serviceClient<thormang3_manipulation_module_msgs::GetKinematicsPose>("/robotis/manipulation/get_kinematics_pose");
+  get_joint_pose_client_ = nh.serviceClient<thormang3_manipulation_module_msgs::GetJointPose>(
+      "/robotis/manipulation/get_joint_pose");
+  get_kinematics_pose_client_ = nh.serviceClient<thormang3_manipulation_module_msgs::GetKinematicsPose>(
+      "/robotis/manipulation/get_kinematics_pose");
 
   // Walking
-  set_balance_param_client_   = nh.serviceClient<thormang3_walking_module_msgs::SetBalanceParam>("/robotis/walking/set_balance_param");
-  set_walking_command_pub_ = nh.advertise<thormang3_foot_step_generator::FootStepCommand>("/robotis/thormang3_foot_step_generator/walking_command", 0);
-  set_walking_footsteps_pub_ = nh.advertise<thormang3_foot_step_generator::Step2DArray>("/robotis/thormang3_foot_step_generator/footsteps_2d", 0);
+  set_balance_param_client_ = nh.serviceClient<thormang3_walking_module_msgs::SetBalanceParam>(
+      "/robotis/walking/set_balance_param");
+  set_walking_command_pub_ = nh.advertise<thormang3_foot_step_generator::FootStepCommand>(
+      "/robotis/thormang3_foot_step_generator/walking_command", 0);
+  set_walking_footsteps_pub_ = nh.advertise<thormang3_foot_step_generator::Step2DArray>(
+      "/robotis/thormang3_foot_step_generator/footsteps_2d", 0);
   set_walking_balance_pub_ = nh.advertise<std_msgs::Bool>("/robotis/thormang3_foot_step_generator/balance_command", 0);
 
   humanoid_footstep_client_ = nh.serviceClient<humanoid_nav_msgs::PlanFootsteps>("plan_footsteps");
@@ -138,11 +147,11 @@ bool QNodeThor3::init()
   motion_page_pub_ = nh.advertise<std_msgs::Int32>("/robotis/action/page_num", 0);
 
   // Config
-  std::string default_config_path = ros::package::getPath("thormang3_demo") +"/config/demo_config.yaml";
+  std::string default_config_path = ros::package::getPath("thormang3_demo") + "/config/demo_config.yaml";
   std::string config_path = nh.param<std::string>("demo_config", default_config_path);
   parseJointNameFromYaml(config_path);
 
-  std::string motion_path = ros::package::getPath("thormang3_demo") +"/config/motion.yaml";
+  std::string motion_path = ros::package::getPath("thormang3_demo") + "/config/motion.yaml";
   parseMotionMapFromYaml(motion_path);
 
   // set start time
@@ -167,7 +176,7 @@ void QNodeThor3::run()
   interactive_marker_server_.reset();
 
   std::cout << "Ros shutdown, proceeding to close the gui." << std::endl;
-  Q_EMIT rosShutdown(); // used to signal the gui for a shutdown (useful to roslaunch)
+  Q_EMIT rosShutdown();  // used to signal the gui for a shutdown (useful to roslaunch)
 }
 
 void QNodeThor3::parseJointNameFromYaml(const std::string &path)
@@ -177,8 +186,7 @@ void QNodeThor3::parseJointNameFromYaml(const std::string &path)
   {
     // load yaml
     doc = YAML::LoadFile(path.c_str());
-  }
-  catch(const std::exception& e)
+  } catch (const std::exception& e)
   {
     ROS_ERROR("Fail to load id_joint table yaml.");
     return;
@@ -186,7 +194,7 @@ void QNodeThor3::parseJointNameFromYaml(const std::string &path)
 
   // parse id_joint table
   YAML::Node id_sub_node = doc["id_joint"];
-  for(YAML::iterator yaml_it = id_sub_node.begin() ; yaml_it != id_sub_node.end() ; ++yaml_it)
+  for (YAML::iterator yaml_it = id_sub_node.begin(); yaml_it != id_sub_node.end(); ++yaml_it)
   {
     int id;
     std::string joint_name;
@@ -201,23 +209,22 @@ void QNodeThor3::parseJointNameFromYaml(const std::string &path)
   }
 
   // parse module
-  std::vector< std::string > modules = doc["module_list"].as< std::vector<std::string> >();
+  std::vector<std::string> modules = doc["module_list"].as<std::vector<std::string> >();
 
   int module_index = 0;
-  for(std::vector<std::string>::iterator module_it = modules.begin() ; module_it != modules.end() ; ++module_it)
+  for (std::vector<std::string>::iterator module_it = modules.begin(); module_it != modules.end(); ++module_it)
   {
-    std::string module_name = *module_it ;
+    std::string module_name = *module_it;
 
-    index_mode_table_[module_index]    = module_name;
-    mode_index_table_[module_name]     = module_index++;
+    index_mode_table_[module_index] = module_name;
+    mode_index_table_[module_name] = module_index++;
 
-    using_mode_table_[module_name]     = false;
+    using_mode_table_[module_name] = false;
   }
-
 
   // parse module_joint preset
   YAML::Node sub_node = doc["module_button"];
-  for(YAML::iterator button_it = sub_node.begin() ; button_it != sub_node.end() ; ++button_it)
+  for (YAML::iterator button_it = sub_node.begin(); button_it != sub_node.end(); ++button_it)
   {
     int key;
     std::string module_name;
@@ -238,8 +245,7 @@ void QNodeThor3::parseMotionMapFromYaml(const std::string &path)
   {
     // load yaml
     doc = YAML::LoadFile(path.c_str());
-  }
-  catch(const std::exception& e)
+  } catch (const std::exception& e)
   {
     ROS_ERROR("Fail to load motion yaml.");
     return;
@@ -247,7 +253,7 @@ void QNodeThor3::parseMotionMapFromYaml(const std::string &path)
 
   // parse motion_table
   YAML::Node motion_sub_node = doc["motion"];
-  for(YAML::iterator motion_it = motion_sub_node.begin() ; motion_it != motion_sub_node.end() ; ++motion_it)
+  for (YAML::iterator motion_it = motion_sub_node.begin(); motion_it != motion_sub_node.end(); ++motion_it)
   {
     int motion_index;
     std::string motion_name;
@@ -267,7 +273,7 @@ bool QNodeThor3::getJointNameFromID(const int &id, std::string &joint_name)
   std::map<int, std::string>::iterator map_it;
 
   map_it = id_joint_table_.find(id);
-  if(map_it == id_joint_table_.end())
+  if (map_it == id_joint_table_.end())
     return false;
 
   joint_name = map_it->second;
@@ -280,7 +286,7 @@ bool QNodeThor3::getIDFromJointName(const std::string &joint_name, int &id)
   std::map<std::string, int>::iterator map_it;
 
   map_it = joint_id_table_.find(joint_name);
-  if(map_it == joint_id_table_.end())
+  if (map_it == joint_id_table_.end())
     return false;
 
   id = map_it->second;
@@ -293,9 +299,9 @@ bool QNodeThor3::getIDJointNameFromIndex(const int &index, int &id, std::string 
   std::map<int, std::string>::iterator map_it;
 
   int count = 0;
-  for(map_it = id_joint_table_.begin(); map_it != id_joint_table_.end(); ++map_it, count++)
+  for (map_it = id_joint_table_.begin(); map_it != id_joint_table_.end(); ++map_it, count++)
   {
-    if(index == count)
+    if (index == count)
     {
       id = map_it->first;
       joint_name = map_it->second;
@@ -312,7 +318,7 @@ std::string QNodeThor3::getModuleName(const int &index)
   std::string mode = "";
   std::map<int, std::string>::iterator map_it = index_mode_table_.find(index);
 
-  if(map_it != index_mode_table_.end())
+  if (map_it != index_mode_table_.end())
     mode = map_it->second;
 
   return mode;
@@ -324,7 +330,7 @@ int QNodeThor3::getModuleIndex(const std::string &mode_name)
   int mode_index = -1;
   std::map<std::string, int>::iterator map_it = mode_index_table_.find(mode_name);
 
-  if(map_it != mode_index_table_.end())
+  if (map_it != mode_index_table_.end())
     mode_index = map_it->second;
 
   return mode_index;
@@ -344,7 +350,8 @@ int QNodeThor3::getJointTableSize()
 
 void QNodeThor3::clearUsingModule()
 {
-  for(std::map<std::string, bool>::iterator map_it = using_mode_table_.begin(); map_it != using_mode_table_.end(); ++map_it)
+  for (std::map<std::string, bool>::iterator map_it = using_mode_table_.begin(); map_it != using_mode_table_.end();
+      ++map_it)
     map_it->second = false;
 }
 
@@ -352,7 +359,7 @@ bool QNodeThor3::isUsingModule(const std::string &module_name)
 {
   std::map<std::string, bool>::iterator map_it = using_mode_table_.find(module_name);
 
-  if(map_it == using_mode_table_.end())
+  if (map_it == using_mode_table_.end())
     return false;
 
   return map_it->second;
@@ -416,13 +423,13 @@ void QNodeThor3::getJointControlModule()
   // get_joint.request
   std::map<int, std::string>::iterator map_it;
   int index = 0;
-  for(map_it = id_joint_table_.begin(); map_it != id_joint_table_.end(); ++map_it, index++)
+  for (map_it = id_joint_table_.begin(); map_it != id_joint_table_.end(); ++map_it, index++)
   {
     get_joint.request.joint_name.push_back(map_it->second);
     service_map[map_it->second] = index;
   }
 
-  if(get_module_control_client_.call(get_joint))
+  if (get_module_control_client_.call(get_joint))
   {
     // get_joint.response
     std::vector<int> modules;
@@ -431,19 +438,19 @@ void QNodeThor3::getJointControlModule()
     // clear current using modules
     clearUsingModule();
 
-    for(int ix = 0; ix < get_joint.response.joint_name.size(); ix++)
+    for (int ix = 0; ix < get_joint.response.joint_name.size(); ix++)
     {
       std::string joint_name = get_joint.response.joint_name[ix];
       std::string module_name = get_joint.response.module_name[ix];
 
       std::map<std::string, int>::iterator service_iter = service_map.find(joint_name);
-      if(service_iter == service_map.end())
+      if (service_iter == service_map.end())
         continue;
 
       index = service_iter->second;
 
       service_iter = mode_index_table_.find(module_name);
-      if(service_iter == mode_index_table_.end())
+      if (service_iter == mode_index_table_.end())
         continue;
 
       ROS_DEBUG_STREAM_COND(debug_print_, "joint[" << ix << "] : " << service_iter->second);
@@ -451,7 +458,7 @@ void QNodeThor3::getJointControlModule()
       modules.at(index) = service_iter->second;
 
       std::map<std::string, bool>::iterator module_iter = using_mode_table_.find(module_name);
-      if(module_iter != using_mode_table_.end())
+      if (module_iter != using_mode_table_.end())
         module_iter->second = true;
     }
 
@@ -476,7 +483,7 @@ void QNodeThor3::refreshCurrentJointControlCallback(const robotis_controller_msg
   // clear current using modules
   clearUsingModule();
 
-  for(int ix = 0; ix < msg->joint_name.size(); ix++)
+  for (int ix = 0; ix < msg->joint_name.size(); ix++)
   {
     std::string joint_name = msg->joint_name[ix];
     std::string module_name = msg->module_name[ix];
@@ -484,20 +491,21 @@ void QNodeThor3::refreshCurrentJointControlCallback(const robotis_controller_msg
     joint_module[joint_name] = getModuleIndex(module_name);
 
     std::map<std::string, bool>::iterator module_iter = using_mode_table_.find(module_name);
-    if(module_iter != using_mode_table_.end())
+    if (module_iter != using_mode_table_.end())
       module_iter->second = true;
   }
 
-  for(int ix = 0; ix < getJointTableSize(); ix++)
+  for (int ix = 0; ix < getJointTableSize(); ix++)
   {
     int id = 0;
-    std::string joint_name= "";
+    std::string joint_name = "";
 
-    if(getIDJointNameFromIndex(ix, id, joint_name) == false)
+    if (getIDJointNameFromIndex(ix, id, joint_name) == false)
       continue;
 
     std::map<std::string, int>::iterator module_iter = joint_module.find(joint_name);
-    if(module_iter == joint_module.end()) continue;
+    if (module_iter == joint_module.end())
+      continue;
 
     ROS_DEBUG_STREAM_COND(debug_print_, "joint[" << ix << "] : " << module_iter->second);
     modules.at(ix) = module_iter->second;
@@ -514,23 +522,24 @@ void QNodeThor3::updateHeadJointStatesCallback(const sensor_msgs::JointState::Co
   double head_pan, head_tilt;
   int count_getting_joint = 0;
 
-  for(int ix = 0; ix < msg->name.size(); ix++)
+  for (int ix = 0; ix < msg->name.size(); ix++)
   {
-    if(msg->name[ix] == "head_y")
+    if (msg->name[ix] == "head_y")
     {
-      head_pan = - msg->position[ix];
+      head_pan = -msg->position[ix];
       count_getting_joint += 1;
     }
-    else if(msg->name[ix] == "head_p")
+    else if (msg->name[ix] == "head_p")
     {
-      head_tilt = - msg->position[ix];
+      head_tilt = -msg->position[ix];
       count_getting_joint += 1;
     }
 
-    if(count_getting_joint == 2) break;
+    if (count_getting_joint == 2)
+      break;
   }
 
-  if(count_getting_joint > 0)
+  if (count_getting_joint > 0)
     Q_EMIT updateHeadJointsAngle(head_pan, head_tilt);
 }
 
@@ -541,7 +550,7 @@ void QNodeThor3::initFTFootCallback(const thormang3_feet_ft_module_msgs::BothWre
   ss << " - Right - " << std::endl << msg->right << std::endl;
   ss << " - Left - " << std::endl << msg->left;
 
-  log( Info , ss.str() );
+  log(Info, ss.str());
 }
 
 void QNodeThor3::setHeadJoint(double pan, double tilt)
@@ -551,126 +560,104 @@ void QNodeThor3::setHeadJoint(double pan, double tilt)
   head_angle_msg.name.push_back("head_y");
   head_angle_msg.name.push_back("head_p");
 
-  head_angle_msg.position.push_back(- pan);
-  head_angle_msg.position.push_back(- tilt);
+  head_angle_msg.position.push_back(-pan);
+  head_angle_msg.position.push_back(-tilt);
 
   set_head_joint_angle_pub_.publish(head_angle_msg);
 }
 
 // Manipulation
-void QNodeThor3::sendInitPoseMsg( std_msgs::String msg )
+void QNodeThor3::sendInitPoseMsg(std_msgs::String msg)
 {
-  send_ini_pose_msg_pub_.publish( msg );
+  send_ini_pose_msg_pub_.publish(msg);
 
-  log( Info , "Send Ini. Pose" );
+  log(Info, "Send Ini. Pose");
 }
 
-void QNodeThor3::sendDestJointMsg( thormang3_manipulation_module_msgs::JointPose msg )
+void QNodeThor3::sendDestJointMsg(thormang3_manipulation_module_msgs::JointPose msg)
 {
-  send_des_joint_msg_pub_.publish( msg );
+  send_des_joint_msg_pub_.publish(msg);
 
-  log( Info , "Set Des. Joint Vale" );
+  log(Info, "Set Des. Joint Vale");
 
   std::stringstream log_msg;
 
-  log_msg << " \n "
-          << "joint name : "
-          << msg.name << " \n "
-          << "joint value : "
-          << msg.value * 180.0 / M_PI << " \n ";
+  log_msg << " \n " << "joint name : " << msg.name << " \n " << "joint value : " << msg.value * 180.0 / M_PI << " \n ";
 
-  log( Info , log_msg.str() );
+  log(Info, log_msg.str());
 }
 
-void QNodeThor3::sendIkMsg( thormang3_manipulation_module_msgs::KinematicsPose msg )
+void QNodeThor3::sendIkMsg(thormang3_manipulation_module_msgs::KinematicsPose msg)
 {
-  send_ik_msg_pub_.publish( msg );
+  send_ik_msg_pub_.publish(msg);
 
-  log( Info , "Solve Inverse Kinematics" );
-  log( Info , "Set Des. End Effector's Pose : " );
+  log(Info, "Solve Inverse Kinematics");
+  log(Info, "Set Des. End Effector's Pose : ");
 
   std::stringstream log_msgs;
 
-  log_msgs << " \n "
-           << "group name : "
-           << msg.name << " \n "
-           << "des. pos. x : "
-           << msg.pose.position.x << " \n "
-           << "des. pos. y : "
-           << msg.pose.position.y << " \n "
-           << "des. pos. z : "
-           << msg.pose.position.z << " \n "
-           << "des. ori. x : "
-           << msg.pose.orientation.x << " \n "
-           << "des. ori. y : "
-           << msg.pose.orientation.y << " \n "
-           << "des. ori. z : "
-           << msg.pose.orientation.z << " \n "
-           << "des. ori. w : "
+  log_msgs << " \n " << "group name : " << msg.name << " \n " << "des. pos. x : " << msg.pose.position.x << " \n "
+           << "des. pos. y : " << msg.pose.position.y << " \n " << "des. pos. z : " << msg.pose.position.z << " \n "
+           << "des. ori. x : " << msg.pose.orientation.x << " \n " << "des. ori. y : " << msg.pose.orientation.y
+           << " \n " << "des. ori. z : " << msg.pose.orientation.z << " \n " << "des. ori. w : "
            << msg.pose.orientation.w << " \n ";
 
-  log( Info , log_msgs.str() );
+  log(Info, log_msgs.str());
 }
 
-void QNodeThor3::getJointPose( std::string joint_name )
+void QNodeThor3::getJointPose(std::string joint_name)
 {
   thormang3_manipulation_module_msgs::GetJointPose get_joint_pose;
 
   // requeset
   get_joint_pose.request.joint_name = joint_name;
 
-  log( Info , "Get Curr. Joint Value" );
+  log(Info, "Get Curr. Joint Value");
 
   std::stringstream log_msg;
 
-  log_msg << " \n "
-          << "joint name : "
-          << joint_name << " \n " ;
+  log_msg << " \n " << "joint name : " << joint_name << " \n ";
 
-  log( Info , log_msg.str() );
+  log(Info, log_msg.str());
 
   //response
-  if( get_joint_pose_client_.call( get_joint_pose ) )
+  if (get_joint_pose_client_.call(get_joint_pose))
   {
     double joint_value = get_joint_pose.response.joint_value;
 
-    log( Info , "Joint Curr. Value" );
+    log(Info, "Joint Curr. Value");
 
     std::stringstream log_msg;
 
-    log_msg << " \n "
-            << "curr. value : "
-            << joint_value << " \n ";
+    log_msg << " \n " << "curr. value : " << joint_value << " \n ";
 
-    log( Info , log_msg.str() );
+    log(Info, log_msg.str());
 
-    Q_EMIT updateCurrJoint( joint_value );
+    Q_EMIT updateCurrJoint(joint_value);
   }
   else
     log(Error, "fail to get joint pose.");
 }
 
-void QNodeThor3::getKinematicsPose (std::string group_name )
+void QNodeThor3::getKinematicsPose(std::string group_name)
 {
   thormang3_manipulation_module_msgs::GetKinematicsPose get_kinematics_pose;
 
   //request
   get_kinematics_pose.request.group_name = group_name;
 
-  log( Info , "Solve Forward Kinematics" );
+  log(Info, "Solve Forward Kinematics");
 
-  log( Info , "Get Curr. End Effector's Pose" );
+  log(Info, "Get Curr. End Effector's Pose");
 
   std::stringstream log_msg;
 
-  log_msg << " \n "
-          << "group name : "
-          << group_name << " \n " ;
+  log_msg << " \n " << "group name : " << group_name << " \n ";
 
-  log( Info , log_msg.str() );
+  log(Info, log_msg.str());
 
   //response
-  if ( get_kinematics_pose_client_.call( get_kinematics_pose ) )
+  if (get_kinematics_pose_client_.call(get_kinematics_pose))
   {
     double pos_x = get_kinematics_pose.response.group_pose.position.x;
     double pos_y = get_kinematics_pose.response.group_pose.position.y;
@@ -681,30 +668,18 @@ void QNodeThor3::getKinematicsPose (std::string group_name )
     double ori_z = get_kinematics_pose.response.group_pose.orientation.z;
     double ori_w = get_kinematics_pose.response.group_pose.orientation.w;
 
-    log( Info , "End Effector Curr. Pose : " );
+    log(Info, "End Effector Curr. Pose : ");
 
     std::stringstream log_msg;
 
-    log_msg << " \n "
-            << "curr. pos. x : "
-            << pos_x << " \n "
-            << "curr. pos. y : "
-            << pos_y << " \n "
-            << "curr. pos. z : "
-            << pos_z << " \n "
-            << "curr. ori. w : "
-            << ori_w << " \n "
-            << "curr. ori. x : "
-            << ori_x << " \n "
-            << "curr. ori. y : "
-            << ori_y << " \n "
-            << "curr. ori. z : "
-            << ori_z << " \n ";
+    log_msg << " \n " << "curr. pos. x : " << pos_x << " \n " << "curr. pos. y : " << pos_y << " \n "
+            << "curr. pos. z : " << pos_z << " \n " << "curr. ori. w : " << ori_w << " \n " << "curr. ori. x : "
+            << ori_x << " \n " << "curr. ori. y : " << ori_y << " \n " << "curr. ori. z : " << ori_z << " \n ";
 
-    log( Info , log_msg.str() );
+    log(Info, log_msg.str());
 
-    Q_EMIT updateCurrPos( pos_x , pos_y , pos_z );
-    Q_EMIT updateCurrOri( ori_x , ori_y , ori_z , ori_w );
+    Q_EMIT updateCurrPos(pos_x, pos_y, pos_z);
+    Q_EMIT updateCurrOri(ori_x, ori_y, ori_z, ori_w);
   }
   else
     log(Error, "fail to get kinematics pose.");
@@ -713,8 +688,8 @@ void QNodeThor3::getKinematicsPose (std::string group_name )
 void QNodeThor3::getKinematicsPoseCallback(const geometry_msgs::Pose::ConstPtr &msg)
 {
   double z_offset = 0.801;
-  Q_EMIT updateCurrPos( msg->position.x , msg->position.y , msg->position.z + z_offset);
-  Q_EMIT updateCurrOri( msg->orientation.x , msg->orientation.y , msg->orientation.z , msg->orientation.w );
+  Q_EMIT updateCurrPos(msg->position.x, msg->position.y, msg->position.z + z_offset);
+  Q_EMIT updateCurrOri(msg->orientation.x, msg->orientation.y, msg->orientation.z, msg->orientation.w);
 }
 
 // Walking
@@ -734,36 +709,37 @@ void QNodeThor3::setWalkingCommand(thormang3_foot_step_generator::FootStepComman
 
 void QNodeThor3::setWalkingBalance(bool on_command)
 {
-  if(on_command == true)
+  if (on_command == true)
     turnOnBalance();
   else
     turnOffBalance();
 }
 
-void QNodeThor3::setWalkingBalanceParam(const double &gyro_gain, const double &ft_gain_ratio, const double &imu_time_const, const double &ft_time_const)
+void QNodeThor3::setWalkingBalanceParam(const double &gyro_gain, const double &ft_gain_ratio,
+                                        const double &imu_time_const, const double &ft_time_const)
 {
   // todo : make the walking balance param msg and fill it, sent to the mpc of thormange3
-  if(loadBalanceParameterFromYaml() == false)
+  if (loadBalanceParameterFromYaml() == false)
   {
     return;
   }
 
-  set_balance_param_srv_.request.updating_duration        = 2.0;
+  set_balance_param_srv_.request.updating_duration = 2.0;
 
-  set_balance_param_srv_.request.balance_param.gyro_gain               = gyro_gain;
-  set_balance_param_srv_.request.balance_param.foot_x_force_gain      *= ft_gain_ratio;
-  set_balance_param_srv_.request.balance_param.foot_y_force_gain      *= ft_gain_ratio;
-  set_balance_param_srv_.request.balance_param.foot_z_force_gain      *= ft_gain_ratio;
-  set_balance_param_srv_.request.balance_param.foot_roll_torque_gain  *= ft_gain_ratio;
+  set_balance_param_srv_.request.balance_param.gyro_gain = gyro_gain;
+  set_balance_param_srv_.request.balance_param.foot_x_force_gain *= ft_gain_ratio;
+  set_balance_param_srv_.request.balance_param.foot_y_force_gain *= ft_gain_ratio;
+  set_balance_param_srv_.request.balance_param.foot_z_force_gain *= ft_gain_ratio;
+  set_balance_param_srv_.request.balance_param.foot_roll_torque_gain *= ft_gain_ratio;
   set_balance_param_srv_.request.balance_param.foot_pitch_torque_gain *= ft_gain_ratio;
 
-  set_balance_param_srv_.request.balance_param.foot_roll_angle_time_constant  = imu_time_const;
+  set_balance_param_srv_.request.balance_param.foot_roll_angle_time_constant = imu_time_const;
   set_balance_param_srv_.request.balance_param.foot_pitch_angle_time_constant = imu_time_const;
 
-  set_balance_param_srv_.request.balance_param.foot_x_force_time_constant      = ft_time_const;
-  set_balance_param_srv_.request.balance_param.foot_y_force_time_constant      = ft_time_const;
-  set_balance_param_srv_.request.balance_param.foot_z_force_time_constant      = ft_time_const;
-  set_balance_param_srv_.request.balance_param.foot_roll_torque_time_constant  = ft_time_const;
+  set_balance_param_srv_.request.balance_param.foot_x_force_time_constant = ft_time_const;
+  set_balance_param_srv_.request.balance_param.foot_y_force_time_constant = ft_time_const;
+  set_balance_param_srv_.request.balance_param.foot_z_force_time_constant = ft_time_const;
+  set_balance_param_srv_.request.balance_param.foot_roll_torque_time_constant = ft_time_const;
   set_balance_param_srv_.request.balance_param.foot_pitch_torque_time_constant = ft_time_const;
 
   setBalanceParameter();
@@ -771,12 +747,12 @@ void QNodeThor3::setWalkingBalanceParam(const double &gyro_gain, const double &f
 
 void QNodeThor3::setWalkingFootsteps()
 {
-  if(preview_foot_steps_.size() != preview_foot_types_.size())
+  if (preview_foot_steps_.size() != preview_foot_types_.size())
   {
     log(Error, "Footsteps are corrupted.");
     return;
   }
-  else if(preview_foot_steps_.size() == 0)
+  else if (preview_foot_steps_.size() == 0)
   {
     log(Warn, "No Footsteps");
     return;
@@ -784,14 +760,14 @@ void QNodeThor3::setWalkingFootsteps()
 
   thormang3_foot_step_generator::Step2DArray footsteps;
 
-  for(int ix = 0; ix < preview_foot_steps_.size(); ix++)
+  for (int ix = 0; ix < preview_foot_steps_.size(); ix++)
   {
     thormang3_foot_step_generator::Step2D step;
 
     int type = preview_foot_types_[ix];
-    if(type == humanoid_nav_msgs::StepTarget::right)
+    if (type == humanoid_nav_msgs::StepTarget::right)
       step.moving_foot = thormang3_foot_step_generator::Step2D::RIGHT_FOOT_SWING;
-    else if(type == humanoid_nav_msgs::StepTarget::left)
+    else if (type == humanoid_nav_msgs::StepTarget::left)
       step.moving_foot = thormang3_foot_step_generator::Step2D::LEFT_FOOT_SWING;
     else
       step.moving_foot = thormang3_foot_step_generator::Step2D::STANDING;
@@ -837,15 +813,15 @@ void QNodeThor3::makeFootstepUsingPlanner(const geometry_msgs::Pose &target_foot
 
   Eigen::Vector3d forward, f_x(1, 0, 0);
   forward = goal_orientation.toRotationMatrix() * f_x;
-  double theta = forward.y() > 0 ? acos(forward.x()) : - acos(forward.x());
+  double theta = forward.y() > 0 ? acos(forward.x()) : -acos(forward.x());
   goal.theta = theta;
 
   get_step.request.start = start;
   get_step.request.goal = goal;
 
   std::stringstream call_msg;
-  call_msg << "Start [" << start.x << ", " << start.y << " | " << start.theta << "]"
-           << " , Goal [" << goal.x << ", " << goal.y << " | " << goal.theta << "]";
+  call_msg << "Start [" << start.x << ", " << start.y << " | " << start.theta << "]" << " , Goal [" << goal.x << ", "
+           << goal.y << " | " << goal.theta << "]";
   log(Info, call_msg.str());
 
   // clear visualization
@@ -855,11 +831,11 @@ void QNodeThor3::makeFootstepUsingPlanner(const geometry_msgs::Pose &target_foot
   preview_foot_steps_.clear();
   preview_foot_types_.clear();
 
-  if(humanoid_footstep_client_.call(get_step))
+  if (humanoid_footstep_client_.call(get_step))
   {
-    if(get_step.response.result)
+    if (get_step.response.result)
     {
-      for(int ix = 0; ix < get_step.response.footsteps.size(); ix++)
+      for (int ix = 0; ix < get_step.response.footsteps.size(); ix++)
       {
         // foot step log
         std::stringstream msg_stream;
@@ -868,8 +844,8 @@ void QNodeThor3::makeFootstepUsingPlanner(const geometry_msgs::Pose &target_foot
         geometry_msgs::Pose2D foot_pose = get_step.response.footsteps[ix].pose;
 
         // log footsteps
-        msg_stream << "Foot Step #" << ix + 1 << " [ " << foot << "] - ["
-                   << foot_pose.x << ", " << foot_pose.y << " | " << (foot_pose.theta * 180 / M_PI) << "]";
+        msg_stream << "Foot Step #" << ix + 1 << " [ " << foot << "] - [" << foot_pose.x << ", " << foot_pose.y << " | "
+                   << (foot_pose.theta * 180 / M_PI) << "]";
         log(Info, msg_stream.str());
 
         preview_foot_steps_.push_back(foot_pose);
@@ -896,7 +872,8 @@ void QNodeThor3::makeFootstepUsingPlanner(const geometry_msgs::Pose &target_foot
 
 void QNodeThor3::visualizePreviewFootsteps(bool clear)
 {
-  if(clear && preview_foot_steps_.size() == 0) return;
+  if (clear && preview_foot_steps_.size() == 0)
+    return;
 
   visualization_msgs::MarkerArray marker_array;
   ros::Time now = ros::Time::now();
@@ -917,30 +894,31 @@ void QNodeThor3::visualizePreviewFootsteps(bool clear)
   double alpha = 0.7;
   double height = -0.723;
 
-  for(int ix = preview_foot_types_.size() - 1; ix >= 0; ix--)
+  for (int ix = preview_foot_types_.size() - 1; ix >= 0; ix--)
   {
     // foot step marker array
     rviz_marker.id += 10;
 
-    if(!clear)
+    if (!clear)
     {
       Eigen::Vector3d marker_position(preview_foot_steps_[ix].x, preview_foot_steps_[ix].y, height);
       Eigen::Vector3d marker_position_offset;
 
-      Eigen::Vector3d toward(1, 0, 0), direction(cos(preview_foot_steps_[ix].theta), sin(preview_foot_steps_[ix].theta), 0);
+      Eigen::Vector3d toward(1, 0, 0), direction(cos(preview_foot_steps_[ix].theta), sin(preview_foot_steps_[ix].theta),
+                                                 0);
       Eigen::Quaterniond marker_orientation(Eigen::Quaterniond::FromTwoVectors(toward, direction));
 
-      if(debug_print_)
+      if (debug_print_)
       {
         std::stringstream msg;
-        msg << "Foot Step #" << ix << " [ " << preview_foot_types_[ix] << "] - ["
-            << rviz_marker.pose.position.x << ", " << rviz_marker.pose.position.y << "]";
+        msg << "Foot Step #" << ix << " [ " << preview_foot_types_[ix] << "] - [" << rviz_marker.pose.position.x << ", "
+            << rviz_marker.pose.position.y << "]";
         log(Info, msg.str());
       }
       alpha *= 0.9;
 
       // set foot step color
-      if(preview_foot_types_[ix] == humanoid_nav_msgs::StepTarget::left)             // left
+      if (preview_foot_types_[ix] == humanoid_nav_msgs::StepTarget::left)  // left
       {
         rviz_marker.color.r = 0.0;
         rviz_marker.color.g = 0.0;
@@ -951,7 +929,7 @@ void QNodeThor3::visualizePreviewFootsteps(bool clear)
         marker_position_offset = marker_orientation.toRotationMatrix() * offset_y;
 
       }
-      else if(preview_foot_types_[ix] == humanoid_nav_msgs::StepTarget::right)       //right
+      else if (preview_foot_types_[ix] == humanoid_nav_msgs::StepTarget::right)  //right
       {
         rviz_marker.color.r = 1.0;
         rviz_marker.color.g = 0.0;
@@ -974,7 +952,7 @@ void QNodeThor3::visualizePreviewFootsteps(bool clear)
   }
 
   // publish foot step marker array
-  if(clear == false)
+  if (clear == false)
     log(Info, "Visualize Preview Footstep Marker Array");
   else
     log(Info, "Clear Visualize Preview Footstep Marker Array");
@@ -988,21 +966,21 @@ void QNodeThor3::setBalanceParameter()
 
   // call service
   service_result = set_balance_param_client_.call(set_balance_param_srv_);
-  if(service_result == true)
+  if (service_result == true)
   {
     int _result = set_balance_param_srv_.response.result;
-    if( _result == thormang3_walking_module_msgs::SetBalanceParam::Response::NO_ERROR)
+    if (_result == thormang3_walking_module_msgs::SetBalanceParam::Response::NO_ERROR)
     {
       ROS_INFO("[Demo]  : Succeed to set balance param");
       ROS_INFO("[Demo]  : Please wait 2 sec for turning on balance");
     }
     else
     {
-      if(_result & thormang3_walking_module_msgs::SetBalanceParam::Response::NOT_ENABLED_WALKING_MODULE)
+      if (_result & thormang3_walking_module_msgs::SetBalanceParam::Response::NOT_ENABLED_WALKING_MODULE)
         ROS_ERROR("[Demo]  : BALANCE_PARAM_ERR::NOT_ENABLED_WALKING_MODULE");
-      if(_result & thormang3_walking_module_msgs::SetBalanceParam::Response::PREV_REQUEST_IS_NOT_FINISHED)
+      if (_result & thormang3_walking_module_msgs::SetBalanceParam::Response::PREV_REQUEST_IS_NOT_FINISHED)
         ROS_ERROR("[Demo]  : BALANCE_PARAM_ERR::PREV_REQUEST_IS_NOT_FINISHED");
-      if(_result & thormang3_walking_module_msgs::SetBalanceParam::Response::TIME_CONST_IS_ZERO_OR_NEGATIVE)
+      if (_result & thormang3_walking_module_msgs::SetBalanceParam::Response::TIME_CONST_IS_ZERO_OR_NEGATIVE)
         ROS_ERROR("[Demo]  : BALANCE_PARAM_ERR::TIME_CONST_IS_ZERO_OR_NEGATIVE");
     }
   }
@@ -1020,50 +998,49 @@ bool QNodeThor3::loadBalanceParameterFromYaml()
   {
     // load yaml
     _doc = YAML::LoadFile(balance_yaml_path.c_str());
-  }
-  catch(const std::exception& e)
+  } catch (const std::exception& e)
   {
     ROS_ERROR("Failed to load balance param yaml file.");
     return false;
   }
 
-  double cob_x_offset_m                   = _doc["cob_x_offset_m"].as<double>();
-  double cob_y_offset_m                   = _doc["cob_y_offset_m"].as<double>();
-  double hip_roll_swap_angle_rad          = _doc["hip_roll_swap_angle_rad"].as<double>();
-  double gyro_gain                        = _doc["gyro_gain"].as<double>();
-  double foot_roll_angle_gain             = _doc["foot_roll_angle_gain"].as<double>();
-  double foot_pitch_angle_gain            = _doc["foot_pitch_angle_gain"].as<double>();
-  double foot_x_force_gain                = _doc["foot_x_force_gain"].as<double>();
-  double foot_y_force_gain                = _doc["foot_y_force_gain"].as<double>();
-  double foot_z_force_gain                = _doc["foot_z_force_gain"].as<double>();
-  double foot_roll_torque_gain            = _doc["foot_roll_torque_gain"].as<double>();
-  double foot_pitch_torque_gain           = _doc["foot_pitch_torque_gain"].as<double>();
-  double foot_roll_angle_time_constant    = _doc["foot_roll_angle_time_constant"].as<double>();
-  double foot_pitch_angle_time_constant   = _doc["foot_pitch_angle_time_constant"].as<double>();
-  double foot_x_force_time_constant       = _doc["foot_x_force_time_constant"].as<double>();
-  double foot_y_force_time_constant       = _doc["foot_y_force_time_constant"].as<double>();
-  double foot_z_force_time_constant       = _doc["foot_z_force_time_constant"].as<double>();
-  double foot_roll_torque_time_constant   = _doc["foot_roll_torque_time_constant"].as<double>();
-  double foot_pitch_torque_time_constant  = _doc["foot_pitch_torque_time_constant"].as<double>();
+  double cob_x_offset_m = _doc["cob_x_offset_m"].as<double>();
+  double cob_y_offset_m = _doc["cob_y_offset_m"].as<double>();
+  double hip_roll_swap_angle_rad = _doc["hip_roll_swap_angle_rad"].as<double>();
+  double gyro_gain = _doc["gyro_gain"].as<double>();
+  double foot_roll_angle_gain = _doc["foot_roll_angle_gain"].as<double>();
+  double foot_pitch_angle_gain = _doc["foot_pitch_angle_gain"].as<double>();
+  double foot_x_force_gain = _doc["foot_x_force_gain"].as<double>();
+  double foot_y_force_gain = _doc["foot_y_force_gain"].as<double>();
+  double foot_z_force_gain = _doc["foot_z_force_gain"].as<double>();
+  double foot_roll_torque_gain = _doc["foot_roll_torque_gain"].as<double>();
+  double foot_pitch_torque_gain = _doc["foot_pitch_torque_gain"].as<double>();
+  double foot_roll_angle_time_constant = _doc["foot_roll_angle_time_constant"].as<double>();
+  double foot_pitch_angle_time_constant = _doc["foot_pitch_angle_time_constant"].as<double>();
+  double foot_x_force_time_constant = _doc["foot_x_force_time_constant"].as<double>();
+  double foot_y_force_time_constant = _doc["foot_y_force_time_constant"].as<double>();
+  double foot_z_force_time_constant = _doc["foot_z_force_time_constant"].as<double>();
+  double foot_roll_torque_time_constant = _doc["foot_roll_torque_time_constant"].as<double>();
+  double foot_pitch_torque_time_constant = _doc["foot_pitch_torque_time_constant"].as<double>();
 
-  set_balance_param_srv_.request.updating_duration                             = 2.0;
-  set_balance_param_srv_.request.balance_param.cob_x_offset_m                  = cob_x_offset_m;
-  set_balance_param_srv_.request.balance_param.cob_y_offset_m                  = cob_y_offset_m;
-  set_balance_param_srv_.request.balance_param.hip_roll_swap_angle_rad         = hip_roll_swap_angle_rad;
-  set_balance_param_srv_.request.balance_param.gyro_gain                       = gyro_gain;
-  set_balance_param_srv_.request.balance_param.foot_roll_angle_gain            = foot_roll_angle_gain;
-  set_balance_param_srv_.request.balance_param.foot_pitch_angle_gain           = foot_pitch_angle_gain;
-  set_balance_param_srv_.request.balance_param.foot_x_force_gain               = foot_x_force_gain;
-  set_balance_param_srv_.request.balance_param.foot_y_force_gain               = foot_y_force_gain;
-  set_balance_param_srv_.request.balance_param.foot_z_force_gain               = foot_z_force_gain;
-  set_balance_param_srv_.request.balance_param.foot_roll_torque_gain           = foot_roll_torque_gain;
-  set_balance_param_srv_.request.balance_param.foot_pitch_torque_gain          = foot_pitch_torque_gain;
-  set_balance_param_srv_.request.balance_param.foot_roll_angle_time_constant   = foot_roll_angle_time_constant;
-  set_balance_param_srv_.request.balance_param.foot_pitch_angle_time_constant  = foot_pitch_angle_time_constant;
-  set_balance_param_srv_.request.balance_param.foot_x_force_time_constant      = foot_x_force_time_constant;
-  set_balance_param_srv_.request.balance_param.foot_y_force_time_constant      = foot_y_force_time_constant;
-  set_balance_param_srv_.request.balance_param.foot_z_force_time_constant      = foot_z_force_time_constant;
-  set_balance_param_srv_.request.balance_param.foot_roll_torque_time_constant  = foot_roll_torque_time_constant;
+  set_balance_param_srv_.request.updating_duration = 2.0;
+  set_balance_param_srv_.request.balance_param.cob_x_offset_m = cob_x_offset_m;
+  set_balance_param_srv_.request.balance_param.cob_y_offset_m = cob_y_offset_m;
+  set_balance_param_srv_.request.balance_param.hip_roll_swap_angle_rad = hip_roll_swap_angle_rad;
+  set_balance_param_srv_.request.balance_param.gyro_gain = gyro_gain;
+  set_balance_param_srv_.request.balance_param.foot_roll_angle_gain = foot_roll_angle_gain;
+  set_balance_param_srv_.request.balance_param.foot_pitch_angle_gain = foot_pitch_angle_gain;
+  set_balance_param_srv_.request.balance_param.foot_x_force_gain = foot_x_force_gain;
+  set_balance_param_srv_.request.balance_param.foot_y_force_gain = foot_y_force_gain;
+  set_balance_param_srv_.request.balance_param.foot_z_force_gain = foot_z_force_gain;
+  set_balance_param_srv_.request.balance_param.foot_roll_torque_gain = foot_roll_torque_gain;
+  set_balance_param_srv_.request.balance_param.foot_pitch_torque_gain = foot_pitch_torque_gain;
+  set_balance_param_srv_.request.balance_param.foot_roll_angle_time_constant = foot_roll_angle_time_constant;
+  set_balance_param_srv_.request.balance_param.foot_pitch_angle_time_constant = foot_pitch_angle_time_constant;
+  set_balance_param_srv_.request.balance_param.foot_x_force_time_constant = foot_x_force_time_constant;
+  set_balance_param_srv_.request.balance_param.foot_y_force_time_constant = foot_y_force_time_constant;
+  set_balance_param_srv_.request.balance_param.foot_z_force_time_constant = foot_z_force_time_constant;
+  set_balance_param_srv_.request.balance_param.foot_roll_torque_time_constant = foot_roll_torque_time_constant;
   set_balance_param_srv_.request.balance_param.foot_pitch_torque_time_constant = foot_pitch_torque_time_constant;
 
   return true;
@@ -1074,7 +1051,7 @@ void QNodeThor3::turnOnBalance()
   // load param from yaml file
   bool result_load = loadBalanceParameterFromYaml();
 
-  if(result_load == false)
+  if (result_load == false)
     return;
 
   setBalanceParameter();
@@ -1087,36 +1064,35 @@ void QNodeThor3::turnOffBalance()
   // load param from yaml file
   bool result_load = loadBalanceParameterFromYaml();
 
-  if(result_load == false)
+  if (result_load == false)
     return;
 
-  set_balance_param_srv_.request.updating_duration                             = 2.0;
-  set_balance_param_srv_.request.balance_param.gyro_gain                       = 0.0;
-  set_balance_param_srv_.request.balance_param.foot_roll_angle_gain            = 0.0;
-  set_balance_param_srv_.request.balance_param.foot_pitch_angle_gain           = 0.0;
-  set_balance_param_srv_.request.balance_param.foot_x_force_gain               = 0.0;
-  set_balance_param_srv_.request.balance_param.foot_y_force_gain               = 0.0;
-  set_balance_param_srv_.request.balance_param.foot_z_force_gain               = 0.0;
-  set_balance_param_srv_.request.balance_param.foot_roll_torque_gain           = 0.0;
-  set_balance_param_srv_.request.balance_param.foot_pitch_torque_gain          = 0.0;
+  set_balance_param_srv_.request.updating_duration = 2.0;
+  set_balance_param_srv_.request.balance_param.gyro_gain = 0.0;
+  set_balance_param_srv_.request.balance_param.foot_roll_angle_gain = 0.0;
+  set_balance_param_srv_.request.balance_param.foot_pitch_angle_gain = 0.0;
+  set_balance_param_srv_.request.balance_param.foot_x_force_gain = 0.0;
+  set_balance_param_srv_.request.balance_param.foot_y_force_gain = 0.0;
+  set_balance_param_srv_.request.balance_param.foot_z_force_gain = 0.0;
+  set_balance_param_srv_.request.balance_param.foot_roll_torque_gain = 0.0;
+  set_balance_param_srv_.request.balance_param.foot_pitch_torque_gain = 0.0;
 
   setBalanceParameter();
 
   log(Info, "Turn Off Walking Balance");
 }
 
-
 // Motion
 void QNodeThor3::playMotion(int motion_index, bool to_action_script)
 {
-  if(motion_table_.find(motion_index) == motion_table_.end())
+  if (motion_table_.find(motion_index) == motion_table_.end())
   {
     log(Error, "Motion index is not valid.");
     return;
   }
 
   std::stringstream log_stream;
-  switch(motion_index)
+  switch (motion_index)
   {
     case -2:
       log_stream << "BRAKE Motion";
@@ -1135,7 +1111,7 @@ void QNodeThor3::playMotion(int motion_index, bool to_action_script)
   std_msgs::Int32 motion_msg;
   motion_msg.data = motion_index;
 
-  if(to_action_script == true)
+  if (to_action_script == true)
     motion_index_pub_.publish(motion_msg);
   else
     motion_page_pub_.publish(motion_msg);
@@ -1145,7 +1121,7 @@ void QNodeThor3::playMotion(int motion_index, bool to_action_script)
 
 void QNodeThor3::poseCallback(const geometry_msgs::Pose::ConstPtr &msg)
 {
-  switch(current_control_ui_)
+  switch (current_control_ui_)
   {
     case WALKING_UI:
     {
@@ -1158,8 +1134,8 @@ void QNodeThor3::poseCallback(const geometry_msgs::Pose::ConstPtr &msg)
     case MANIPULATION_UI:
     {
       double z_offset = 0.801;
-      Q_EMIT updateCurrPos( msg->position.x , msg->position.y , msg->position.z + z_offset);
-      Q_EMIT updateCurrOri( msg->orientation.x , msg->orientation.y , msg->orientation.z , msg->orientation.w );
+      Q_EMIT updateCurrPos(msg->position.x, msg->position.y, msg->position.z + z_offset);
+      Q_EMIT updateCurrOri(msg->orientation.x, msg->orientation.y, msg->orientation.z, msg->orientation.w);
       log(Info, "Get Pose For IK");
       break;
     }
@@ -1183,7 +1159,7 @@ void QNodeThor3::pointStampedCallback(const geometry_msgs::PointStamped::ConstPt
 void QNodeThor3::interactiveMarkerFeedback(const visualization_msgs::InteractiveMarkerFeedbackConstPtr &feedback)
 {
   // event
-  switch ( feedback->event_type )
+  switch (feedback->event_type)
   {
     case visualization_msgs::InteractiveMarkerFeedback::BUTTON_CLICK:
       break;
@@ -1215,7 +1191,7 @@ void QNodeThor3::interactiveMarkerFeedback(const visualization_msgs::Interactive
 
 void QNodeThor3::makeInteractiveMarker(const geometry_msgs::Pose &marker_pose)
 {
-  if(frame_id_ == "")
+  if (frame_id_ == "")
   {
     ROS_ERROR("No frame id!!!");
     // return;
@@ -1223,25 +1199,19 @@ void QNodeThor3::makeInteractiveMarker(const geometry_msgs::Pose &marker_pose)
     frame_id_ = "world";
   }
 
-  ROS_INFO_STREAM("Make Interactive Marker! - " << marker_pose.position.x
-                  << ", " << marker_pose.position.y
-                  << ", " << marker_pose.position.z
-                  << " [" <<  marker_pose.orientation.x
-                  << ", " << marker_pose.orientation.y
-                  << ", " << marker_pose.orientation.z
-                  << " | " << marker_pose.orientation.w << "]");
+  ROS_INFO_STREAM(
+      "Make Interactive Marker! - " << marker_pose.position.x << ", " << marker_pose.position.y << ", " << marker_pose.position.z << " [" << marker_pose.orientation.x << ", " << marker_pose.orientation.y << ", " << marker_pose.orientation.z << " | " << marker_pose.orientation.w << "]");
 
   interactive_marker_server_->clear();
 
   visualization_msgs::InteractiveMarker interactive_marker;
   interactive_marker.pose = marker_pose;    // set pose
 
-
   // Visualize Interactive Marker
   interactive_marker.header.frame_id = frame_id_;
   interactive_marker.scale = 0.3;
 
-  interactive_marker.name = marker_name_; //"pose_marker";
+  interactive_marker.name = marker_name_;  //"pose_marker";
   interactive_marker.description = "3D Pose Control";
 
   // ----- center marker
@@ -1356,7 +1326,8 @@ void QNodeThor3::makeInteractiveMarker(const geometry_msgs::Pose &marker_pose)
   interactive_marker.controls.push_back(interactive_control);
 
   interactive_marker_server_->insert(interactive_marker);
-  interactive_marker_server_->setCallback(interactive_marker.name, boost::bind(&QNodeThor3::interactiveMarkerFeedback, this, _1));
+  interactive_marker_server_->setCallback(interactive_marker.name,
+                                          boost::bind(&QNodeThor3::interactiveMarkerFeedback, this, _1));
 
   interactive_marker_server_->applyChanges();
 }
@@ -1369,7 +1340,7 @@ void QNodeThor3::updateInteractiveMarker(const geometry_msgs::Pose &pose)
   bool result_getting = false;
 
   result_getting = interactive_marker_server_->get(marker_name_, interactive_marker);
-  if(result_getting == false)
+  if (result_getting == false)
   {
     ROS_ERROR("No Interactive marker to set pose");
     return;
@@ -1384,7 +1355,7 @@ void QNodeThor3::getInteractiveMarkerPose()
   ROS_INFO("Get Interactive Marker Pose");
 
   visualization_msgs::InteractiveMarker _interactive_marker;
-  if(!(interactive_marker_server_->get(marker_name_, _interactive_marker)))
+  if (!(interactive_marker_server_->get(marker_name_, _interactive_marker)))
   {
     ROS_ERROR("No Interactive marker to get pose");
     return;
@@ -1407,10 +1378,10 @@ void QNodeThor3::clearInteractiveMarker()
 
 void QNodeThor3::kickDemo(const std::string &kick_foot)
 {
-  if(kick_foot == "right kick")
+  if (kick_foot == "right kick")
   {
     bool result = loadBalanceParameterFromYaml();
-    if(result == false)
+    if (result == false)
       return;
 
     double old_hip_swap = set_balance_param_srv_.request.balance_param.hip_roll_swap_angle_rad;
@@ -1434,10 +1405,10 @@ void QNodeThor3::kickDemo(const std::string &kick_foot)
     // wait for recovering balance
     usleep(2 * 1000 * 1000);
   }
-  else if(kick_foot == "left kick")
+  else if (kick_foot == "left kick")
   {
     bool result = loadBalanceParameterFromYaml();
-    if(result == false)
+    if (result == false)
       return;
 
     double old_hip_swap = set_balance_param_srv_.request.balance_param.hip_roll_swap_angle_rad;
@@ -1468,68 +1439,72 @@ void QNodeThor3::statusMsgCallback(const robotis_controller_msgs::StatusMsg::Con
   log((LogLevel) msg->type, msg->status_msg, msg->module_name);
 }
 
-void QNodeThor3::log( const LogLevel &level, const std::string &msg, std::string sender)
+void QNodeThor3::log(const LogLevel &level, const std::string &msg, std::string sender)
 {
-  logging_model_.insertRows(logging_model_.rowCount(),1);
+  logging_model_.insertRows(logging_model_.rowCount(), 1);
   std::stringstream logging_model_msg;
 
   ros::Duration duration_time = ros::Time::now() - start_time_;
   int current_time = duration_time.sec;
   int min_time = 0, sec_time = 0;
-  min_time = (int)(current_time / 60);
-  sec_time = (int)(current_time % 60);
+  min_time = (int) (current_time / 60);
+  sec_time = (int) (current_time % 60);
 
   std::stringstream min_str, sec_str;
-  if(min_time < 10) min_str << "0";
-  if(sec_time < 10) sec_str << "0";
+  if (min_time < 10)
+    min_str << "0";
+  if (sec_time < 10)
+    sec_str << "0";
   min_str << min_time;
   sec_str << sec_time;
 
   std::stringstream stream_sender;
   stream_sender << "[" << sender << "] ";
 
-  switch ( level ) {
-    case(Debug) :
+  switch (level)
+  {
+    case (Debug):
     {
       ROS_DEBUG_STREAM(msg);
       logging_model_msg << "[DEBUG] [" << min_str.str() << ":" << sec_str.str() << "]: " << stream_sender.str() << msg;
       break;
     }
-    case(Info) :
+    case (Info):
     {
       ROS_INFO_STREAM(msg);
       logging_model_msg << "[INFO] [" << min_str.str() << ":" << sec_str.str() << "]: " << stream_sender.str() << msg;
       break;
     }
-    case(Warn) :
+    case (Warn):
     {
       ROS_WARN_STREAM(msg);
-      logging_model_msg << "[WARN] [" << min_str.str() << ":" << sec_str.str() << "]: " << stream_sender.str() <<msg;
+      logging_model_msg << "[WARN] [" << min_str.str() << ":" << sec_str.str() << "]: " << stream_sender.str() << msg;
       break;
     }
-    case(Error) :
+    case (Error):
     {
       ROS_ERROR_STREAM(msg);
-      logging_model_msg << "<ERROR> [" << min_str.str() << ":" << sec_str.str() << "]: " << stream_sender.str() <<msg;
+      logging_model_msg << "<ERROR> [" << min_str.str() << ":" << sec_str.str() << "]: " << stream_sender.str() << msg;
       break;
     }
-    case(Fatal) :
+    case (Fatal):
     {
       ROS_FATAL_STREAM(msg);
-      logging_model_msg << "[FATAL] [" << min_str.str() << ":" << sec_str.str() << "]: " << stream_sender.str() <<msg;
+      logging_model_msg << "[FATAL] [" << min_str.str() << ":" << sec_str.str() << "]: " << stream_sender.str() << msg;
       break;
     }
   }
 
   QVariant new_row(QString(logging_model_msg.str().c_str()));
-  logging_model_.setData(logging_model_.index(logging_model_.rowCount()-1),new_row);
+  logging_model_.setData(logging_model_.index(logging_model_.rowCount() - 1), new_row);
 
-  Q_EMIT loggingUpdated(); // used to readjust the scrollbar
+  Q_EMIT loggingUpdated();  // used to readjust the scrollbar
 }
 
 void QNodeThor3::clearLog()
 {
-  if(logging_model_.rowCount() == 0) return;
+  if (logging_model_.rowCount() == 0)
+    return;
 
   logging_model_.removeRows(0, logging_model_.rowCount());
 }
