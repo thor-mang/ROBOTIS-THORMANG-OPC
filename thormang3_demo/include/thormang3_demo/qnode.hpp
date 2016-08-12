@@ -28,9 +28,7 @@
 * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
-
 /* Author: Kayman Jung */
-
 
 /*****************************************************************************
 ** Ifdefs
@@ -83,7 +81,7 @@
 #include "thormang3_foot_step_generator/FootStepCommand.h"
 #include "thormang3_foot_step_generator/Step2DArray.h"
 
-#endif  // Q_MOC_RUN
+#endif // Q_MOC_RUN
 /*****************************************************************************
 ** Namespaces
 *****************************************************************************/
@@ -109,33 +107,35 @@ public:
     Fatal = 4
   };
 
-//  enum ModuleIndex
-//  {
-//    Control_None = 0,
-//    Control_Walking = 1,
-//    Control_Manipulation = 2,
-//    Control_Head = 3,
-//  };
+  //  enum ModuleIndex
+  //  {
+  //    Control_None = 0,
+  //    Control_Walking = 1,
+  //    Control_Manipulation = 2,
+  //    Control_Head = 3,
+  //  };
 
-  QNodeThor3(int argc, char** argv );
+  QNodeThor3(int argc, char** argv);
   virtual ~QNodeThor3();
 
   bool init();
   void run();
   QStringListModel* loggingModel() { return &logging_model_; }
-  void log(const LogLevel &level, const std::string &msg, std::string sender="Demo");
+  void log(const LogLevel& level, const std::string& msg,
+           std::string sender = "Demo");
   void clearLog();
   void assembleLidar();
-  void enableControlModule(const std::string &mode);
-  bool getJointNameFromID(const int &id, std::string &joint_name);
-  bool getIDFromJointName(const std::string &joint_name, int &id);
-  bool getIDJointNameFromIndex(const int &index, int &id, std::string &joint_name);
-  std::string getModuleName(const int &index);
-  int getModuleIndex(const std::string &mode_name);
+  void enableControlModule(const std::string& mode);
+  bool getJointNameFromID(const int& id, std::string& joint_name);
+  bool getIDFromJointName(const std::string& joint_name, int& id);
+  bool getIDJointNameFromIndex(const int& index, int& id,
+                               std::string& joint_name);
+  std::string getModuleName(const int& index);
+  int getModuleIndex(const std::string& mode_name);
   int getModuleTableSize();
   int getJointTableSize();
   void clearUsingModule();
-  bool isUsingModule(const std::string &module_name);
+  bool isUsingModule(const std::string& module_name);
   void moveInitPose();
   void initFTCommand(std::string command);
 
@@ -143,39 +143,42 @@ public:
   void setHeadJoint(double pan, double tilt);
 
   // Manipulation
-  void sendInitPoseMsg( std_msgs::String msg );
-  void sendDestJointMsg( thormang3_manipulation_module_msgs::JointPose msg );
-  void sendIkMsg( thormang3_manipulation_module_msgs::KinematicsPose msg );
+  void sendInitPoseMsg(std_msgs::String msg);
+  void sendDestJointMsg(thormang3_manipulation_module_msgs::JointPose msg);
+  void sendIkMsg(thormang3_manipulation_module_msgs::KinematicsPose msg);
 
   // Walking
-  void setWalkingCommand( thormang3_foot_step_generator::FootStepCommand msg);
+  void setWalkingCommand(thormang3_foot_step_generator::FootStepCommand msg);
   void setWalkingBalance(bool on_command);
-  void setWalkingBalanceParam(const double &gyro_gain, const double &ft_gain_ratio, const double &imu_time_const, const double &ft_time_const);
+  void setWalkingBalanceParam(const double& gyro_gain,
+                              const double& ft_gain_ratio,
+                              const double& imu_time_const,
+                              const double& ft_time_const);
   void setWalkingFootsteps();
   void clearFootsteps();
   void makeFootstepUsingPlanner();
-  void makeFootstepUsingPlanner(const geometry_msgs::Pose &target_foot_pose);
+  void makeFootstepUsingPlanner(const geometry_msgs::Pose& target_foot_pose);
   void visualizePreviewFootsteps(bool clear);
 
   // motion
   void playMotion(int motion_index, bool to_action_script = true);
 
   // demo
-  void makeInteractiveMarker(const geometry_msgs::Pose &marker_pose);
-  void updateInteractiveMarker(const geometry_msgs::Pose &pose);
+  void makeInteractiveMarker(const geometry_msgs::Pose& marker_pose);
+  void updateInteractiveMarker(const geometry_msgs::Pose& pose);
   void getInteractiveMarkerPose();
   void clearInteractiveMarker();
-  void manipulationDemo(const int &index);
-  void kickDemo(const std::string &kick_foot);
+  void manipulationDemo(const int& index);
+  void kickDemo(const std::string& kick_foot);
 
-  std::map< int, std::string > module_table_;
-  std::map< int, std::string> motion_table_;
+  std::map<int, std::string> module_table_;
+  std::map<int, std::string> motion_table_;
 
 public Q_SLOTS:
   void getJointControlModule();
-  void getJointPose( std::string joint_name );
-  void getKinematicsPose (std::string group_name );
-  void getKinematicsPoseCallback(const geometry_msgs::Pose::ConstPtr &msg);
+  void getJointPose(std::string joint_name);
+  void getKinematicsPose(std::string group_name);
+  void getKinematicsPoseCallback(const geometry_msgs::Pose::ConstPtr& msg);
   void setCurrentControlUI(int mode);
 
 Q_SIGNALS:
@@ -184,9 +187,9 @@ Q_SIGNALS:
   void updatePresentJointControlModules(std::vector<int> mode);
 
   // Manipulation
-  void updateCurrJoint( double value );
-  void updateCurrPos( double x , double y , double z );
-  void updateCurrOri( double x , double y , double z , double w );
+  void updateCurrJoint(double value);
+  void updateCurrPos(double x, double y, double z);
+  void updateCurrOri(double x, double y, double z, double w);
 
   // Head control
   void updateHeadJointsAngle(double pan, double tilt);
@@ -209,15 +212,20 @@ private:
     DEMO_UI = 5,
   };
 
-  void parseJointNameFromYaml(const std::string &path);
-  void parseMotionMapFromYaml(const std::string &path);
-  void refreshCurrentJointControlCallback(const robotis_controller_msgs::JointCtrlModule::ConstPtr &msg);
-  void updateHeadJointStatesCallback(const sensor_msgs::JointState::ConstPtr &msg);
-  void initFTFootCallback(const thormang3_feet_ft_module_msgs::BothWrench::ConstPtr &msg);
-  void statusMsgCallback(const robotis_controller_msgs::StatusMsg::ConstPtr &msg);
-  void poseCallback(const geometry_msgs::Pose::ConstPtr &msg);
-  void interactiveMarkerFeedback(const visualization_msgs::InteractiveMarkerFeedbackConstPtr &feedback);
-  void pointStampedCallback(const geometry_msgs::PointStamped::ConstPtr &msg);
+  void parseJointNameFromYaml(const std::string& path);
+  void parseMotionMapFromYaml(const std::string& path);
+  void refreshCurrentJointControlCallback(
+      const robotis_controller_msgs::JointCtrlModule::ConstPtr& msg);
+  void
+  updateHeadJointStatesCallback(const sensor_msgs::JointState::ConstPtr& msg);
+  void initFTFootCallback(
+      const thormang3_feet_ft_module_msgs::BothWrench::ConstPtr& msg);
+  void
+  statusMsgCallback(const robotis_controller_msgs::StatusMsg::ConstPtr& msg);
+  void poseCallback(const geometry_msgs::Pose::ConstPtr& msg);
+  void interactiveMarkerFeedback(
+      const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback);
+  void pointStampedCallback(const geometry_msgs::PointStamped::ConstPtr& msg);
   void setBalanceParameter();
   bool loadBalanceParameterFromYaml();
   void turnOnBalance();
@@ -234,7 +242,8 @@ private:
   std::string marker_name_;
   geometry_msgs::Pose pose_from_ui_;
   geometry_msgs::Pose current_pose_;
-  boost::shared_ptr<interactive_markers::InteractiveMarkerServer> interactive_marker_server_;
+  boost::shared_ptr<interactive_markers::InteractiveMarkerServer>
+      interactive_marker_server_;
   thormang3_walking_module_msgs::SetBalanceParam set_balance_param_srv_;
 
   ros::Publisher init_pose_pub_;
@@ -286,6 +295,6 @@ private:
   std::map<std::string, bool> using_mode_table_;
 };
 
-}  // namespace thormang3_demo
+} // namespace thormang3_demo
 
 #endif /* thormang3_demo_QNODE_HPP_ */

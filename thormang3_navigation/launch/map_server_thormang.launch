@@ -3,7 +3,7 @@
         <param name="resolution" value="0.2" />
 
         <!-- fixed map frame (set to 'map' if SLAM or localization running!) -->
-        <param name="frame_id" type="string" value="world" />
+        <param name="frame_id" type="string" value="map" />
 
         <!-- maximum range to integrate (speedup!) -->
         <!-- <param name="sensor_model/max_range" value="5.0" /> -->
@@ -14,6 +14,8 @@
         <param name="latch" value="True" />
 
         <!-- data source to integrate (PointCloud2) -->
-        <remap from="cloud_in" to="/robotis/sensor/assembled_scan" />
+        <remap from="cloud_in" to="/opc/map_cloud" />
+        <!-- <remap from="cloud_in" to="/ppc/assembled_scan" />       -->     
+        <remap from="projected_map" to="/opc/projected_map" />
     </node>
 </launch>

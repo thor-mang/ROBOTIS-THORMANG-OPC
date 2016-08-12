@@ -1,6 +1,5 @@
 ### navigation settings ########################################################
 
-# whether NAO should execute its footsteps slow but accurate or fast and
 # inaccurate
 safe_execution: True
 
