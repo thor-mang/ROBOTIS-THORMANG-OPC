@@ -10,7 +10,13 @@ project(thormang3_offset_tuner_client)
 ##############################################################################
 
 # qt_build provides the qt cmake glue, roscpp the comms for a default talker
-find_package(catkin REQUIRED COMPONENTS qt_build roscpp thormang3_offset_tuner_msgs thormang3_foot_step_generator)
+find_package(catkin REQUIRED COMPONENTS
+  qt_build
+  roscpp
+  roslib
+  thormang3_offset_tuner_msgs
+)
+
 include_directories(${catkin_INCLUDE_DIRS})
 # Use this to define what the package will export (e.g. libs, headers).
 # Since the default here is to produce only a binary, we don't worry about
@@ -48,6 +54,6 @@ file(GLOB_RECURSE QT_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} FOLLOW_SYMLINK
 ##############################################################################
 
 add_executable(thormang3_offset_tuner_client ${QT_SOURCES} ${QT_RESOURCES_CPP} ${QT_FORMS_HPP} ${QT_MOC_HPP})
-target_link_libraries(thormang3_offset_tuner_client ${QT_LIBRARIES} ${catkin_LIBRARIES})
+target_link_libraries(thormang3_offset_tuner_client ${QT_LIBRARIES} ${catkin_LIBRARIES} yaml-cpp)
 install(TARGETS thormang3_offset_tuner_client RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
