@@ -2,7 +2,11 @@
 <package>
   <name>thormang3_action_script_player</name>
   <version>0.1.0</version>
-  <description>The thormang3_action_script_player package</description>
+  <description>
+    The thormang3_action_script_player package
+    This package provides a action script playing for thormang3.
+    It can be used with thormang3_action_module and ros_mpg321_player.
+  </description>
 
   <maintainer email="hjsong@robotis.com">ROBOTIS</maintainer>
 
