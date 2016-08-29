@@ -1,0 +1,65 @@
+# thormang3 action script
+# the argument of "play" cmd is action file page number.
+# the unit for sleep is ms
+# the mp3 file is in the ppc
+ 
+# Hello
+script2: 
+     cmd1: {cmd_name: play,  cmd_arg: 2}
+     cmd2: {cmd_name: sleep, cmd_arg: 1800}
+     cmd3: {cmd_name: mp3,   cmd_arg: "/home/robotis/Music/thormang_mp3/hello_kor.mp3"}
+     cmd4: {cmd_name: sleep, cmd_arg: 1100}
+     cmd5: {cmd_name: mp3,   cmd_arg: "/home/robotis/Music/thormang_mp3/i_am_thormang_kor.mp3"}
+
+# Thank You
+script3:
+     cmd1: {cmd_name: play,  cmd_arg: 3}
+     cmd2: {cmd_name: sleep, cmd_arg: 2100}
+     cmd3: {cmd_name: mp3,   cmd_arg: "/home/robotis/Music/thormang_mp3/thank_you_kor.mp3"}
+
+# Yes
+script4:
+     joint_name: [r_leg_hip_p, l_leg_hip_p, head_p]
+     cmd1: {cmd_name: play,  cmd_arg: 4}
+     cmd2: {cmd_name: sleep, cmd_arg: 500}
+     cmd3: {cmd_name: mp3,   cmd_arg: "/home/robotis/Music/thormang_mp3/yes_kor.mp3"}
+
+# No
+script5:
+     joint_name: [torso_y, head_y]
+     cmd1: {cmd_name: play,  cmd_arg: 5}     
+     cmd2: {cmd_name: sleep, cmd_arg: 500}
+     cmd3: {cmd_name: mp3,   cmd_arg: "/home/robotis/Music/thormang_mp3/no_kor.mp3"}
+
+# Cheer Up
+script6:
+     cmd1: {cmd_name: play,  cmd_arg: 6}
+     
+# Clap
+script7:
+     cmd1: {cmd_name: play,  cmd_arg: 7}
+     cmd2: {cmd_name: sleep, cmd_arg: 2000}
+     cmd3: {cmd_name: mp3,   cmd_arg: "/home/robotis/Music/thormang_mp3/clap_please_kor.mp3"}
+
+# Ready to Handshake
+script9:
+     cmd1: {cmd_name: play, cmd_arg: 9}
+     cmd2: {cmd_name: wait}
+     cmd3: {cmd_name: mp3,   cmd_arg: "/home/robotis/Music/thormang_mp3/handshake_please.mp3"}
+     
+# Start to Handshake
+script10:
+     cmd1: {cmd_name: play, cmd_arg: 10}
+     
+# Finish Handshake
+script11:
+     cmd1: {cmd_name: play, cmd_arg: 11}
+     
+# Scan
+script12:
+     joint_name: [head_y, head_p]
+     cmd1: {cmd_name: play, cmd_arg: 12}
+     
+# Ceremony
+script13:
+     cmd1: {cmd_name: play, cmd_arg: 13}

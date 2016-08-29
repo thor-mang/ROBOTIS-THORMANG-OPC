@@ -1,9 +1,0 @@
-<library path="lib/librviz_thor3_pose_panel">
-    <class name="thormang3_rviz/THORMANG Pose Panel"
-            type="rviz_thor3::Thor3PosePanel"
-            base_class_type="rviz::Panel">
-        <description>
-            A panel widget to get positoin or to get pose.
-        </description>
-    </class>
-</library>

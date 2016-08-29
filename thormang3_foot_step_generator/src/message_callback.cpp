@@ -1,344 +1,397 @@
-/*
- * message_callback.cpp
- *
- *  Created on: 2016. 2. 20.
- *      Author: HJSONG
- */
+/*******************************************************************************
+* Copyright (c) 2016, ROBOTIS CO., LTD.
+* All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification, are permitted provided that the following conditions are met:
+*
+* * Redistributions of source code must retain the above copyright notice, this
+*   list of conditions and the following disclaimer.
+*
+* * Redistributions in binary form must reproduce the above copyright notice,
+*   this list of conditions and the following disclaimer in the documentation
+*   and/or other materials provided with the distribution.
+*
+* * Neither the name of ROBOTIS nor the names of its
+*   contributors may be used to endorse or promote products derived from
+*   this software without specific prior written permission.
+*
+* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+* AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+* IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+* DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+* FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+* DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+* SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+* CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+* OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+* OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*******************************************************************************/
+
+
+/* Author: Jay Song */
 
 #include "thormang3_foot_step_generator/message_callback.h"
 
+ros::ServiceClient   g_get_ref_step_data_client;
+ros::ServiceClient   g_add_step_data_array_client;
 
-//ros::ServiceClient	remove_exisitng_step_data_client;
-ros::ServiceClient	get_ref_step_data_client;
-ros::ServiceClient	add_step_data_array_client;
-//ros::ServiceClient	walking_start_client;
-ros::ServiceClient	is_running_client;
+ros::ServiceClient   g_is_running_client;
 
-ros::ServiceClient	set_balance_param_client;
+ros::ServiceClient  g_set_balance_param_client;
 
-ros::Subscriber		walking_module_status_msg_sub;
+ros::Subscriber     g_walking_module_status_msg_sub;
 
-ros::Subscriber     walking_command_sub;
-ros::Subscriber		balance_command_sub;
-ros::Subscriber		footsteps_2d_sub;
+ros::Subscriber     g_walking_command_sub;
+ros::Subscriber     g_balance_command_sub;
+ros::Subscriber     g_footsteps_2d_sub;
+
+thormang3::FootStepGenerator g_foot_stp_generator;
+
+thormang3_walking_module_msgs::AddStepDataArray     add_step_data_array_srv;
+
+thormang3_foot_step_generator::FootStepCommand last_command;
+double g_last_command_time = 0;
 
 
-ROBOTIS::FootStepGenerator thormang3_foot_stp_generator;
+bool g_is_running_check_needed = false;
 
-void Initialize()
+void initialize(void)
 {
-	ros::NodeHandle _nh;
+  ros::NodeHandle nh;
 
-    get_ref_step_data_client		= _nh.serviceClient<thormang3_walking_module_msgs::GetReferenceStepData>("robotis/walking/get_reference_step_data");
-    add_step_data_array_client		= _nh.serviceClient<thormang3_walking_module_msgs::AddStepDataArray>("robotis/walking/add_step_data");
-    set_balance_param_client		= _nh.serviceClient<thormang3_walking_module_msgs::SetBalanceParam>("robotis/walking/set_balance_param");
-	is_running_client				= _nh.serviceClient<thormang3_walking_module_msgs::IsRunning>("robotis/walking/is_running");
+  g_get_ref_step_data_client      = nh.serviceClient<thormang3_walking_module_msgs::GetReferenceStepData>("robotis/walking/get_reference_step_data");
+  g_add_step_data_array_client    = nh.serviceClient<thormang3_walking_module_msgs::AddStepDataArray>("robotis/walking/add_step_data");
+  g_set_balance_param_client      = nh.serviceClient<thormang3_walking_module_msgs::SetBalanceParam>("robotis/walking/set_balance_param");
+  g_is_running_client             = nh.serviceClient<thormang3_walking_module_msgs::IsRunning>("robotis/walking/is_running");
 
-	walking_module_status_msg_sub	= _nh.subscribe("robotis/status", 10, WalkingModuleStatusMSGCallback);
+  g_walking_module_status_msg_sub = nh.subscribe("robotis/status", 10, walkingModuleStatusMSGCallback);
 
-	walking_command_sub			= _nh.subscribe("robotis/thormang3_foot_step_generator/walking_command", 0, WalkingCommandCallback);
-	balance_command_sub			= _nh.subscribe("robotis/thormang3_foot_step_generator/balance_command", 0, BalanceCommandCallback);
-	footsteps_2d_sub			= _nh.subscribe("robotis/thormang3_foot_step_generator/footsteps_2d",    0, Step2DArrayCallback);
+  g_walking_command_sub           = nh.subscribe("robotis/thormang3_foot_step_generator/walking_command", 0, walkingCommandCallback);
+  g_footsteps_2d_sub              = nh.subscribe("robotis/thormang3_foot_step_generator/footsteps_2d",    0, step2DArrayCallback);
 
+  g_last_command_time = ros::Time::now().toSec();
 }
 
-void WalkingModuleStatusMSGCallback(const robotis_controller_msgs::StatusMsg::ConstPtr& msg)
+void walkingModuleStatusMSGCallback(const robotis_controller_msgs::StatusMsg::ConstPtr& msg)
 {
-	if(msg->type == msg->STATUS_ERROR)
-		ROS_ERROR_STREAM("[Robot] : " << msg->status_msg);
-	else if(msg->type == msg->STATUS_INFO)
-		ROS_INFO_STREAM("[Robot] : " << msg->status_msg);
-	else if(msg->type == msg->STATUS_WARN)
-		ROS_WARN_STREAM("[Robot] : " << msg->status_msg);
-	else if(msg->type == msg->STATUS_UNKNOWN)
-		ROS_ERROR_STREAM("[Robot] : " << msg->status_msg);
-	else
-		ROS_ERROR_STREAM("[Robot] : " << msg->status_msg);
+  if(msg->type == msg->STATUS_ERROR)
+    ROS_ERROR_STREAM("[Robot] : " << msg->status_msg);
+  else if(msg->type == msg->STATUS_INFO)
+    ROS_INFO_STREAM("[Robot] : " << msg->status_msg);
+  else if(msg->type == msg->STATUS_WARN)
+    ROS_WARN_STREAM("[Robot] : " << msg->status_msg);
+  else if(msg->type == msg->STATUS_UNKNOWN)
+    ROS_ERROR_STREAM("[Robot] : " << msg->status_msg);
+  else
+    ROS_ERROR_STREAM("[Robot] : " << msg->status_msg);
 }
 
-void WalkingCommandCallback(const thormang3_foot_step_generator::FootStepCommand::ConstPtr &msg)
+void walkingCommandCallback(const thormang3_foot_step_generator::FootStepCommand::ConstPtr &msg)
 {
-	ROS_INFO("[Demo]  : Walking Command");
-	ROS_INFO_STREAM("  command        : " << msg->command );
-	ROS_INFO_STREAM("  step_num       : " << msg->step_num );
-	ROS_INFO_STREAM("  step_length    : " << msg->step_length);
-	ROS_INFO_STREAM("  side_ste_lengh : " << msg->side_step_length );
-	ROS_INFO_STREAM("  step_angle_rad : " << msg->step_angle_rad );
+  double now_time = ros::Time::now().toSec();
 
-	if(msg->step_num == 0)
-		return;
-
-    thormang3_walking_module_msgs::GetReferenceStepData	_get_ref_stp_data_srv;
-    thormang3_walking_module_msgs::StepData				_ref_step_data;
-    thormang3_walking_module_msgs::AddStepDataArray		_add_stp_data_srv;
-
-	//set walking parameter
-	thormang3_foot_stp_generator.fb_step_length_m = msg->step_length;
-	thormang3_foot_stp_generator.rl_step_length_m = msg->side_step_length;
-	thormang3_foot_stp_generator.rotate_step_angle_rad = msg->step_angle_rad;
-	thormang3_foot_stp_generator.num_of_step = 2*(msg->step_num) + 2;
-
-
-	//get reference step data
-	if(get_ref_step_data_client.call(_get_ref_stp_data_srv) == false) {
-		ROS_ERROR("Failed to get reference step data");
-		return;
-	}
-
-	_ref_step_data = _get_ref_stp_data_srv.response.reference_step_data;
-//
-//	std::cout << "ref_body_pose_x     : " << _ref_step_data.position_data.body_pose.z <<std::endl;
-//	std::cout << "ref_body_pose_roll  : " << _ref_step_data.position_data.body_pose.roll <<std::endl;
-//	std::cout << "ref_body_pose_pitch : " << _ref_step_data.position_data.body_pose.pitch <<std::endl;
-//	std::cout << "ref_body_pose_yaw   : " << _ref_step_data.position_data.body_pose.yaw <<std::endl;
-//	std::cout << "right_foot_pose.x		: " <<_ref_step_data.position_data.right_foot_pose.x		<< std::endl;
-//	std::cout << "right_foot_pose.y		: " <<_ref_step_data.position_data.right_foot_pose.y		<< std::endl;
-//	std::cout << "right_foot_pose.z     : " <<_ref_step_data.position_data.right_foot_pose.z     << std::endl;
-//	std::cout << "right_foot_pose.roll  : " <<_ref_step_data.position_data.right_foot_pose.roll  << std::endl;
-//	std::cout << "right_foot_pose.pitch : " <<_ref_step_data.position_data.right_foot_pose.pitch << std::endl;
-//	std::cout << "right_foot_pose.yaw   : " <<_ref_step_data.position_data.right_foot_pose.yaw   << std::endl;
-//	std::cout << "left_foot_pose.x		: " <<_ref_step_data.position_data.left_foot_pose.x		<< std::endl;
-//	std::cout << "left_foot_pose.y		: " <<_ref_step_data.position_data.left_foot_pose.y		<< std::endl;
-//	std::cout << "left_foot_pose.z      : " <<_ref_step_data.position_data.left_foot_pose.z     << std::endl;
-//	std::cout << "left_foot_pose.roll   : " <<_ref_step_data.position_data.left_foot_pose.roll  << std::endl;
-//	std::cout << "left_foot_pose.pitch  : " <<_ref_step_data.position_data.left_foot_pose.pitch << std::endl;
-//	std::cout << "left_foot_pose.yaw    : " <<_ref_step_data.position_data.left_foot_pose.yaw   << std::endl;
-
-	//calc step data
-	if(msg->command == "forward") {
-		thormang3_foot_stp_generator.GetStepData( &_add_stp_data_srv.request.step_data_array, _ref_step_data, ForwardWalking);
-	}
-	else if(msg->command == "backward") {
-		thormang3_foot_stp_generator.GetStepData( &_add_stp_data_srv.request.step_data_array, _ref_step_data, BackwardWalking);
-	}
-	else if(msg->command == "turn left") {
-		thormang3_foot_stp_generator.GetStepData( &_add_stp_data_srv.request.step_data_array, _ref_step_data, PlusRotatingWalking);
-	}
-	else if(msg->command == "turn right") {
-		thormang3_foot_stp_generator.GetStepData( &_add_stp_data_srv.request.step_data_array, _ref_step_data, MinusRotatingWalking);
-	}
-	else if(msg->command == "right") {
-		thormang3_foot_stp_generator.GetStepData( &_add_stp_data_srv.request.step_data_array, _ref_step_data, RightwardWalking);
-	}
-	else if(msg->command == "left") {
-		thormang3_foot_stp_generator.GetStepData( &_add_stp_data_srv.request.step_data_array, _ref_step_data, LeftwardWalking);
-	}
-	else {
-		ROS_ERROR("[Demo]  : Invalid Command");
-		return;
-	}
-
-	//set add step data srv fot auto start and remove existing step data
-	_add_stp_data_srv.request.auto_start = true;
-	_add_stp_data_srv.request.remove_existing_step_data = true;
-
-	//add step data
-	if(add_step_data_array_client.call(_add_stp_data_srv) == true) {
-		int _result = _add_stp_data_srv.response.result;
-		if(_result== STEP_DATA_ERR::NO_ERROR)
-			ROS_INFO("[Demo]  : Succeed to add step data array");
-		else {
-			ROS_ERROR("[Demo]  : Failed to add step data array");
-
-			if(_result & STEP_DATA_ERR::NOT_ENABLED_WALKING_MODULE)
-				ROS_ERROR("[Demo]  : STEP_DATA_ERR::NOT_ENABLED_WALKING_MODULE");
-			if(_result & STEP_DATA_ERR::PROBLEM_IN_POSITION_DATA)
-				ROS_ERROR("[Demo]  : STEP_DATA_ERR::PROBLEM_IN_POSITION_DATA");
-			if(_result & STEP_DATA_ERR::PROBLEM_IN_TIME_DATA)
-				ROS_ERROR("[Demo]  : STEP_DATA_ERR::PROBLEM_IN_TIME_DATA");
-			if(_result & STEP_DATA_ERR::ROBOT_IS_WALKING_NOW)
-				ROS_ERROR("[Demo]  : STEP_DATA_ERR::ROBOT_IS_WALKING_NOW");
-
-			return;
-		}
-	}
-	else {
-		ROS_ERROR("[Demo]  : Failed to add step data array ");
-		return;
-	}
-
-}
-
-
-void Step2DArrayCallback(const thormang3_foot_step_generator::Step2DArray::ConstPtr& msg)
-{
-    thormang3_walking_module_msgs::GetReferenceStepData	_get_ref_stp_data_srv;
-    thormang3_walking_module_msgs::StepData				_ref_step_data;
-    thormang3_walking_module_msgs::AddStepDataArray		_add_stp_data_srv;
-    thormang3_walking_module_msgs::IsRunning			_is_running_srv;
-
-
-    if(is_running_client.call(_is_running_srv) == false) {
-    	ROS_ERROR("[Demo]  : Failed to Walking Status");
-    	return;
+  if((last_command.command == msg->command)
+      && (last_command.step_num == msg->step_num)
+      && (last_command.step_time == msg->step_time)
+      && (last_command.step_length == msg->step_length)
+      && (last_command.side_step_length == msg->side_step_length)
+      && (last_command.step_angle_rad == msg->step_angle_rad))
+  {
+    //prevent double click
+    if( (fabs(now_time - g_last_command_time) < last_command.step_time) )
+    {
+      ROS_ERROR("Receive same command in short time");
+      return;
     }
+  }
+
+  g_last_command_time = now_time;
+
+  last_command.command          = msg->command;
+  last_command.step_num         = msg->step_num;
+  last_command.step_time        = msg->step_time;
+  last_command.step_length      = msg->step_length;
+  last_command.side_step_length = msg->side_step_length;
+  last_command.step_angle_rad   = msg->step_angle_rad;
+
+
+  ROS_INFO("[Demo]  : Walking Command");
+  ROS_INFO_STREAM("  command          : " << msg->command );
+  ROS_INFO_STREAM("  step_num         : " << msg->step_num );
+  ROS_INFO_STREAM("  step_time        : " << msg->step_time );
+  ROS_INFO_STREAM("  step_length      : " << msg->step_length);
+  ROS_INFO_STREAM("  side_step_length : " << msg->side_step_length );
+  ROS_INFO_STREAM("  step_angle_rad   : " << msg->step_angle_rad );
+
+  if((msg->step_num == 0)
+      && (msg->command != "left kick")
+      && (msg->command != "right kick")
+      && (msg->command != "stop"))
+    return;
+
+  //set walking parameter
+  if(msg->step_length < 0)
+  {
+    g_foot_stp_generator.fb_step_length_m_ = 0;
+    ROS_ERROR_STREAM("step_length is negative.");
+    ROS_ERROR_STREAM("It will be set to zero.");
+  }
+  else
+  {
+    g_foot_stp_generator.fb_step_length_m_ = msg->step_length;
+  }
+
+  if(msg->side_step_length < 0)
+  {
+    g_foot_stp_generator.rl_step_length_m_ = 0;
+    ROS_ERROR_STREAM("side_step_length is negative.");
+    ROS_ERROR_STREAM("It will be set to zero.");
+  }
+  else
+  {
+    g_foot_stp_generator.rl_step_length_m_ = msg->side_step_length;
+  }
+
+  if(msg->step_angle_rad < 0)
+  {
+    g_foot_stp_generator.rotate_step_angle_rad_ = 0;
+    ROS_ERROR_STREAM("step_angle_rad is negative.");
+    ROS_ERROR_STREAM("It will be set to zero.");
+  }
+  else
+  {
+    g_foot_stp_generator.rotate_step_angle_rad_ = msg->step_angle_rad;
+  }
+
+  if(msg->step_time < MINIMUM_STEP_TIME_SEC)
+  {
+    g_foot_stp_generator.step_time_sec_ = MINIMUM_STEP_TIME_SEC;
+    ROS_ERROR_STREAM("step_time is less than minimum step time. ");
+    ROS_ERROR_STREAM("It will be set to minimum step time(0.4 sec).");
+  }
+  else
+  {
+    g_foot_stp_generator.step_time_sec_ = msg->step_time;
+  }
+
+  g_foot_stp_generator.num_of_step_ = 2*(msg->step_num) + 2;
+
+
+  thormang3_walking_module_msgs::GetReferenceStepData    get_ref_stp_data_srv;
+  thormang3_walking_module_msgs::StepData                ref_step_data;
+  thormang3_walking_module_msgs::AddStepDataArray        add_stp_data_srv;
+
+
+  //get reference step data
+  if(g_get_ref_step_data_client.call(get_ref_stp_data_srv) == false)
+  {
+    ROS_ERROR("Failed to get reference step data");
+    return;
+  }
+
+  ref_step_data = get_ref_stp_data_srv.response.reference_step_data;
+
+  //calc step data
+  if(msg->command == "forward")
+  {
+    if(g_is_running_check_needed == true)
+      if(isRunning() == true)
+        return;
+
+    g_foot_stp_generator.getStepData( &add_stp_data_srv.request.step_data_array, ref_step_data, FORWARD_WALKING);
+    g_is_running_check_needed = false;
+  }
+  else if(msg->command == "backward")
+  {
+    if(g_is_running_check_needed == true)
+      if(isRunning() == true)
+        return;
+
+    g_foot_stp_generator.getStepData( &add_stp_data_srv.request.step_data_array, ref_step_data, BACKWARD_WALKING);
+    g_is_running_check_needed = false;
+  }
+  else if(msg->command == "turn left")
+  {
+    if(g_is_running_check_needed == true)
+      if(isRunning() == true)
+        return;
+
+    g_foot_stp_generator.getStepData( &add_stp_data_srv.request.step_data_array, ref_step_data, LEFT_ROTATING_WALKING);
+    g_is_running_check_needed = false;
+  }
+  else if(msg->command == "turn right")
+  {
+    if(g_is_running_check_needed == true)
+      if(isRunning() == true)
+        return;
+
+    g_foot_stp_generator.getStepData( &add_stp_data_srv.request.step_data_array, ref_step_data, RIGHT_ROTATING_WALKING);
+    g_is_running_check_needed = false;
+  }
+  else if(msg->command == "right")
+  {
+    if(g_is_running_check_needed == true)
+      if(isRunning() == true)
+        return;
+
+    g_foot_stp_generator.getStepData( &add_stp_data_srv.request.step_data_array, ref_step_data, RIGHTWARD_WALKING);
+    g_is_running_check_needed = false;
+  }
+  else if(msg->command == "left")
+  {
+    if(g_is_running_check_needed == true)
+      if(isRunning() == true)
+        return;
+
+    g_foot_stp_generator.getStepData( &add_stp_data_srv.request.step_data_array, ref_step_data, LEFTWARD_WALKING);
+    g_is_running_check_needed = false;
+  }
+  else if(msg->command == "right kick")
+  {
+    if(isRunning() == true)
+      return;
+
+    g_foot_stp_generator.calcRightKickStep( &add_stp_data_srv.request.step_data_array, ref_step_data);
+    g_is_running_check_needed = true;
+  }
+  else if(msg->command == "left kick")
+  {
+    if(isRunning() == true)
+      return;
+
+    g_foot_stp_generator.calcLeftKickStep( &add_stp_data_srv.request.step_data_array, ref_step_data);
+    g_is_running_check_needed = true;
+  }
+  else if(msg->command == "stop")
+  {
+    if(g_is_running_check_needed == true)
+      if(isRunning() == true)
+        return;
+
+    g_foot_stp_generator.getStepData( &add_stp_data_srv.request.step_data_array, ref_step_data, STOP_WALKING);
+    g_is_running_check_needed = false;
+  }
+  else
+  {
+    ROS_ERROR("[Demo]  : Invalid Command");
+    return;
+  }
+
+  //set add step data srv for auto start
+  add_stp_data_srv.request.auto_start = true;
+  add_stp_data_srv.request.remove_existing_step_data = true;
+
+  //add step data
+  if(g_add_step_data_array_client.call(add_stp_data_srv) == true)
+  {
+    int add_stp_data_srv_result = add_stp_data_srv.response.result;
+    if(add_stp_data_srv_result== thormang3_walking_module_msgs::AddStepDataArray::Response::NO_ERROR)
+    {
+      ROS_INFO("[Demo]  : Succeed to add step data array");
+    }
+    else
+    {
+      ROS_ERROR("[Demo]  : Failed to add step data array");
+
+      if(add_stp_data_srv_result & thormang3_walking_module_msgs::AddStepDataArray::Response::NOT_ENABLED_WALKING_MODULE)
+        ROS_ERROR("[Demo]  : STEP_DATA_ERR::NOT_ENABLED_WALKING_MODULE");
+      if(add_stp_data_srv_result & thormang3_walking_module_msgs::AddStepDataArray::Response::PROBLEM_IN_POSITION_DATA)
+        ROS_ERROR("[Demo]  : STEP_DATA_ERR::PROBLEM_IN_POSITION_DATA");
+      if(add_stp_data_srv_result & thormang3_walking_module_msgs::AddStepDataArray::Response::PROBLEM_IN_TIME_DATA)
+        ROS_ERROR("[Demo]  : STEP_DATA_ERR::PROBLEM_IN_TIME_DATA");
+      if(add_stp_data_srv_result & thormang3_walking_module_msgs::AddStepDataArray::Response::TOO_MANY_STEP_DATA)
+        ROS_ERROR("[Demo]  : STEP_DATA_ERR::TOO_MANY_STEP_DATA");
+      if(add_stp_data_srv_result & thormang3_walking_module_msgs::AddStepDataArray::Response::ROBOT_IS_WALKING_NOW)
+        ROS_ERROR("[Demo]  : STEP_DATA_ERR::ROBOT_IS_WALKING_NOW");
+
+      g_foot_stp_generator.initialize();
+
+      return;
+    }
+  }
+  else
+  {
+    ROS_ERROR("[Demo]  : Failed to add step data array ");
+    g_foot_stp_generator.initialize();
+    return;
+  }
+
+}
+
+
+void step2DArrayCallback(const thormang3_foot_step_generator::Step2DArray::ConstPtr& msg)
+{
+  thormang3_walking_module_msgs::GetReferenceStepData get_ref_stp_data_srv;
+  thormang3_walking_module_msgs::StepData             ref_step_data;
+  thormang3_walking_module_msgs::AddStepDataArray     add_stp_data_srv;
+  thormang3_walking_module_msgs::IsRunning            is_running_srv;
+
+  if(isRunning() == true)
+    return;
+
+
+  //get reference step data
+  if(g_get_ref_step_data_client.call(get_ref_stp_data_srv) == false)
+  {
+    ROS_ERROR("[Demo]  : Failed to get reference step data");
+    return;
+  }
+
+  ref_step_data = get_ref_stp_data_srv.response.reference_step_data;
+
+  g_foot_stp_generator.getStepDataFromStepData2DArray(&add_stp_data_srv.request.step_data_array, ref_step_data, msg);
+  g_is_running_check_needed = true;
+
+  //set add step data srv fot auto start and remove existing step data
+  add_stp_data_srv.request.auto_start = true;
+  add_stp_data_srv.request.remove_existing_step_data = true;
+
+  //add step data
+  if(g_add_step_data_array_client.call(add_stp_data_srv) == true)
+  {
+    int add_stp_data_srv_result = add_stp_data_srv.response.result;
+    if(add_stp_data_srv_result== thormang3_walking_module_msgs::AddStepDataArray::Response::NO_ERROR)
+      ROS_INFO("[Demo]  : Succeed to add step data array");
     else {
-    	if(_is_running_srv.response.is_running == true)
-    	{
-    		ROS_ERROR("[Demo]  : STEP_DATA_ERR::ROBOT_IS_WALKING_NOW");
-    		return;
-    	}
+      ROS_ERROR("[Demo]  : Failed to add step data array");
+
+      if(add_stp_data_srv_result & thormang3_walking_module_msgs::AddStepDataArray::Response::NOT_ENABLED_WALKING_MODULE)
+        ROS_ERROR("[Demo]  : STEP_DATA_ERR::NOT_ENABLED_WALKING_MODULE");
+      if(add_stp_data_srv_result & thormang3_walking_module_msgs::AddStepDataArray::Response::PROBLEM_IN_POSITION_DATA)
+        ROS_ERROR("[Demo]  : STEP_DATA_ERR::PROBLEM_IN_POSITION_DATA");
+      if(add_stp_data_srv_result & thormang3_walking_module_msgs::AddStepDataArray::Response::PROBLEM_IN_TIME_DATA)
+        ROS_ERROR("[Demo]  : STEP_DATA_ERR::PROBLEM_IN_TIME_DATA");
+      if(add_stp_data_srv_result & thormang3_walking_module_msgs::AddStepDataArray::Response::ROBOT_IS_WALKING_NOW)
+        ROS_ERROR("[Demo]  : STEP_DATA_ERR::ROBOT_IS_WALKING_NOW");
+
+      return;
     }
-
-
-	//get reference step data
-	if(get_ref_step_data_client.call(_get_ref_stp_data_srv) == false) {
-		ROS_ERROR("[Demo]  : Failed to get reference step data");
-		return;
-	}
-
-	_ref_step_data = _get_ref_stp_data_srv.response.reference_step_data;
-
-
-	thormang3_foot_stp_generator.GetStepDataFromStepData2DArray(&_add_stp_data_srv.request.step_data_array, _ref_step_data, msg);
-
-	//set add step data srv fot auto start and remove existing step data
-	_add_stp_data_srv.request.auto_start = true;
-	_add_stp_data_srv.request.remove_existing_step_data = true;
-
-	//add step data
-	if(add_step_data_array_client.call(_add_stp_data_srv) == true) {
-		int _result = _add_stp_data_srv.response.result;
-		if(_result== STEP_DATA_ERR::NO_ERROR)
-			ROS_INFO("[Demo]  : Succeed to add step data array");
-		else {
-			ROS_ERROR("[Demo]  : Failed to add step data array");
-
-			if(_result & STEP_DATA_ERR::NOT_ENABLED_WALKING_MODULE)
-				ROS_ERROR("[Demo]  : STEP_DATA_ERR::NOT_ENABLED_WALKING_MODULE");
-			if(_result & STEP_DATA_ERR::PROBLEM_IN_POSITION_DATA)
-				ROS_ERROR("[Demo]  : STEP_DATA_ERR::PROBLEM_IN_POSITION_DATA");
-			if(_result & STEP_DATA_ERR::PROBLEM_IN_TIME_DATA)
-				ROS_ERROR("[Demo]  : STEP_DATA_ERR::PROBLEM_IN_TIME_DATA");
-			if(_result & STEP_DATA_ERR::ROBOT_IS_WALKING_NOW)
-				ROS_ERROR("[Demo]  : STEP_DATA_ERR::ROBOT_IS_WALKING_NOW");
-
-			return;
-		}
-	}
-	else {
-		ROS_ERROR("[Demo]  : Failed to add step data array ");
-		return;
-	}
+  }
+  else
+  {
+    ROS_ERROR("[Demo]  : Failed to add step data array ");
+    return;
+  }
 }
 
-
-void BalanceCommandCallback(const std_msgs::Bool::ConstPtr &msg)
+bool isRunning(void)
 {
-    thormang3_walking_module_msgs::SetBalanceParam _set_balance_param_srv;
-
-	if(LoadBalanceParam(_set_balance_param_srv) == false)
-	{
-		return;
-	}
-
-	_set_balance_param_srv.request.updating_duration = 2.0; //1sec
-	if(msg->data == false)
-	{
-		_set_balance_param_srv.request.balance_param.hip_roll_swap_angle_rad = 0;
-		_set_balance_param_srv.request.balance_param.gyro_gain               = 0;
-		_set_balance_param_srv.request.balance_param.foot_roll_angle_gain    = 0;
-		_set_balance_param_srv.request.balance_param.foot_pitch_angle_gain   = 0;
-		_set_balance_param_srv.request.balance_param.foot_x_force_gain       = 0;
-		_set_balance_param_srv.request.balance_param.foot_y_force_gain       = 0;
-		_set_balance_param_srv.request.balance_param.foot_z_force_gain       = 0;
-		_set_balance_param_srv.request.balance_param.foot_roll_torque_gain   = 0;
-		_set_balance_param_srv.request.balance_param.foot_pitch_torque_gain  = 0;
-	}
-
-	if(set_balance_param_client.call(_set_balance_param_srv) == true)
-	{
-		int _result = _set_balance_param_srv.response.result;
-		if( _result == BALANCE_PARAM_ERR::NO_ERROR) {
-			ROS_INFO("[Demo]  : Succeed to set balance param");
-			ROS_INFO("[Demo]  : Please wait 2 sec for turning on balance");
-		}
-		else {
-			if(_result & BALANCE_PARAM_ERR::NOT_ENABLED_WALKING_MODULE)
-				ROS_ERROR("[Demo]  : BALANCE_PARAM_ERR::NOT_ENABLED_WALKING_MODULE");
-			if(_result & BALANCE_PARAM_ERR::PREV_REQUEST_IS_NOT_FINISHED)
-				ROS_ERROR("[Demo]  : BALANCE_PARAM_ERR::PREV_REQUEST_IS_NOT_FINISHED");
-			if(_result & BALANCE_PARAM_ERR::TIME_CONST_IS_ZERO_OR_NEGATIVE)
-				ROS_ERROR("[Demo]  : BALANCE_PARAM_ERR::TIME_CONST_IS_ZERO_OR_NEGATIVE");
-		}
-	}
-	else
-		ROS_ERROR("[Demo]  : Failed to set balance param ");
-}
-
-bool LoadBalanceParam(thormang3_walking_module_msgs::SetBalanceParam& _set_param)
-{
-    ros::NodeHandle _ros_node;
-    std::string _balance_yaml_path = "";
-    _balance_yaml_path = ros::package::getPath("thormang3_foot_step_generator") + "/data/balance_param.yaml";
-
-    YAML::Node _doc;
-	try	{
-		// load yaml
-		_doc = YAML::LoadFile(_balance_yaml_path.c_str());
-	}
-	catch(const std::exception& e) {
-		ROS_ERROR("Failed to load balance param yaml file.");
-		return false;
-	}
-
-	double cob_x_offset_m					= _doc["cob_x_offset_m"].as<double>();
-	double cob_y_offset_m					= _doc["cob_y_offset_m"].as<double>();
-	double hip_roll_swap_angle_rad			= _doc["hip_roll_swap_angle_rad"].as<double>();
-	double gyro_gain						= _doc["gyro_gain"].as<double>();
-	double foot_roll_angle_gain				= _doc["foot_roll_angle_gain"].as<double>();
-	double foot_pitch_angle_gain			= _doc["foot_pitch_angle_gain"].as<double>();
-	double foot_x_force_gain				= _doc["foot_x_force_gain"].as<double>();
-	double foot_y_force_gain				= _doc["foot_y_force_gain"].as<double>();
-	double foot_z_force_gain				= _doc["foot_z_force_gain"].as<double>();
-	double foot_roll_torque_gain			= _doc["foot_roll_torque_gain"].as<double>();
-	double foot_pitch_torque_gain			= _doc["foot_pitch_torque_gain"].as<double>();
-	double foot_roll_angle_time_constant	= _doc["foot_roll_angle_time_constant"].as<double>();
-	double foot_pitch_angle_time_constant	= _doc["foot_pitch_angle_time_constant"].as<double>();
-	double foot_x_force_time_constant		= _doc["foot_x_force_time_constant"].as<double>();
-	double foot_y_force_time_constant		= _doc["foot_y_force_time_constant"].as<double>();
-	double foot_z_force_time_constant		= _doc["foot_z_force_time_constant"].as<double>();
-	double foot_roll_torque_time_constant	= _doc["foot_roll_torque_time_constant"].as<double>();
-	double foot_pitch_torque_time_constant	= _doc["foot_pitch_torque_time_constant"].as<double>();
-
-//	std::cout << "cob_x_offset_m                  : " << cob_x_offset_m					    <<std::endl;
-//	std::cout << "cob_y_offset_m                  : " << cob_y_offset_m					    <<std::endl;
-//	std::cout << "hip_roll_swap_angle_rad         : " << hip_roll_swap_angle_rad			<<std::endl;
-//	std::cout << "gyro_gain                       : " << gyro_gain						    <<std::endl;
-//	std::cout << "foot_roll_angle_gain            : " << foot_roll_angle_gain				<<std::endl;
-//	std::cout << "foot_pitch_angle_gain           : " << foot_pitch_angle_gain			    <<std::endl;
-//	std::cout << "foot_x_force_gain               : " << foot_x_force_gain				    <<std::endl;
-//	std::cout << "foot_y_force_gain               : " << foot_y_force_gain				    <<std::endl;
-//	std::cout << "foot_z_force_gain               : " << foot_z_force_gain				    <<std::endl;
-//	std::cout << "foot_roll_torque_gain           : " << foot_roll_torque_gain			    <<std::endl;
-//	std::cout << "foot_pitch_torque_gain          : " << foot_pitch_torque_gain			    <<std::endl;
-//	std::cout << "foot_roll_angle_time_constant   : " << foot_roll_angle_time_constant	    <<std::endl;
-//	std::cout << "foot_pitch_angle_time_constant  : " << foot_pitch_angle_time_constant	    <<std::endl;
-//	std::cout << "foot_x_force_time_constant      : " << foot_x_force_time_constant		    <<std::endl;
-//	std::cout << "foot_y_force_time_constant      : " << foot_y_force_time_constant		    <<std::endl;
-//	std::cout << "foot_z_force_time_constant      : " << foot_z_force_time_constant		    <<std::endl;
-//	std::cout << "foot_roll_torque_time_constant  : " << foot_roll_torque_time_constant	    <<std::endl;
-//	std::cout << "foot_pitch_torque_time_constant : " << foot_pitch_torque_time_constant	<<std::endl;
-
-	_set_param.request.balance_param.cob_x_offset_m                  = cob_x_offset_m;
-	_set_param.request.balance_param.cob_y_offset_m                  = cob_y_offset_m;
-	_set_param.request.balance_param.hip_roll_swap_angle_rad         = hip_roll_swap_angle_rad;
-	_set_param.request.balance_param.gyro_gain                       = gyro_gain;
-	_set_param.request.balance_param.foot_roll_angle_gain            = foot_roll_angle_gain;
-	_set_param.request.balance_param.foot_pitch_angle_gain           = foot_pitch_angle_gain;
-	_set_param.request.balance_param.foot_x_force_gain               = foot_x_force_gain;
-	_set_param.request.balance_param.foot_y_force_gain               = foot_y_force_gain;
-	_set_param.request.balance_param.foot_z_force_gain               = foot_z_force_gain;
-	_set_param.request.balance_param.foot_roll_torque_gain           = foot_roll_torque_gain;
-	_set_param.request.balance_param.foot_pitch_torque_gain          = foot_pitch_torque_gain;
-	_set_param.request.balance_param.foot_roll_angle_time_constant   = foot_roll_angle_time_constant;
-	_set_param.request.balance_param.foot_pitch_angle_time_constant  = foot_pitch_angle_time_constant;
-	_set_param.request.balance_param.foot_x_force_time_constant      = foot_x_force_time_constant;
-	_set_param.request.balance_param.foot_y_force_time_constant      = foot_y_force_time_constant;
-	_set_param.request.balance_param.foot_z_force_time_constant      = foot_z_force_time_constant;
-	_set_param.request.balance_param.foot_roll_torque_time_constant  = foot_roll_torque_time_constant;
-	_set_param.request.balance_param.foot_pitch_torque_time_constant = foot_pitch_torque_time_constant;
-
+  thormang3_walking_module_msgs::IsRunning is_running_srv;
+  if(g_is_running_client.call(is_running_srv) == false)
+  {
+    ROS_ERROR("[Demo]  : Failed to Walking Status");
     return true;
+  }
+  else
+  {
+    if(is_running_srv.response.is_running == true)
+    {
+      ROS_ERROR("[Demo]  : STEP_DATA_ERR::ROBOT_IS_WALKING_NOW");
+      return true;
+    }
+  }
+  return false;
 }
+
 
