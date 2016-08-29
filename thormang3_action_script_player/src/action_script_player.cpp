@@ -356,11 +356,11 @@ int main(int argc, char **argv)
 
   g_action_script_play_thread = 0;
 
-  g_action_script_num_sub = ros_node_handle.subscribe("/robotis/demo/action_index", 0, &actionScriptNumberCallback);
-  g_action_page_num_pub   = ros_node_handle.advertise<std_msgs::Int32>("/robotis/action/page_num", 0);
-  g_start_action_pub      = ros_node_handle.advertise<thormang3_action_module_msgs::StartAction>("/robotis/action/start_action", 0);
+  g_action_script_num_sub = ros_node_handle.subscribe("robotis/demo/action_index", 0, &actionScriptNumberCallback);
+  g_action_page_num_pub   = ros_node_handle.advertise<std_msgs::Int32>("robotis/action/page_num", 0);
+  g_start_action_pub      = ros_node_handle.advertise<thormang3_action_module_msgs::StartAction>("robotis/action/start_action", 0);
   g_sound_file_name_pub   = ros_node_handle.advertise<std_msgs::String>("/play_sound_file", 0);
-  g_is_running_client     = ros_node_handle.serviceClient<thormang3_action_module_msgs::IsRunning>("/robotis/action/is_running");
+  g_is_running_client     = ros_node_handle.serviceClient<thormang3_action_module_msgs::IsRunning>("robotis/action/is_running");
 
   //Setting action script file path
   std::string temp_action_script_file_path = ros::package::getPath("thormang3_action_script_player") + "/script/action_script.yaml";
