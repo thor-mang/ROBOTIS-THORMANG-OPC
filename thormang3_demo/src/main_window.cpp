@@ -493,7 +493,7 @@ void MainWindow::on_button_walking_demo_1_clicked(bool check)
 void MainWindow::on_button_walking_demo_2_clicked(bool check)
 {
   // walking mode
-  qnode_thor3_.enableControlModule("walking_module");
+  qnode_thor3_.enableControlModule("walk_control_module");
 
   // wait for setting module
   usleep(10 * 1000);
