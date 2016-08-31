@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>thormang3_opc</name>
-  <version>0.1.0</version>
+  <version>0.2.0</version>
   <description>ROS packages for the thormang3_opc (meta package)</description>
   <license>BSD</license>
   <author email="hjsong@robotis.com">Jay Song</author>
@@ -13,9 +13,7 @@
   <url type="website">http://wiki.ros.org/thormang3_opc</url>
   <buildtool_depend>catkin</buildtool_depend>
   <run_depend>thormang3_action_script_player</run_depend>
-  <run_depend>thormang3_demo</run_depend>
   <run_depend>thormang3_foot_step_generator</run_depend>
-  <run_depend>thormang3_navigation</run_depend>
   <run_depend>thormang3_offset_tuner_client</run_depend>
   <export><metapackage/></export>
 </package>

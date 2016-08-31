@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>thormang3_offset_tuner_client</name>
-  <version>0.1.0</version>
+  <version>0.2.0</version>
   <description>
      The GUI program that can adjust offset of THORMANG3.
      It is used with the thormang3_offset_tuner_server.
