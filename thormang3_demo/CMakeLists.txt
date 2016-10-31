@@ -73,9 +73,11 @@ file(GLOB_RECURSE QT_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} FOLLOW_SYMLINK
 ##############################################################################
 
 add_executable(thormang3_demo ${QT_SOURCES} ${QT_RESOURCES_CPP} ${QT_FORMS_HPP} ${QT_MOC_HPP})
+add_dependencies(thormang3_demo ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(thormang3_demo
   ${QT_LIBRARIES}
   ${catkin_LIBRARIES}
   yaml-cpp)
 install(TARGETS thormang3_demo RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+
 

@@ -20,8 +20,9 @@ add_executable(thormang3_action_script_player
    src/action_script_player.cpp   
 )
 
+add_dependencies(thormang3_action_script_player ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
 target_link_libraries(thormang3_action_script_player
    yaml-cpp
    ${catkin_LIBRARIES}
 )
-
