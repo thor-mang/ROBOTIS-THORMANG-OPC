@@ -4,10 +4,12 @@
   <version>0.1.1</version>
   <description>
 
-     thormang3_demo
+     A GUI program for controlling a THORMANG3.
+     Initial posture, walking, manipulation, head control are available with this package.
 
   </description>
-  <maintainer email="platform@robotis.com">kayman</maintainer>
+  
+  <maintainer email="kmjung@robotis.com">kayman</maintainer>
   <author email="kmjung@robotis.com">kayman</author>
   <license>BSD</license>
 
