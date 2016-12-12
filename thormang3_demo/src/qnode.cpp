@@ -50,7 +50,8 @@ namespace thormang3_demo
 QNodeThor3::QNodeThor3(int argc, char** argv)
     : init_argc_(argc),
       init_argv_(argv),
-      marker_name_("THORMANG3_demo_marker")
+      marker_name_("THORMANG3_demo_marker"),
+      frame_id_("pelvis_link")
 {
   // code to DEBUG
   debug_print_ = false;
@@ -125,6 +126,7 @@ bool QNodeThor3::init()
       "/robotis/manipulation/get_joint_pose");
   get_kinematics_pose_client_ = nh.serviceClient<thormang3_manipulation_module_msgs::GetKinematicsPose>(
       "/robotis/manipulation/get_kinematics_pose");
+  send_gripper_pub_ = nh.advertise<sensor_msgs::JointState>("/robotis/gripper/joint_pose_msg", 0);
 
   // Walking
   set_balance_param_client_ = nh.serviceClient<thormang3_walking_module_msgs::SetBalanceParam>(
@@ -165,7 +167,7 @@ bool QNodeThor3::init()
 
 void QNodeThor3::run()
 {
-  ros::Rate loop_rate(1);
+  ros::Rate loop_rate(100);
 
   while (ros::ok())
   {
@@ -602,6 +604,12 @@ void QNodeThor3::sendIkMsg(thormang3_manipulation_module_msgs::KinematicsPose ms
            << msg.pose.orientation.w << " \n ";
 
   log(Info, log_msgs.str());
+}
+
+void QNodeThor3::sendGripperPosition(sensor_msgs::JointState msg)
+{
+  // publish gripper angle
+  send_gripper_pub_.publish(msg);
 }
 
 void QNodeThor3::getJointPose(std::string joint_name)
@@ -1195,7 +1203,7 @@ void QNodeThor3::makeInteractiveMarker(const geometry_msgs::Pose &marker_pose)
     ROS_ERROR("No frame id!!!");
     // return;
 
-    frame_id_ = "world";
+    frame_id_ = "pelvis_link";
   }
 
   ROS_INFO_STREAM(

@@ -1,45 +1,45 @@
 /*******************************************************************************
-* Copyright (c) 2016, ROBOTIS CO., LTD.
-* All rights reserved.
-*
-* Redistribution and use in source and binary forms, with or without
-* modification, are permitted provided that the following conditions are met:
-*
-* * Redistributions of source code must retain the above copyright notice, this
-*   list of conditions and the following disclaimer.
-*
-* * Redistributions in binary form must reproduce the above copyright notice,
-*   this list of conditions and the following disclaimer in the documentation
-*   and/or other materials provided with the distribution.
-*
-* * Neither the name of ROBOTIS nor the names of its
-*   contributors may be used to endorse or promote products derived from
-*   this software without specific prior written permission.
-*
-* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-* AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-* IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-* DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-* FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-* DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-* SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-* CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-* OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-* OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*******************************************************************************/
+ * Copyright (c) 2016, ROBOTIS CO., LTD.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * * Redistributions of source code must retain the above copyright notice, this
+ *   list of conditions and the following disclaimer.
+ *
+ * * Redistributions in binary form must reproduce the above copyright notice,
+ *   this list of conditions and the following disclaimer in the documentation
+ *   and/or other materials provided with the distribution.
+ *
+ * * Neither the name of ROBOTIS nor the names of its
+ *   contributors may be used to endorse or promote products derived from
+ *   this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *******************************************************************************/
 
 /* Author: Kayman Jung */
 
 /*****************************************************************************
-** Ifdefs
-*****************************************************************************/
+ ** Ifdefs
+ *****************************************************************************/
 
 #ifndef thormang3_demo_QNODE_HPP_
 #define thormang3_demo_QNODE_HPP_
 
 /*****************************************************************************
-** Includes
-*****************************************************************************/
+ ** Includes
+ *****************************************************************************/
 #ifndef Q_MOC_RUN
 
 #include <string>
@@ -83,21 +83,21 @@
 
 #endif // Q_MOC_RUN
 /*****************************************************************************
-** Namespaces
-*****************************************************************************/
+ ** Namespaces
+ *****************************************************************************/
 
 namespace thormang3_demo
 {
 
 /*****************************************************************************
-** Class
-*****************************************************************************/
+ ** Class
+ *****************************************************************************/
 
 class QNodeThor3 : public QThread
 {
-  Q_OBJECT
+Q_OBJECT
 
-public:
+ public:
   enum LogLevel
   {
     Debug = 0,
@@ -120,16 +120,17 @@ public:
 
   bool init();
   void run();
-  QStringListModel* loggingModel() { return &logging_model_; }
-  void log(const LogLevel& level, const std::string& msg,
-           std::string sender = "Demo");
+  QStringListModel* loggingModel()
+  {
+    return &logging_model_;
+  }
+  void log(const LogLevel& level, const std::string& msg, std::string sender = "Demo");
   void clearLog();
   void assembleLidar();
   void enableControlModule(const std::string& mode);
   bool getJointNameFromID(const int& id, std::string& joint_name);
   bool getIDFromJointName(const std::string& joint_name, int& id);
-  bool getIDJointNameFromIndex(const int& index, int& id,
-                               std::string& joint_name);
+  bool getIDJointNameFromIndex(const int& index, int& id, std::string& joint_name);
   std::string getModuleName(const int& index);
   int getModuleIndex(const std::string& mode_name);
   int getModuleTableSize();
@@ -146,13 +147,12 @@ public:
   void sendInitPoseMsg(std_msgs::String msg);
   void sendDestJointMsg(thormang3_manipulation_module_msgs::JointPose msg);
   void sendIkMsg(thormang3_manipulation_module_msgs::KinematicsPose msg);
+  void sendGripperPosition(sensor_msgs::JointState msg);
 
   // Walking
   void setWalkingCommand(thormang3_foot_step_generator::FootStepCommand msg);
   void setWalkingBalance(bool on_command);
-  void setWalkingBalanceParam(const double& gyro_gain,
-                              const double& ft_gain_ratio,
-                              const double& imu_time_const,
+  void setWalkingBalanceParam(const double& gyro_gain, const double& ft_gain_ratio, const double& imu_time_const,
                               const double& ft_time_const);
   void setWalkingFootsteps();
   void clearFootsteps();
@@ -174,7 +174,7 @@ public:
   std::map<int, std::string> module_table_;
   std::map<int, std::string> motion_table_;
 
-public Q_SLOTS:
+ public Q_SLOTS:
   void getJointControlModule();
   void getJointPose(std::string joint_name);
   void getKinematicsPose(std::string group_name);
@@ -201,7 +201,7 @@ Q_SIGNALS:
   void updateDemoPoint(const geometry_msgs::Point point);
   void updateDemoPose(const geometry_msgs::Pose pose);
 
-private:
+ private:
   enum Control_Index
   {
     MODE_UI = 0,
@@ -217,17 +217,14 @@ private:
 
   void parseJointNameFromYaml(const std::string& path);
   void parseMotionMapFromYaml(const std::string& path);
-  void refreshCurrentJointControlCallback(
-      const robotis_controller_msgs::JointCtrlModule::ConstPtr& msg);
+  void refreshCurrentJointControlCallback(const robotis_controller_msgs::JointCtrlModule::ConstPtr& msg);
   void
   updateHeadJointStatesCallback(const sensor_msgs::JointState::ConstPtr& msg);
-  void initFTFootCallback(
-      const thormang3_feet_ft_module_msgs::BothWrench::ConstPtr& msg);
+  void initFTFootCallback(const thormang3_feet_ft_module_msgs::BothWrench::ConstPtr& msg);
   void
   statusMsgCallback(const robotis_controller_msgs::StatusMsg::ConstPtr& msg);
   void poseCallback(const geometry_msgs::Pose::ConstPtr& msg);
-  void interactiveMarkerFeedback(
-      const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback);
+  void interactiveMarkerFeedback(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback);
   void pointStampedCallback(const geometry_msgs::PointStamped::ConstPtr& msg);
   void setBalanceParameter();
   bool loadBalanceParameterFromYaml();
@@ -245,8 +242,7 @@ private:
   std::string marker_name_;
   geometry_msgs::Pose pose_from_ui_;
   geometry_msgs::Pose current_pose_;
-  boost::shared_ptr<interactive_markers::InteractiveMarkerServer>
-      interactive_marker_server_;
+  boost::shared_ptr<interactive_markers::InteractiveMarkerServer> interactive_marker_server_;
   thormang3_walking_module_msgs::SetBalanceParam set_balance_param_srv_;
 
   ros::Publisher init_pose_pub_;
@@ -275,6 +271,8 @@ private:
   ros::ServiceClient get_joint_pose_client_;
   ros::ServiceClient get_kinematics_pose_client_;
 
+  ros::Publisher send_gripper_pub_;
+
   // Walking
   ros::ServiceClient humanoid_footstep_client_;
   ros::ServiceClient set_balance_param_client_;
@@ -298,6 +296,6 @@ private:
   std::map<std::string, bool> using_mode_table_;
 };
 
-} // namespace thormang3_demo
+}  // namespace thormang3_demo
 
 #endif /* thormang3_demo_QNODE_HPP_ */

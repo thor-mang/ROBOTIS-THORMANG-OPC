@@ -238,12 +238,12 @@ void MainWindow::on_despos_button_clicked(bool check)
 
 void MainWindow::on_button_grip_on_clicked(bool check)
 {
-  setGripper(GRIPPER_ON_ANGLE, ui_.gripper_comboBox->currentText().toStdString());
+  setGripper(GRIPPER_ON_ANGLE, GRIPPER_TORQUE_LIMIT, ui_.gripper_comboBox->currentText().toStdString());
 }
 
 void MainWindow::on_button_grip_off_clicked(bool check)
 {
-  setGripper(GRIPPER_OFF_ANGLE, ui_.gripper_comboBox->currentText().toStdString());
+  setGripper(GRIPPER_OFF_ANGLE, GRIPPER_TORQUE_LIMIT, ui_.gripper_comboBox->currentText().toStdString());
 }
 
 void MainWindow::on_A0_button_fl_clicked(bool check)
@@ -436,6 +436,7 @@ void MainWindow::on_button_manipulation_demo_5_clicked(bool check)
 {
   // send pose
   thormang3_manipulation_module_msgs::KinematicsPose msg;
+  double z_offset = 0.801;
 
   // arm group : left_arm_with_torso / right_arm_with_torso
   std::string selected_arm = ui_.comboBox_arm_group->currentText().toStdString();
@@ -444,7 +445,7 @@ void MainWindow::on_button_manipulation_demo_5_clicked(bool check)
 
   msg.pose.position.x = ui_.dSpinBox_marker_pos_x->value() + ui_.dSpinBox_offset_x->value();
   msg.pose.position.y = ui_.dSpinBox_marker_pos_y->value() + ui_.dSpinBox_offset_y->value();
-  msg.pose.position.z = ui_.dSpinBox_marker_pos_z->value() + ui_.dSpinBox_offset_z->value();
+  msg.pose.position.z = ui_.dSpinBox_marker_pos_z->value() + ui_.dSpinBox_offset_z->value() + z_offset;
 
   double roll = deg2rad<double>(ui_.dSpinBox_marker_ori_r->value());
   double pitch = deg2rad<double>(ui_.dSpinBox_marker_ori_p->value());
@@ -469,7 +470,7 @@ void MainWindow::on_button_manipulation_demo_6_clicked(bool check)
   // grip on : l_arm_grip / r_arm_grip
   std::string arm_group =
       (ui_.comboBox_arm_group->currentText().toStdString() == "Right Arm") ? "r_arm_grip" : "l_arm_grip";
-  setGripper(GRIPPER_ON_ANGLE, arm_group);
+  setGripper(GRIPPER_ON_ANGLE, GRIPPER_TORQUE_LIMIT, arm_group);
 }
 
 void MainWindow::on_button_manipulation_demo_7_clicked(bool check)
@@ -477,7 +478,7 @@ void MainWindow::on_button_manipulation_demo_7_clicked(bool check)
   // grip off : l_arm_grip / r_arm_grip
   std::string arm_group =
       (ui_.comboBox_arm_group->currentText().toStdString() == "Right Arm") ? "r_arm_grip" : "l_arm_grip";
-  setGripper(GRIPPER_OFF_ANGLE, arm_group);
+  setGripper(GRIPPER_OFF_ANGLE, GRIPPER_TORQUE_LIMIT, arm_group);
 }
 
 /////////////////////////////////////////////////
@@ -762,14 +763,14 @@ void MainWindow::updateCurrOriSpinbox(double r, double p, double y)
   ui_.ori_yaw_spinbox->setValue(y);
 }
 
-void MainWindow::setGripper(const double &angle_deg, const std::string &arm_type)
+void MainWindow::setGripper(const double angle_deg, const double torque_limit, const std::string &arm_type)
 {
-  thormang3_manipulation_module_msgs::JointPose msg;
+  sensor_msgs::JointState gripper_joint;
+  gripper_joint.name.push_back(arm_type);
+  gripper_joint.position.push_back(deg2rad<double>(angle_deg));
+  gripper_joint.effort.push_back(torque_limit);
 
-  msg.name = arm_type;
-  msg.value = deg2rad<double>(angle_deg);
-
-  qnode_thor3_.sendDestJointMsg(msg);
+  qnode_thor3_.sendGripperPosition(gripper_joint);
 }
 
 // walking
@@ -902,10 +903,7 @@ void MainWindow::clearMarkerPanel()
 
 void MainWindow::on_actionAbout_triggered()
 {
-  QMessageBox::about(
-      this,
-      tr("About ..."),
-      tr("<h2>THORMANG3 Demo</h2><p>Copyright Robotis</p>"));
+  QMessageBox::about(this, tr("About ..."), tr("<h2>THORMANG3 Demo</h2><p>Copyright Robotis</p>"));
 }
 
 /*****************************************************************************
