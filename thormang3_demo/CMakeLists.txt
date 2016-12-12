@@ -37,9 +37,6 @@ include_directories(
 # exporting anything. 
 catkin_package(
  INCLUDE_DIRS include
-#  LIBRARIES thormang3_demo
-#  CATKIN_DEPENDS roscpp thormang3_base_module_msgs thormang3_walking_module_msgs thormang3_manipulation_module_msgs robotis_controller_msgs 
-#  DEPENDS system_lib
 )
 
 ##############################################################################
@@ -78,6 +75,12 @@ target_link_libraries(thormang3_demo
   ${QT_LIBRARIES}
   ${catkin_LIBRARIES}
   yaml-cpp)
-install(TARGETS thormang3_demo RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+
+################################################################################
+# Install
+################################################################################
+install(TARGETS thormang3_demo
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
 

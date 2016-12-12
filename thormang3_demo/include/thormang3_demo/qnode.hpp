@@ -212,6 +212,9 @@ private:
     DEMO_UI = 5,
   };
 
+  static const double DEGREE2RADIAN = M_PI / 180.0;
+  static const double RADIAN2DEGREE = 180.0 / M_PI;
+
   void parseJointNameFromYaml(const std::string& path);
   void parseMotionMapFromYaml(const std::string& path);
   void refreshCurrentJointControlCallback(

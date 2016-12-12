@@ -80,6 +80,7 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
 
   readSettings();
   setWindowIcon(QIcon(":/images/icon.png"));
+
   ui_.tab_manager->setCurrentIndex(0);  // ensure the first tab is showing - qt-designer should have this already hardwired, but often loses it (settings?).
   QObject::connect(&qnode_thor3_, SIGNAL(rosShutdown()), this, SLOT(close()));
 
@@ -129,14 +130,6 @@ MainWindow::~MainWindow()
 /*****************************************************************************
  ** Implementation [Slots]
  *****************************************************************************/
-
-void MainWindow::showNoMasterMessage()
-{
-  QMessageBox msgBox;
-  msgBox.setText("Couldn't find the ros master.");
-  msgBox.exec();
-  close();
-}
 
 void MainWindow::on_button_assemble_lidar_clicked(bool check)
 {
@@ -262,6 +255,7 @@ void MainWindow::on_A1_button_f_clicked(bool check)
 {
   sendWalkingCommand("forward");
 }
+
 void MainWindow::on_A2_button_fr_clicked(bool check)
 {
   sendWalkingCommand("turn right");
@@ -271,10 +265,12 @@ void MainWindow::on_B0_button_l_clicked(bool check)
 {
   sendWalkingCommand("left");
 }
+
 void MainWindow::on_B1_button_stop_clicked(bool check)
 {
   sendWalkingCommand("stop");
 }
+
 void MainWindow::on_B2_button_r_clicked(bool check)
 {
   sendWalkingCommand("right");
@@ -283,10 +279,12 @@ void MainWindow::on_B2_button_r_clicked(bool check)
 void MainWindow::on_C0_button_bl_clicked(bool check)
 {
 }    // disable
+
 void MainWindow::on_C1_button_b_clicked(bool check)
 {
   sendWalkingCommand("backward");
 }
+
 void MainWindow::on_C2_button_br_clicked(bool check)
 {
 }    // disable
@@ -295,10 +293,12 @@ void MainWindow::on_button_balance_on_clicked(bool check)
 {
   qnode_thor3_.setWalkingBalance(true);
 }
+
 void MainWindow::on_button_balance_off_clicked(bool check)
 {
   qnode_thor3_.setWalkingBalance(false);
 }
+
 void MainWindow::on_button_balance_param_apply_clicked(bool check)
 {
   double gyro_gain = ui_.dSpinBox_gyro_gain->value();
@@ -346,10 +346,12 @@ void MainWindow::on_dSpinBox_marker_pos_x_valueChanged(double value)
 {
   updateInteractiveMarker();
 }
+
 void MainWindow::on_dSpinBox_marker_pos_y_valueChanged(double value)
 {
   updateInteractiveMarker();
 }
+
 void MainWindow::on_dSpinBox_marker_pos_z_valueChanged(double value)
 {
   updateInteractiveMarker();
@@ -359,10 +361,12 @@ void MainWindow::on_dSpinBox_marker_ori_r_valueChanged(double value)
 {
   updateInteractiveMarker();
 }
+
 void MainWindow::on_dSpinBox_marker_ori_p_valueChanged(double value)
 {
   updateInteractiveMarker();
 }
+
 void MainWindow::on_dSpinBox_marker_ori_y_valueChanged(double value)
 {
   updateInteractiveMarker();
@@ -372,11 +376,15 @@ void MainWindow::on_button_marker_set_clicked()
 {
   makeInteractiveMarker();
 }
+
 void MainWindow::on_button_marker_clear_clicked()
 {
   clearMarkerPanel();
 }
 
+/////////////////////////////////////////////////
+//             Manupulation Demo
+/////////////////////////////////////////////////
 void MainWindow::on_button_manipulation_demo_0_clicked(bool check)
 {
   // init pose : base
@@ -472,6 +480,9 @@ void MainWindow::on_button_manipulation_demo_7_clicked(bool check)
   setGripper(GRIPPER_OFF_ANGLE, arm_group);
 }
 
+/////////////////////////////////////////////////
+//                 Walking Demo
+/////////////////////////////////////////////////
 void MainWindow::on_button_walking_demo_0_clicked(bool check)
 {
   // init pose : base
@@ -562,6 +573,9 @@ void MainWindow::on_button_walking_demo_7_clicked(bool check)
   qnode_thor3_.kickDemo(kick_command);
 }
 
+/////////////////////////////////////////////////
+//                Action Demo
+/////////////////////////////////////////////////
 void MainWindow::on_button_motion_demo_0_clicked(bool check)
 {
   // init pose : base
@@ -634,19 +648,19 @@ void MainWindow::updatePresentJointModule(std::vector<int> mode)
 
     if (debug_print_)
     {
-      std::stringstream stream;
-      std::string joint;
+      std::stringstream log_stream;
+      std::string joint_name;
       int id;
 
       std::string control_mode = combo_children.at(ix)->currentText().toStdString();
 
-      bool result = qnode_thor3_.getIDJointNameFromIndex(ix, id, joint);
+      bool result = qnode_thor3_.getIDJointNameFromIndex(ix, id, joint_name);
       if (result == true)
-        stream << "[" << (id < 10 ? "0" : "") << id << "] " << joint << " : " << control_mode;
+        log_stream << "[" << (id < 10 ? "0" : "") << id << "] " << joint_name << " : " << control_mode;
       else
-        stream << "id " << ix << " : " << control_mode;
+        log_stream << "id " << ix << " : " << control_mode;
 
-      qnode_thor3_.log(QNodeThor3::Info, stream.str());
+      qnode_thor3_.log(QNodeThor3::Info, log_stream.str());
     }
   }
 
@@ -678,6 +692,7 @@ void MainWindow::updateModuleUI()
   }
 }
 
+// head control
 void MainWindow::updateHeadJointsAngle(double pan, double tilt)
 {
   if (ui_.head_pan_slider->underMouse() == true)
@@ -1043,14 +1058,14 @@ void MainWindow::enableModule(QString mode_name)
 
 void MainWindow::readSettings()
 {
-  QSettings settings("Qt-Ros Package", "thor3_control");
+  QSettings settings("Qt-Ros Package", "thormang3_demo");
   restoreGeometry(settings.value("geometry").toByteArray());
   restoreState(settings.value("windowState").toByteArray());
 }
 
 void MainWindow::writeSettings()
 {
-  QSettings settings("Qt-Ros Package", "thor3_control");
+  QSettings settings("Qt-Ros Package", "thormang3_demo");
   settings.setValue("geometry", saveGeometry());
   settings.setValue("windowState", saveState());
 }

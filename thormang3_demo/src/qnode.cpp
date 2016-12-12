@@ -473,7 +473,6 @@ void QNodeThor3::getJointControlModule()
 void QNodeThor3::refreshCurrentJointControlCallback(const robotis_controller_msgs::JointCtrlModule::ConstPtr &msg)
 {
   ROS_INFO("set current joint module");
-  int index = 0;
 
   std::vector<int> modules;
   modules.resize(getJointTableSize());
@@ -582,7 +581,7 @@ void QNodeThor3::sendDestJointMsg(thormang3_manipulation_module_msgs::JointPose 
 
   std::stringstream log_msg;
 
-  log_msg << " \n " << "joint name : " << msg.name << " \n " << "joint value : " << msg.value * 180.0 / M_PI << " \n ";
+  log_msg << " \n " << "joint name : " << msg.name << " \n " << "joint value : " << msg.value * RADIAN2DEGREE << " \n ";
 
   log(Info, log_msg.str());
 }
@@ -845,7 +844,7 @@ void QNodeThor3::makeFootstepUsingPlanner(const geometry_msgs::Pose &target_foot
 
         // log footsteps
         msg_stream << "Foot Step #" << ix + 1 << " [ " << foot << "] - [" << foot_pose.x << ", " << foot_pose.y << " | "
-                   << (foot_pose.theta * 180 / M_PI) << "]";
+                   << (foot_pose.theta * RADIAN2DEGREE) << "]";
         log(Info, msg_stream.str());
 
         preview_foot_steps_.push_back(foot_pose);
