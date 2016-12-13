@@ -194,9 +194,6 @@ Q_SIGNALS:
   // Head control
   void updateHeadJointsAngle(double pan, double tilt);
 
-  // Walking
-  void havePoseToMakeFootstep();
-
   // Interactive marker
   void updateDemoPoint(const geometry_msgs::Point point);
   void updateDemoPose(const geometry_msgs::Pose pose);

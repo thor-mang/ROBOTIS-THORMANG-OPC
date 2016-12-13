@@ -657,7 +657,7 @@
                     <string>  step(s)</string>
                    </property>
                    <property name="minimum">
-                    <number>4</number>
+                    <number>2</number>
                    </property>
                   </widget>
                  </item>
@@ -919,7 +919,7 @@
               <item row="0" column="0">
                <widget class="QPushButton" name="A0_button_get_step">
                 <property name="enabled">
-                 <bool>false</bool>
+                 <bool>true</bool>
                 </property>
                 <property name="text">
                  <string>Plan</string>

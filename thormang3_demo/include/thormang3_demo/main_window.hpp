@@ -165,9 +165,6 @@ Q_OBJECT
   void updateCurrOriSpinbox(double x, double y, double z, double w);
   void updateCurrOriSpinbox(double r, double p, double y);
 
-  // Walking
-  void enableGetStepButton();
-
   // demo
   void updatePointPanel(const geometry_msgs::Point point);
   void updatePosePanel(const geometry_msgs::Pose pose);

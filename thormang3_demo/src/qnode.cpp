@@ -326,7 +326,7 @@ std::string QNodeThor3::getModuleName(const int &index)
   return mode;
 }
 
-// mode(module) name -> mode(module) index, fail to find out :u
+// mode(module) name -> mode(module) index, fail to find out :-1
 int QNodeThor3::getModuleIndex(const std::string &mode_name)
 {
   int mode_index = -1;
@@ -1133,14 +1133,13 @@ void QNodeThor3::poseCallback(const geometry_msgs::Pose::ConstPtr &msg)
     case WALKING_UI:
     {
       pose_from_ui_ = *msg;
-      Q_EMIT havePoseToMakeFootstep();
       log(Info, "Get Pose For Step");
       break;
     }
 
     case MANIPULATION_UI:
     {
-      double z_offset = 0.801;
+      double z_offset = 0.723;
       Q_EMIT updateCurrPos(msg->position.x, msg->position.y, msg->position.z + z_offset);
       Q_EMIT updateCurrOri(msg->orientation.x, msg->orientation.y, msg->orientation.z, msg->orientation.w);
       log(Info, "Get Pose For IK");
