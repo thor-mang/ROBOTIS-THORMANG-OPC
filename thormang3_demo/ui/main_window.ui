@@ -784,79 +784,6 @@
                  <string>Balance Control</string>
                 </property>
                 <layout class="QGridLayout" name="gridLayout_9">
-                 <item row="2" column="0">
-                  <widget class="QLabel" name="label_10">
-                   <property name="text">
-                    <string>Gyro Gain</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="3" column="0">
-                  <widget class="QLabel" name="label_12">
-                   <property name="text">
-                    <string>FT Gain Ratio</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="3" column="1">
-                  <widget class="QDoubleSpinBox" name="dSpinBox_ft_gain">
-                   <property name="maximum">
-                    <double>2.000000000000000</double>
-                   </property>
-                   <property name="singleStep">
-                    <double>0.050000000000000</double>
-                   </property>
-                   <property name="value">
-                    <double>1.000000000000000</double>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="2" column="2">
-                  <widget class="QLabel" name="label_11">
-                   <property name="text">
-                    <string>IMU Time Constant</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="2" column="3">
-                  <widget class="QDoubleSpinBox" name="dSpinBox_imu_time_constant">
-                   <property name="suffix">
-                    <string> s</string>
-                   </property>
-                   <property name="minimum">
-                    <double>0.050000000000000</double>
-                   </property>
-                   <property name="maximum">
-                    <double>1.000000000000000</double>
-                   </property>
-                   <property name="singleStep">
-                    <double>0.050000000000000</double>
-                   </property>
-                   <property name="value">
-                    <double>0.500000000000000</double>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="2" column="1">
-                  <widget class="QDoubleSpinBox" name="dSpinBox_gyro_gain">
-                   <property name="maximum">
-                    <double>2.000000000000000</double>
-                   </property>
-                   <property name="singleStep">
-                    <double>0.050000000000000</double>
-                   </property>
-                   <property name="value">
-                    <double>0.500000000000000</double>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="4" column="2" colspan="2">
-                  <widget class="QPushButton" name="button_balance_param_apply">
-                   <property name="text">
-                    <string>Apply</string>
-                   </property>
-                  </widget>
-                 </item>
                  <item row="0" column="0" colspan="2">
                   <widget class="QPushButton" name="button_balance_on">
                    <property name="text">
@@ -871,29 +798,10 @@
                    </property>
                   </widget>
                  </item>
-                 <item row="3" column="2">
-                  <widget class="QLabel" name="label_13">
+                 <item row="2" column="2" colspan="2">
+                  <widget class="QPushButton" name="button_feedback_gain_apply">
                    <property name="text">
-                    <string>FT Time Constant</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="3" column="3">
-                  <widget class="QDoubleSpinBox" name="dSpinBox_ft_time_constant">
-                   <property name="suffix">
-                    <string> s</string>
-                   </property>
-                   <property name="minimum">
-                    <double>0.050000000000000</double>
-                   </property>
-                   <property name="maximum">
-                    <double>1.000000000000000</double>
-                   </property>
-                   <property name="singleStep">
-                    <double>0.050000000000000</double>
-                   </property>
-                   <property name="value">
-                    <double>0.200000000000000</double>
+                    <string>Apply</string>
                    </property>
                   </widget>
                  </item>
@@ -901,6 +809,13 @@
                   <widget class="Line" name="line_5">
                    <property name="orientation">
                     <enum>Qt::Horizontal</enum>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="2" column="0" colspan="2">
+                  <widget class="QLabel" name="label_10">
+                   <property name="text">
+                    <string>Joint Feedback Gain</string>
                    </property>
                   </widget>
                  </item>
@@ -2209,7 +2124,7 @@
   </connection>
  </connections>
  <buttongroups>
-  <buttongroup name="buttonGroup_manipulation_demo"/>
   <buttongroup name="buttonGroup_walking_demo"/>
+  <buttongroup name="buttonGroup_manipulation_demo"/>
  </buttongroups>
 </ui>

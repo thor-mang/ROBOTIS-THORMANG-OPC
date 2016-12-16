@@ -78,6 +78,8 @@
 #include "thormang3_manipulation_module_msgs/GetKinematicsPose.h"
 
 #include "thormang3_walking_module_msgs/SetBalanceParam.h"
+#include "thormang3_walking_module_msgs/SetJointFeedBackGain.h"
+
 #include "thormang3_foot_step_generator/FootStepCommand.h"
 #include "thormang3_foot_step_generator/Step2DArray.h"
 
@@ -154,6 +156,8 @@ Q_OBJECT
   void setWalkingBalance(bool on_command);
   void setWalkingBalanceParam(const double& gyro_gain, const double& ft_gain_ratio, const double& imu_time_const,
                               const double& ft_time_const);
+  bool setFeedBackGain(); 
+
   void setWalkingFootsteps();
   void clearFootsteps();
   void makeFootstepUsingPlanner();
@@ -173,6 +177,8 @@ Q_OBJECT
 
   std::map<int, std::string> module_table_;
   std::map<int, std::string> motion_table_;
+
+  std::string package_name_;
 
  public Q_SLOTS:
   void getJointControlModule();
@@ -227,6 +233,7 @@ Q_SIGNALS:
   bool loadBalanceParameterFromYaml();
   void turnOnBalance();
   void turnOffBalance();
+  bool loadFeedbackGainFromYaml();
 
   int init_argc_;
   char** init_argv_;
@@ -241,6 +248,7 @@ Q_SIGNALS:
   geometry_msgs::Pose current_pose_;
   boost::shared_ptr<interactive_markers::InteractiveMarkerServer> interactive_marker_server_;
   thormang3_walking_module_msgs::SetBalanceParam set_balance_param_srv_;
+  thormang3_walking_module_msgs::SetJointFeedBackGain set_joint_feedback_gain_srv_;
 
   ros::Publisher init_pose_pub_;
   ros::Publisher init_ft_pub_;
@@ -273,6 +281,7 @@ Q_SIGNALS:
   // Walking
   ros::ServiceClient humanoid_footstep_client_;
   ros::ServiceClient set_balance_param_client_;
+  ros::ServiceClient set_joint_feedback_gain_client_;
   ros::Publisher set_walking_command_pub_;
   ros::Publisher set_walking_footsteps_pub_;
   ros::Publisher set_walking_balance_pub_;

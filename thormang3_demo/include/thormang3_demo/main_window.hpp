@@ -108,7 +108,7 @@ Q_OBJECT
 
   void on_button_balance_on_clicked(bool check);
   void on_button_balance_off_clicked(bool check);
-  void on_button_balance_param_apply_clicked(bool check);
+  void on_button_feedback_gain_apply_clicked(bool check);
 
   void on_A0_button_get_step_clicked(bool check);
   void on_A1_button_clear_step_clicked(bool check);

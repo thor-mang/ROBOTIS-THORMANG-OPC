@@ -300,14 +300,9 @@ void MainWindow::on_button_balance_off_clicked(bool check)
   qnode_thor3_.setWalkingBalance(false);
 }
 
-void MainWindow::on_button_balance_param_apply_clicked(bool check)
+void MainWindow::on_button_feedback_gain_apply_clicked(bool check)
 {
-  double gyro_gain = ui_.dSpinBox_gyro_gain->value();
-  double ft_gain = ui_.dSpinBox_gyro_gain->value();
-  double imu_time_constant = ui_.dSpinBox_imu_time_constant->value();
-  double ft_time_constant = ui_.dSpinBox_ft_time_constant->value();
-
-  qnode_thor3_.setWalkingBalanceParam(gyro_gain, ft_gain, imu_time_constant, ft_time_constant);
+  qnode_thor3_.setFeedBackGain();
 }
 
 void MainWindow::on_A0_button_get_step_clicked(bool check)
