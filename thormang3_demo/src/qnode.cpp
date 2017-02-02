@@ -50,7 +50,8 @@ namespace thormang3_demo
 QNodeThor3::QNodeThor3(int argc, char** argv)
     : init_argc_(argc),
       init_argv_(argv),
-      marker_name_("THORMANG3_demo_marker")
+      marker_name_("THORMANG3_demo_marker"),
+      frame_id_("pelvis_link")
 {
   // code to DEBUG
   debug_print_ = false;
@@ -88,6 +89,8 @@ bool QNodeThor3::init()
   ros::start();  // explicitly needed since our nodehandle is going out of scope.
 
   ros::NodeHandle nh;
+
+  package_name_ = ros::package::getPath("thormang3_demo");
 
   // Add your ros communications here.
   status_msg_sub_ = nh.subscribe("robotis/status", 10, &QNodeThor3::statusMsgCallback, this);
@@ -129,6 +132,7 @@ bool QNodeThor3::init()
   // Walking
   set_balance_param_client_ = nh.serviceClient<thormang3_walking_module_msgs::SetBalanceParam>(
       "robotis/walking/set_balance_param");
+  set_joint_feedback_gain_client_ = nh.serviceClient<thormang3_walking_module_msgs::SetJointFeedBackGain>("robotis/walking/joint_feedback_gain");
   set_walking_command_pub_ = nh.advertise<thormang3_foot_step_generator::FootStepCommand>(
       "robotis/thormang3_foot_step_generator/walking_command", 0);
   set_walking_footsteps_pub_ = nh.advertise<thormang3_foot_step_generator::Step2DArray>(
@@ -165,7 +169,7 @@ bool QNodeThor3::init()
 
 void QNodeThor3::run()
 {
-  ros::Rate loop_rate(1);
+  ros::Rate loop_rate(100);
 
   while (ros::ok())
   {
@@ -324,7 +328,7 @@ std::string QNodeThor3::getModuleName(const int &index)
   return mode;
 }
 
-// mode(module) name -> mode(module) index, fail to find out :u
+// mode(module) name -> mode(module) index, fail to find out :-1
 int QNodeThor3::getModuleIndex(const std::string &mode_name)
 {
   int mode_index = -1;
@@ -473,7 +477,6 @@ void QNodeThor3::getJointControlModule()
 void QNodeThor3::refreshCurrentJointControlCallback(const robotis_controller_msgs::JointCtrlModule::ConstPtr &msg)
 {
   ROS_INFO("set current joint module");
-  int index = 0;
 
   std::vector<int> modules;
   modules.resize(getJointTableSize());
@@ -582,7 +585,7 @@ void QNodeThor3::sendDestJointMsg(thormang3_manipulation_module_msgs::JointPose 
 
   std::stringstream log_msg;
 
-  log_msg << " \n " << "joint name : " << msg.name << " \n " << "joint value : " << msg.value * 180.0 / M_PI << " \n ";
+  log_msg << " \n " << "joint name : " << msg.name << " \n " << "joint value : " << msg.value * RADIAN2DEGREE << " \n ";
 
   log(Info, log_msg.str());
 }
@@ -603,6 +606,12 @@ void QNodeThor3::sendIkMsg(thormang3_manipulation_module_msgs::KinematicsPose ms
            << msg.pose.orientation.w << " \n ";
 
   log(Info, log_msgs.str());
+}
+
+void QNodeThor3::sendGripperPosition(sensor_msgs::JointState msg)
+{
+  // publish gripper angle
+  send_gripper_pub_.publish(msg);
 }
 
 void QNodeThor3::getJointPose(std::string joint_name)
@@ -724,25 +733,25 @@ void QNodeThor3::setWalkingBalanceParam(const double &gyro_gain, const double &f
     return;
   }
 
-  set_balance_param_srv_.request.updating_duration = 2.0;
+  //  set_balance_param_srv_.request.updating_duration = 2.0;
 
-  set_balance_param_srv_.request.balance_param.gyro_gain = gyro_gain;
-  set_balance_param_srv_.request.balance_param.foot_x_force_gain *= ft_gain_ratio;
-  set_balance_param_srv_.request.balance_param.foot_y_force_gain *= ft_gain_ratio;
-  set_balance_param_srv_.request.balance_param.foot_z_force_gain *= ft_gain_ratio;
-  set_balance_param_srv_.request.balance_param.foot_roll_torque_gain *= ft_gain_ratio;
-  set_balance_param_srv_.request.balance_param.foot_pitch_torque_gain *= ft_gain_ratio;
+  //  set_balance_param_srv_.request.balance_param.gyro_gain = gyro_gain;
+  //  set_balance_param_srv_.request.balance_param.foot_x_force_gain *= ft_gain_ratio;
+  //  set_balance_param_srv_.request.balance_param.foot_y_force_gain *= ft_gain_ratio;
+  //  set_balance_param_srv_.request.balance_param.foot_z_force_gain *= ft_gain_ratio;
+  //  set_balance_param_srv_.request.balance_param.foot_roll_torque_gain *= ft_gain_ratio;
+  //  set_balance_param_srv_.request.balance_param.foot_pitch_torque_gain *= ft_gain_ratio;
 
-  set_balance_param_srv_.request.balance_param.foot_roll_angle_time_constant = imu_time_const;
-  set_balance_param_srv_.request.balance_param.foot_pitch_angle_time_constant = imu_time_const;
+  //  set_balance_param_srv_.request.balance_param.foot_roll_angle_time_constant = imu_time_const;
+  //  set_balance_param_srv_.request.balance_param.foot_pitch_angle_time_constant = imu_time_const;
 
-  set_balance_param_srv_.request.balance_param.foot_x_force_time_constant = ft_time_const;
-  set_balance_param_srv_.request.balance_param.foot_y_force_time_constant = ft_time_const;
-  set_balance_param_srv_.request.balance_param.foot_z_force_time_constant = ft_time_const;
-  set_balance_param_srv_.request.balance_param.foot_roll_torque_time_constant = ft_time_const;
-  set_balance_param_srv_.request.balance_param.foot_pitch_torque_time_constant = ft_time_const;
+  //  set_balance_param_srv_.request.balance_param.foot_x_force_time_constant = ft_time_const;
+  //  set_balance_param_srv_.request.balance_param.foot_y_force_time_constant = ft_time_const;
+  //  set_balance_param_srv_.request.balance_param.foot_z_force_time_constant = ft_time_const;
+  //  set_balance_param_srv_.request.balance_param.foot_roll_torque_time_constant = ft_time_const;
+  //  set_balance_param_srv_.request.balance_param.foot_pitch_torque_time_constant = ft_time_const;
 
-  setBalanceParameter();
+  //  setBalanceParameter();
 }
 
 void QNodeThor3::setWalkingFootsteps()
@@ -845,7 +854,7 @@ void QNodeThor3::makeFootstepUsingPlanner(const geometry_msgs::Pose &target_foot
 
         // log footsteps
         msg_stream << "Foot Step #" << ix + 1 << " [ " << foot << "] - [" << foot_pose.x << ", " << foot_pose.y << " | "
-                   << (foot_pose.theta * 180 / M_PI) << "]";
+                   << (foot_pose.theta * RADIAN2DEGREE) << "]";
         log(Info, msg_stream.str());
 
         preview_foot_steps_.push_back(foot_pose);
@@ -973,6 +982,7 @@ void QNodeThor3::setBalanceParameter()
     {
       ROS_INFO("[Demo]  : Succeed to set balance param");
       ROS_INFO("[Demo]  : Please wait 2 sec for turning on balance");
+      log(Info, "Set Walking Balance parameters");
     }
     else
     {
@@ -980,68 +990,179 @@ void QNodeThor3::setBalanceParameter()
         ROS_ERROR("[Demo]  : BALANCE_PARAM_ERR::NOT_ENABLED_WALKING_MODULE");
       if (_result & thormang3_walking_module_msgs::SetBalanceParam::Response::PREV_REQUEST_IS_NOT_FINISHED)
         ROS_ERROR("[Demo]  : BALANCE_PARAM_ERR::PREV_REQUEST_IS_NOT_FINISHED");
-      if (_result & thormang3_walking_module_msgs::SetBalanceParam::Response::TIME_CONST_IS_ZERO_OR_NEGATIVE)
-        ROS_ERROR("[Demo]  : BALANCE_PARAM_ERR::TIME_CONST_IS_ZERO_OR_NEGATIVE");
     }
   }
   else
     ROS_ERROR("[Demo]  : Failed to set balance param ");
+
+  setFeedBackGain();
 }
 
 bool QNodeThor3::loadBalanceParameterFromYaml()
 {
   std::string balance_yaml_path = "";
-  balance_yaml_path = ros::package::getPath("thormang3_demo") + "/config/balance_param.yaml";
+  balance_yaml_path = package_name_ + "/config/balance_param.yaml";
 
-  YAML::Node _doc;
+  YAML::Node doc;
   try
   {
     // load yaml
-    _doc = YAML::LoadFile(balance_yaml_path.c_str());
-  } catch (const std::exception& e)
+    doc = YAML::LoadFile(balance_yaml_path.c_str());
+
+    double cob_x_offset_m                      = doc["cob_x_offset_m"].as<double>();
+    double cob_y_offset_m                      = doc["cob_y_offset_m"].as<double>();
+    double hip_roll_swap_angle_rad             = doc["hip_roll_swap_angle_rad"].as<double>();
+    double foot_roll_gyro_p_gain               = doc["foot_roll_gyro_p_gain"].as<double>();
+    double foot_roll_gyro_d_gain               = doc["foot_roll_gyro_d_gain"].as<double>();
+    double foot_pitch_gyro_p_gain              = doc["foot_pitch_gyro_p_gain"].as<double>();
+    double foot_pitch_gyro_d_gain              = doc["foot_pitch_gyro_d_gain"].as<double>();
+    double foot_roll_angle_p_gain              = doc["foot_roll_angle_p_gain"].as<double>();
+    double foot_roll_angle_d_gain              = doc["foot_roll_angle_d_gain"].as<double>();
+    double foot_pitch_angle_p_gain             = doc["foot_pitch_angle_p_gain"].as<double>();
+    double foot_pitch_angle_d_gain             = doc["foot_pitch_angle_d_gain"].as<double>();
+    double foot_x_force_p_gain                 = doc["foot_x_force_p_gain"].as<double>();
+    double foot_x_force_d_gain                 = doc["foot_x_force_d_gain"].as<double>();
+    double foot_y_force_p_gain                 = doc["foot_y_force_p_gain"].as<double>();
+    double foot_y_force_d_gain                 = doc["foot_y_force_d_gain"].as<double>();
+    double foot_z_force_p_gain                 = doc["foot_z_force_p_gain"].as<double>();
+    double foot_z_force_d_gain                 = doc["foot_z_force_d_gain"].as<double>();
+    double foot_roll_torque_p_gain             = doc["foot_roll_torque_p_gain"].as<double>();
+    double foot_roll_torque_d_gain             = doc["foot_roll_torque_d_gain"].as<double>();
+    double foot_pitch_torque_p_gain            = doc["foot_pitch_torque_p_gain"].as<double>();
+    double foot_pitch_torque_d_gain            = doc["foot_pitch_torque_d_gain"].as<double>();
+    double roll_gyro_cut_off_frequency         = doc["roll_gyro_cut_off_frequency"].as<double>();
+    double pitch_gyro_cut_off_frequency        = doc["pitch_gyro_cut_off_frequency"].as<double>();
+    double roll_angle_cut_off_frequency        = doc["roll_angle_cut_off_frequency"].as<double>();
+    double pitch_angle_cut_off_frequency       = doc["pitch_angle_cut_off_frequency"].as<double>();
+    double foot_x_force_cut_off_frequency      = doc["foot_x_force_cut_off_frequency"].as<double>();
+    double foot_y_force_cut_off_frequency      = doc["foot_y_force_cut_off_frequency"].as<double>();
+    double foot_z_force_cut_off_frequency      = doc["foot_z_force_cut_off_frequency"].as<double>();
+    double foot_roll_torque_cut_off_frequency  = doc["foot_roll_torque_cut_off_frequency"].as<double>();
+    double foot_pitch_torque_cut_off_frequency = doc["foot_pitch_torque_cut_off_frequency"].as<double>();
+
+    set_balance_param_srv_.request.updating_duration                                 = 2.0;
+    set_balance_param_srv_.request.balance_param.cob_x_offset_m                      =  cob_x_offset_m                     ;
+    set_balance_param_srv_.request.balance_param.cob_y_offset_m                      =  cob_y_offset_m                     ;
+    set_balance_param_srv_.request.balance_param.hip_roll_swap_angle_rad             =  hip_roll_swap_angle_rad            ;
+    set_balance_param_srv_.request.balance_param.foot_roll_gyro_p_gain               =  foot_roll_gyro_p_gain              ;
+    set_balance_param_srv_.request.balance_param.foot_roll_gyro_d_gain               =  foot_roll_gyro_d_gain              ;
+    set_balance_param_srv_.request.balance_param.foot_pitch_gyro_p_gain              =  foot_pitch_gyro_p_gain             ;
+    set_balance_param_srv_.request.balance_param.foot_pitch_gyro_d_gain              =  foot_pitch_gyro_d_gain             ;
+    set_balance_param_srv_.request.balance_param.foot_roll_angle_p_gain              =  foot_roll_angle_p_gain             ;
+    set_balance_param_srv_.request.balance_param.foot_roll_angle_d_gain              =  foot_roll_angle_d_gain             ;
+    set_balance_param_srv_.request.balance_param.foot_pitch_angle_p_gain             =  foot_pitch_angle_p_gain            ;
+    set_balance_param_srv_.request.balance_param.foot_pitch_angle_d_gain             =  foot_pitch_angle_d_gain            ;
+    set_balance_param_srv_.request.balance_param.foot_x_force_p_gain                 =  foot_x_force_p_gain                ;
+    set_balance_param_srv_.request.balance_param.foot_x_force_d_gain                 =  foot_x_force_d_gain                ;
+    set_balance_param_srv_.request.balance_param.foot_y_force_p_gain                 =  foot_y_force_p_gain                ;
+    set_balance_param_srv_.request.balance_param.foot_y_force_d_gain                 =  foot_y_force_d_gain                ;
+    set_balance_param_srv_.request.balance_param.foot_z_force_p_gain                 =  foot_z_force_p_gain                ;
+    set_balance_param_srv_.request.balance_param.foot_z_force_d_gain                 =  foot_z_force_d_gain                ;
+    set_balance_param_srv_.request.balance_param.foot_roll_torque_p_gain             =  foot_roll_torque_p_gain            ;
+    set_balance_param_srv_.request.balance_param.foot_roll_torque_d_gain             =  foot_roll_torque_d_gain            ;
+    set_balance_param_srv_.request.balance_param.foot_pitch_torque_p_gain            =  foot_pitch_torque_p_gain           ;
+    set_balance_param_srv_.request.balance_param.foot_pitch_torque_d_gain            =  foot_pitch_torque_d_gain           ;
+    set_balance_param_srv_.request.balance_param.roll_gyro_cut_off_frequency         =  roll_gyro_cut_off_frequency        ;
+    set_balance_param_srv_.request.balance_param.pitch_gyro_cut_off_frequency        =  pitch_gyro_cut_off_frequency       ;
+    set_balance_param_srv_.request.balance_param.roll_angle_cut_off_frequency        =  roll_angle_cut_off_frequency       ;
+    set_balance_param_srv_.request.balance_param.pitch_angle_cut_off_frequency       =  pitch_angle_cut_off_frequency      ;
+    set_balance_param_srv_.request.balance_param.foot_x_force_cut_off_frequency      =  foot_x_force_cut_off_frequency     ;
+    set_balance_param_srv_.request.balance_param.foot_y_force_cut_off_frequency      =  foot_y_force_cut_off_frequency     ;
+    set_balance_param_srv_.request.balance_param.foot_z_force_cut_off_frequency      =  foot_z_force_cut_off_frequency     ;
+    set_balance_param_srv_.request.balance_param.foot_roll_torque_cut_off_frequency  =  foot_roll_torque_cut_off_frequency ;
+    set_balance_param_srv_.request.balance_param.foot_pitch_torque_cut_off_frequency =  foot_pitch_torque_cut_off_frequency;
+
+    return true;
+  }
+  catch (const std::exception& e)
   {
     ROS_ERROR("Failed to load balance param yaml file.");
     return false;
   }
 
-  double cob_x_offset_m = _doc["cob_x_offset_m"].as<double>();
-  double cob_y_offset_m = _doc["cob_y_offset_m"].as<double>();
-  double hip_roll_swap_angle_rad = _doc["hip_roll_swap_angle_rad"].as<double>();
-  double gyro_gain = _doc["gyro_gain"].as<double>();
-  double foot_roll_angle_gain = _doc["foot_roll_angle_gain"].as<double>();
-  double foot_pitch_angle_gain = _doc["foot_pitch_angle_gain"].as<double>();
-  double foot_x_force_gain = _doc["foot_x_force_gain"].as<double>();
-  double foot_y_force_gain = _doc["foot_y_force_gain"].as<double>();
-  double foot_z_force_gain = _doc["foot_z_force_gain"].as<double>();
-  double foot_roll_torque_gain = _doc["foot_roll_torque_gain"].as<double>();
-  double foot_pitch_torque_gain = _doc["foot_pitch_torque_gain"].as<double>();
-  double foot_roll_angle_time_constant = _doc["foot_roll_angle_time_constant"].as<double>();
-  double foot_pitch_angle_time_constant = _doc["foot_pitch_angle_time_constant"].as<double>();
-  double foot_x_force_time_constant = _doc["foot_x_force_time_constant"].as<double>();
-  double foot_y_force_time_constant = _doc["foot_y_force_time_constant"].as<double>();
-  double foot_z_force_time_constant = _doc["foot_z_force_time_constant"].as<double>();
-  double foot_roll_torque_time_constant = _doc["foot_roll_torque_time_constant"].as<double>();
-  double foot_pitch_torque_time_constant = _doc["foot_pitch_torque_time_constant"].as<double>();
+  return true;
+}
 
-  set_balance_param_srv_.request.updating_duration = 2.0;
-  set_balance_param_srv_.request.balance_param.cob_x_offset_m = cob_x_offset_m;
-  set_balance_param_srv_.request.balance_param.cob_y_offset_m = cob_y_offset_m;
-  set_balance_param_srv_.request.balance_param.hip_roll_swap_angle_rad = hip_roll_swap_angle_rad;
-  set_balance_param_srv_.request.balance_param.gyro_gain = gyro_gain;
-  set_balance_param_srv_.request.balance_param.foot_roll_angle_gain = foot_roll_angle_gain;
-  set_balance_param_srv_.request.balance_param.foot_pitch_angle_gain = foot_pitch_angle_gain;
-  set_balance_param_srv_.request.balance_param.foot_x_force_gain = foot_x_force_gain;
-  set_balance_param_srv_.request.balance_param.foot_y_force_gain = foot_y_force_gain;
-  set_balance_param_srv_.request.balance_param.foot_z_force_gain = foot_z_force_gain;
-  set_balance_param_srv_.request.balance_param.foot_roll_torque_gain = foot_roll_torque_gain;
-  set_balance_param_srv_.request.balance_param.foot_pitch_torque_gain = foot_pitch_torque_gain;
-  set_balance_param_srv_.request.balance_param.foot_roll_angle_time_constant = foot_roll_angle_time_constant;
-  set_balance_param_srv_.request.balance_param.foot_pitch_angle_time_constant = foot_pitch_angle_time_constant;
-  set_balance_param_srv_.request.balance_param.foot_x_force_time_constant = foot_x_force_time_constant;
-  set_balance_param_srv_.request.balance_param.foot_y_force_time_constant = foot_y_force_time_constant;
-  set_balance_param_srv_.request.balance_param.foot_z_force_time_constant = foot_z_force_time_constant;
-  set_balance_param_srv_.request.balance_param.foot_roll_torque_time_constant = foot_roll_torque_time_constant;
-  set_balance_param_srv_.request.balance_param.foot_pitch_torque_time_constant = foot_pitch_torque_time_constant;
+bool QNodeThor3::setFeedBackGain()
+{
+  // load joint feedback gain from yaml file
+  bool result_load = loadFeedbackGainFromYaml();
+
+  if (result_load == false)
+    return false;
+
+  bool service_result = false;
+
+  // call service
+  service_result = set_joint_feedback_gain_client_.call(set_joint_feedback_gain_srv_);
+  if (service_result == true)
+  {
+    int _result = set_joint_feedback_gain_srv_.response.result;
+
+    if (_result == thormang3_walking_module_msgs::SetJointFeedBackGain::Response::NO_ERROR)
+    {
+      ROS_INFO("[Demo]  : Succeed to set joint feedback gain");
+      log(Info, "Set Walking Joint FeedBack gain");
+    }
+    else
+    {
+      if (_result & thormang3_walking_module_msgs::SetJointFeedBackGain::Response::NOT_ENABLED_WALKING_MODULE)
+        ROS_ERROR("[Demo]  : FRRDBACK_GAIN_ERR::NOT_ENABLED_WALKING_MODULE");
+      if (_result & thormang3_walking_module_msgs::SetJointFeedBackGain::Response::PREV_REQUEST_IS_NOT_FINISHED)
+        ROS_ERROR("[Demo]  : FRRDBACK_GAIN_ERR::PREV_REQUEST_IS_NOT_FINISHED");
+    }
+  }
+  else
+  {
+    ROS_ERROR("[Demo]  : Failed to set Joint Feedback Gain");
+    log(Error, "Fain to set Walking Joint FeedBack gain");
+  }
+    return true;
+}
+
+bool QNodeThor3::loadFeedbackGainFromYaml()
+{
+  std::string balance_yaml_path = "";
+  balance_yaml_path = package_name_ + "/config/joint_feedback_gain.yaml";
+
+  YAML::Node doc;
+  try
+  {
+    // load yaml
+    doc = YAML::LoadFile(balance_yaml_path.c_str());
+
+    set_joint_feedback_gain_srv_.request.updating_duration                 = 2.0;
+    set_joint_feedback_gain_srv_.request.feedback_gain.r_leg_hip_y_p_gain  = doc["r_leg_hip_y_p_gain"].as<double>();
+    set_joint_feedback_gain_srv_.request.feedback_gain.r_leg_hip_y_d_gain  = doc["r_leg_hip_y_d_gain"].as<double>();
+    set_joint_feedback_gain_srv_.request.feedback_gain.r_leg_hip_r_p_gain  = doc["r_leg_hip_r_p_gain"].as<double>();
+    set_joint_feedback_gain_srv_.request.feedback_gain.r_leg_hip_r_d_gain  = doc["r_leg_hip_r_d_gain"].as<double>();
+    set_joint_feedback_gain_srv_.request.feedback_gain.r_leg_hip_p_p_gain  = doc["r_leg_hip_p_p_gain"].as<double>();
+    set_joint_feedback_gain_srv_.request.feedback_gain.r_leg_hip_p_d_gain  = doc["r_leg_hip_p_d_gain"].as<double>();
+    set_joint_feedback_gain_srv_.request.feedback_gain.r_leg_kn_p_p_gain   = doc["r_leg_kn_p_p_gain"].as<double>();
+    set_joint_feedback_gain_srv_.request.feedback_gain.r_leg_kn_p_d_gain   = doc["r_leg_kn_p_d_gain"].as<double>();
+    set_joint_feedback_gain_srv_.request.feedback_gain.r_leg_an_p_p_gain   = doc["r_leg_an_p_p_gain"].as<double>();
+    set_joint_feedback_gain_srv_.request.feedback_gain.r_leg_an_p_d_gain   = doc["r_leg_an_p_d_gain"].as<double>();
+    set_joint_feedback_gain_srv_.request.feedback_gain.r_leg_an_r_p_gain   = doc["r_leg_an_r_p_gain"].as<double>();
+    set_joint_feedback_gain_srv_.request.feedback_gain.r_leg_an_r_d_gain   = doc["r_leg_an_r_d_gain"].as<double>();
+
+    set_joint_feedback_gain_srv_.request.feedback_gain.l_leg_hip_y_p_gain  = doc["l_leg_hip_y_p_gain"].as<double>();
+    set_joint_feedback_gain_srv_.request.feedback_gain.l_leg_hip_y_d_gain  = doc["l_leg_hip_y_d_gain"].as<double>();
+    set_joint_feedback_gain_srv_.request.feedback_gain.l_leg_hip_r_p_gain  = doc["l_leg_hip_r_p_gain"].as<double>();
+    set_joint_feedback_gain_srv_.request.feedback_gain.l_leg_hip_r_d_gain  = doc["l_leg_hip_r_d_gain"].as<double>();
+    set_joint_feedback_gain_srv_.request.feedback_gain.l_leg_hip_p_p_gain  = doc["l_leg_hip_p_p_gain"].as<double>();
+    set_joint_feedback_gain_srv_.request.feedback_gain.l_leg_hip_p_d_gain  = doc["l_leg_hip_p_d_gain"].as<double>();
+    set_joint_feedback_gain_srv_.request.feedback_gain.l_leg_kn_p_p_gain   = doc["l_leg_kn_p_p_gain"].as<double>();
+    set_joint_feedback_gain_srv_.request.feedback_gain.l_leg_kn_p_d_gain   = doc["l_leg_kn_p_d_gain"].as<double>();
+    set_joint_feedback_gain_srv_.request.feedback_gain.l_leg_an_p_p_gain   = doc["l_leg_an_p_p_gain"].as<double>();
+    set_joint_feedback_gain_srv_.request.feedback_gain.l_leg_an_p_d_gain   = doc["l_leg_an_p_d_gain"].as<double>();
+    set_joint_feedback_gain_srv_.request.feedback_gain.l_leg_an_r_p_gain   = doc["l_leg_an_r_p_gain"].as<double>();
+    set_joint_feedback_gain_srv_.request.feedback_gain.l_leg_an_r_d_gain   = doc["l_leg_an_r_d_gain"].as<double>();
+  }
+  catch (const std::exception& e)
+  {
+    ROS_ERROR("Failed to load joint feedback gain yaml file.");
+    return false;
+  }
 
   return true;
 }
@@ -1068,14 +1189,24 @@ void QNodeThor3::turnOffBalance()
     return;
 
   set_balance_param_srv_.request.updating_duration = 2.0;
-  set_balance_param_srv_.request.balance_param.gyro_gain = 0.0;
-  set_balance_param_srv_.request.balance_param.foot_roll_angle_gain = 0.0;
-  set_balance_param_srv_.request.balance_param.foot_pitch_angle_gain = 0.0;
-  set_balance_param_srv_.request.balance_param.foot_x_force_gain = 0.0;
-  set_balance_param_srv_.request.balance_param.foot_y_force_gain = 0.0;
-  set_balance_param_srv_.request.balance_param.foot_z_force_gain = 0.0;
-  set_balance_param_srv_.request.balance_param.foot_roll_torque_gain = 0.0;
-  set_balance_param_srv_.request.balance_param.foot_pitch_torque_gain = 0.0;
+  set_balance_param_srv_.request.balance_param.foot_roll_gyro_p_gain               =  0.0;
+  set_balance_param_srv_.request.balance_param.foot_roll_gyro_d_gain               =  0.0;
+  set_balance_param_srv_.request.balance_param.foot_pitch_gyro_p_gain              =  0.0;
+  set_balance_param_srv_.request.balance_param.foot_pitch_gyro_d_gain              =  0.0;
+  set_balance_param_srv_.request.balance_param.foot_roll_angle_p_gain              =  0.0;
+  set_balance_param_srv_.request.balance_param.foot_roll_angle_d_gain              =  0.0;
+  set_balance_param_srv_.request.balance_param.foot_pitch_angle_p_gain             =  0.0;
+  set_balance_param_srv_.request.balance_param.foot_pitch_angle_d_gain             =  0.0;
+  set_balance_param_srv_.request.balance_param.foot_x_force_p_gain                 =  0.0;
+  set_balance_param_srv_.request.balance_param.foot_x_force_d_gain                 =  0.0;
+  set_balance_param_srv_.request.balance_param.foot_y_force_p_gain                 =  0.0;
+  set_balance_param_srv_.request.balance_param.foot_y_force_d_gain                 =  0.0;
+  set_balance_param_srv_.request.balance_param.foot_z_force_p_gain                 =  0.0;
+  set_balance_param_srv_.request.balance_param.foot_z_force_d_gain                 =  0.0;
+  set_balance_param_srv_.request.balance_param.foot_roll_torque_p_gain             =  0.0;
+  set_balance_param_srv_.request.balance_param.foot_roll_torque_d_gain             =  0.0;
+  set_balance_param_srv_.request.balance_param.foot_pitch_torque_p_gain            =  0.0;
+  set_balance_param_srv_.request.balance_param.foot_pitch_torque_d_gain            =  0.0;
 
   setBalanceParameter();
 
@@ -1126,14 +1257,13 @@ void QNodeThor3::poseCallback(const geometry_msgs::Pose::ConstPtr &msg)
     case WALKING_UI:
     {
       pose_from_ui_ = *msg;
-      Q_EMIT havePoseToMakeFootstep();
       log(Info, "Get Pose For Step");
       break;
     }
 
     case MANIPULATION_UI:
     {
-      double z_offset = 0.801;
+      double z_offset = 0.723;
       Q_EMIT updateCurrPos(msg->position.x, msg->position.y, msg->position.z + z_offset);
       Q_EMIT updateCurrOri(msg->orientation.x, msg->orientation.y, msg->orientation.z, msg->orientation.w);
       log(Info, "Get Pose For IK");
@@ -1196,7 +1326,7 @@ void QNodeThor3::makeInteractiveMarker(const geometry_msgs::Pose &marker_pose)
     ROS_ERROR("No frame id!!!");
     // return;
 
-    frame_id_ = "world";
+    frame_id_ = "pelvis_link";
   }
 
   ROS_INFO_STREAM(

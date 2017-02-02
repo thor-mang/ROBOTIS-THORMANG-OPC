@@ -80,6 +80,7 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
 
   readSettings();
   setWindowIcon(QIcon(":/images/icon.png"));
+
   ui_.tab_manager->setCurrentIndex(0);  // ensure the first tab is showing - qt-designer should have this already hardwired, but often loses it (settings?).
   QObject::connect(&qnode_thor3_, SIGNAL(rosShutdown()), this, SLOT(close()));
 
@@ -99,7 +100,6 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
                    SLOT(updateCurrOriSpinbox(double , double , double , double)));
 
   QObject::connect(ui_.tabWidget_control, SIGNAL(currentChanged(int)), &qnode_thor3_, SLOT(setCurrentControlUI(int)));
-  QObject::connect(&qnode_thor3_, SIGNAL(havePoseToMakeFootstep()), this, SLOT(enableGetStepButton()));
 
   qRegisterMetaType<geometry_msgs::Point>("geometry_msgs::Point");
   qRegisterMetaType<geometry_msgs::Pose>("geometry_msgs::Pose");
@@ -129,14 +129,6 @@ MainWindow::~MainWindow()
 /*****************************************************************************
  ** Implementation [Slots]
  *****************************************************************************/
-
-void MainWindow::showNoMasterMessage()
-{
-  QMessageBox msgBox;
-  msgBox.setText("Couldn't find the ros master.");
-  msgBox.exec();
-  close();
-}
 
 void MainWindow::on_button_assemble_lidar_clicked(bool check)
 {
@@ -206,8 +198,10 @@ void MainWindow::on_desjoint_button_clicked(bool check)
 
 void MainWindow::on_get_despos_button_clicked(bool check)
 {
+  double z_offset = 0.723;
+
   updateCurrPosSpinbox(ui_.dSpinBox_marker_pos_x->value(), ui_.dSpinBox_marker_pos_y->value(),
-                       ui_.dSpinBox_marker_pos_z->value());
+                       ui_.dSpinBox_marker_pos_z->value() + z_offset);
 
   updateCurrOriSpinbox(ui_.dSpinBox_marker_ori_r->value(), ui_.dSpinBox_marker_ori_p->value(),
                        ui_.dSpinBox_marker_ori_y->value());
@@ -245,12 +239,12 @@ void MainWindow::on_despos_button_clicked(bool check)
 
 void MainWindow::on_button_grip_on_clicked(bool check)
 {
-  setGripper(GRIPPER_ON_ANGLE, ui_.gripper_comboBox->currentText().toStdString());
+  setGripper(GRIPPER_ON_ANGLE, GRIPPER_TORQUE_LIMIT, ui_.gripper_comboBox->currentText().toStdString());
 }
 
 void MainWindow::on_button_grip_off_clicked(bool check)
 {
-  setGripper(GRIPPER_OFF_ANGLE, ui_.gripper_comboBox->currentText().toStdString());
+  setGripper(GRIPPER_OFF_ANGLE, GRIPPER_TORQUE_LIMIT, ui_.gripper_comboBox->currentText().toStdString());
 }
 
 void MainWindow::on_A0_button_fl_clicked(bool check)
@@ -262,6 +256,7 @@ void MainWindow::on_A1_button_f_clicked(bool check)
 {
   sendWalkingCommand("forward");
 }
+
 void MainWindow::on_A2_button_fr_clicked(bool check)
 {
   sendWalkingCommand("turn right");
@@ -271,10 +266,12 @@ void MainWindow::on_B0_button_l_clicked(bool check)
 {
   sendWalkingCommand("left");
 }
+
 void MainWindow::on_B1_button_stop_clicked(bool check)
 {
   sendWalkingCommand("stop");
 }
+
 void MainWindow::on_B2_button_r_clicked(bool check)
 {
   sendWalkingCommand("right");
@@ -283,10 +280,12 @@ void MainWindow::on_B2_button_r_clicked(bool check)
 void MainWindow::on_C0_button_bl_clicked(bool check)
 {
 }    // disable
+
 void MainWindow::on_C1_button_b_clicked(bool check)
 {
   sendWalkingCommand("backward");
 }
+
 void MainWindow::on_C2_button_br_clicked(bool check)
 {
 }    // disable
@@ -295,25 +294,38 @@ void MainWindow::on_button_balance_on_clicked(bool check)
 {
   qnode_thor3_.setWalkingBalance(true);
 }
+
 void MainWindow::on_button_balance_off_clicked(bool check)
 {
   qnode_thor3_.setWalkingBalance(false);
 }
-void MainWindow::on_button_balance_param_apply_clicked(bool check)
-{
-  double gyro_gain = ui_.dSpinBox_gyro_gain->value();
-  double ft_gain = ui_.dSpinBox_gyro_gain->value();
-  double imu_time_constant = ui_.dSpinBox_imu_time_constant->value();
-  double ft_time_constant = ui_.dSpinBox_ft_time_constant->value();
 
-  qnode_thor3_.setWalkingBalanceParam(gyro_gain, ft_gain, imu_time_constant, ft_time_constant);
+void MainWindow::on_button_feedback_gain_apply_clicked(bool check)
+{
+  qnode_thor3_.setFeedBackGain();
 }
 
 void MainWindow::on_A0_button_get_step_clicked(bool check)
 {
-  qnode_thor3_.makeFootstepUsingPlanner();
+  geometry_msgs::Pose target_pose;
+  target_pose.position.x = ui_.dSpinBox_marker_pos_x->value();
+  target_pose.position.y = ui_.dSpinBox_marker_pos_y->value();
+  target_pose.position.z = ui_.dSpinBox_marker_pos_z->value();
 
-  ui_.A0_button_get_step->setEnabled(false);
+  double roll = deg2rad<double>(ui_.dSpinBox_marker_ori_r->value());
+  double pitch = deg2rad<double>(ui_.dSpinBox_marker_ori_p->value());
+  double yaw = deg2rad<double>(ui_.dSpinBox_marker_ori_y->value());
+
+  Eigen::Quaterniond orientation = rpy2quaternion(roll, pitch, yaw);
+
+  target_pose.orientation.x = orientation.x();
+  target_pose.orientation.y = orientation.y();
+  target_pose.orientation.z = orientation.z();
+  target_pose.orientation.w = orientation.w();
+
+  // generate foot steps
+  qnode_thor3_.makeFootstepUsingPlanner(target_pose);
+
   ui_.A1_button_clear_step->setEnabled(true);
   ui_.A2_button_go_walking->setEnabled(true);
 }
@@ -322,7 +334,6 @@ void MainWindow::on_A1_button_clear_step_clicked(bool check)
 {
   qnode_thor3_.clearFootsteps();
 
-  ui_.A0_button_get_step->setEnabled(false);
   ui_.A1_button_clear_step->setEnabled(false);
   ui_.A2_button_go_walking->setEnabled(false);
 }
@@ -331,7 +342,6 @@ void MainWindow::on_A2_button_go_walking_clicked(bool check)
 {
   qnode_thor3_.setWalkingFootsteps();
 
-  ui_.A0_button_get_step->setEnabled(false);
   ui_.A1_button_clear_step->setEnabled(false);
   ui_.A2_button_go_walking->setEnabled(false);
 }
@@ -346,10 +356,12 @@ void MainWindow::on_dSpinBox_marker_pos_x_valueChanged(double value)
 {
   updateInteractiveMarker();
 }
+
 void MainWindow::on_dSpinBox_marker_pos_y_valueChanged(double value)
 {
   updateInteractiveMarker();
 }
+
 void MainWindow::on_dSpinBox_marker_pos_z_valueChanged(double value)
 {
   updateInteractiveMarker();
@@ -359,10 +371,12 @@ void MainWindow::on_dSpinBox_marker_ori_r_valueChanged(double value)
 {
   updateInteractiveMarker();
 }
+
 void MainWindow::on_dSpinBox_marker_ori_p_valueChanged(double value)
 {
   updateInteractiveMarker();
 }
+
 void MainWindow::on_dSpinBox_marker_ori_y_valueChanged(double value)
 {
   updateInteractiveMarker();
@@ -372,11 +386,15 @@ void MainWindow::on_button_marker_set_clicked()
 {
   makeInteractiveMarker();
 }
+
 void MainWindow::on_button_marker_clear_clicked()
 {
   clearMarkerPanel();
 }
 
+/////////////////////////////////////////////////
+//             Manupulation Demo
+/////////////////////////////////////////////////
 void MainWindow::on_button_manipulation_demo_0_clicked(bool check)
 {
   // init pose : base
@@ -387,6 +405,7 @@ void MainWindow::on_button_manipulation_demo_1_clicked(bool check)
 {
   // manipulation mode
   qnode_thor3_.enableControlModule("manipulation_module");
+  qnode_thor3_.enableControlModule("gripper_module");
 }
 
 void MainWindow::on_button_manipulation_demo_2_clicked(bool check)
@@ -418,7 +437,9 @@ void MainWindow::on_button_manipulation_demo_4_clicked(bool check)
   {
     current_pose.position.x = 0.305;
     current_pose.position.y = (ui_.comboBox_arm_group->currentText().toStdString() == "Right Arm") ? -0.3 : 0.3;
-    current_pose.position.z = 0.8;
+    current_pose.position.z = 0.108;
+
+    updatePosePanel(current_pose);
   }
 
   qnode_thor3_.makeInteractiveMarker(current_pose);
@@ -428,6 +449,7 @@ void MainWindow::on_button_manipulation_demo_5_clicked(bool check)
 {
   // send pose
   thormang3_manipulation_module_msgs::KinematicsPose msg;
+  double z_offset = 0.723;
 
   // arm group : left_arm_with_torso / right_arm_with_torso
   std::string selected_arm = ui_.comboBox_arm_group->currentText().toStdString();
@@ -436,7 +458,7 @@ void MainWindow::on_button_manipulation_demo_5_clicked(bool check)
 
   msg.pose.position.x = ui_.dSpinBox_marker_pos_x->value() + ui_.dSpinBox_offset_x->value();
   msg.pose.position.y = ui_.dSpinBox_marker_pos_y->value() + ui_.dSpinBox_offset_y->value();
-  msg.pose.position.z = ui_.dSpinBox_marker_pos_z->value() + ui_.dSpinBox_offset_z->value();
+  msg.pose.position.z = ui_.dSpinBox_marker_pos_z->value() + ui_.dSpinBox_offset_z->value() + z_offset;
 
   double roll = deg2rad<double>(ui_.dSpinBox_marker_ori_r->value());
   double pitch = deg2rad<double>(ui_.dSpinBox_marker_ori_p->value());
@@ -461,7 +483,7 @@ void MainWindow::on_button_manipulation_demo_6_clicked(bool check)
   // grip on : l_arm_grip / r_arm_grip
   std::string arm_group =
       (ui_.comboBox_arm_group->currentText().toStdString() == "Right Arm") ? "r_arm_grip" : "l_arm_grip";
-  setGripper(GRIPPER_ON_ANGLE, arm_group);
+  setGripper(GRIPPER_ON_ANGLE, GRIPPER_TORQUE_LIMIT, arm_group);
 }
 
 void MainWindow::on_button_manipulation_demo_7_clicked(bool check)
@@ -469,9 +491,12 @@ void MainWindow::on_button_manipulation_demo_7_clicked(bool check)
   // grip off : l_arm_grip / r_arm_grip
   std::string arm_group =
       (ui_.comboBox_arm_group->currentText().toStdString() == "Right Arm") ? "r_arm_grip" : "l_arm_grip";
-  setGripper(GRIPPER_OFF_ANGLE, arm_group);
+  setGripper(GRIPPER_OFF_ANGLE, GRIPPER_TORQUE_LIMIT, arm_group);
 }
 
+/////////////////////////////////////////////////
+//                 Walking Demo
+/////////////////////////////////////////////////
 void MainWindow::on_button_walking_demo_0_clicked(bool check)
 {
   // init pose : base
@@ -562,6 +587,9 @@ void MainWindow::on_button_walking_demo_7_clicked(bool check)
   qnode_thor3_.kickDemo(kick_command);
 }
 
+/////////////////////////////////////////////////
+//                Action Demo
+/////////////////////////////////////////////////
 void MainWindow::on_button_motion_demo_0_clicked(bool check)
 {
   // init pose : base
@@ -634,19 +662,19 @@ void MainWindow::updatePresentJointModule(std::vector<int> mode)
 
     if (debug_print_)
     {
-      std::stringstream stream;
-      std::string joint;
+      std::stringstream log_stream;
+      std::string joint_name;
       int id;
 
       std::string control_mode = combo_children.at(ix)->currentText().toStdString();
 
-      bool result = qnode_thor3_.getIDJointNameFromIndex(ix, id, joint);
+      bool result = qnode_thor3_.getIDJointNameFromIndex(ix, id, joint_name);
       if (result == true)
-        stream << "[" << (id < 10 ? "0" : "") << id << "] " << joint << " : " << control_mode;
+        log_stream << "[" << (id < 10 ? "0" : "") << id << "] " << joint_name << " : " << control_mode;
       else
-        stream << "id " << ix << " : " << control_mode;
+        log_stream << "id " << ix << " : " << control_mode;
 
-      qnode_thor3_.log(QNodeThor3::Info, stream.str());
+      qnode_thor3_.log(QNodeThor3::Info, log_stream.str());
     }
   }
 
@@ -678,6 +706,7 @@ void MainWindow::updateModuleUI()
   }
 }
 
+// head control
 void MainWindow::updateHeadJointsAngle(double pan, double tilt)
 {
   if (ui_.head_pan_slider->underMouse() == true)
@@ -691,8 +720,8 @@ void MainWindow::updateHeadJointsAngle(double pan, double tilt)
 
   is_updating_ = true;
 
-  ui_.head_pan_slider->setValue(deg2rad<double>(pan));
-  ui_.head_tilt_slider->setValue(deg2rad<double>(tilt));
+  ui_.head_pan_slider->setValue(rad2deg<double>(pan));
+  ui_.head_tilt_slider->setValue(rad2deg<double>(tilt));
 
   is_updating_ = false;
 }
@@ -720,7 +749,7 @@ void MainWindow::playMotion(int motion_index)
 // manipulation
 void MainWindow::updateCurrJointSpinbox(double value)
 {
-  ui_.joint_spinbox->setValue(deg2rad<double>(value));
+  ui_.joint_spinbox->setValue(rad2deg<double>(value));
 }
 
 void MainWindow::updateCurrPosSpinbox(double x, double y, double z)
@@ -747,14 +776,14 @@ void MainWindow::updateCurrOriSpinbox(double r, double p, double y)
   ui_.ori_yaw_spinbox->setValue(y);
 }
 
-void MainWindow::setGripper(const double &angle_deg, const std::string &arm_type)
+void MainWindow::setGripper(const double angle_deg, const double torque_limit, const std::string &arm_type)
 {
-  thormang3_manipulation_module_msgs::JointPose msg;
+  sensor_msgs::JointState gripper_joint;
+  gripper_joint.name.push_back(arm_type);
+  gripper_joint.position.push_back(deg2rad<double>(angle_deg));
+  gripper_joint.effort.push_back(torque_limit);
 
-  msg.name = arm_type;
-  msg.value = deg2rad<double>(angle_deg);
-
-  qnode_thor3_.sendDestJointMsg(msg);
+  qnode_thor3_.sendGripperPosition(gripper_joint);
 }
 
 // walking
@@ -770,11 +799,6 @@ void MainWindow::sendWalkingCommand(const std::string &command)
   msg.step_angle_rad = deg2rad<double>(ui_.D1_spinbox_r_angle->value());
 
   qnode_thor3_.setWalkingCommand(msg);
-}
-
-void MainWindow::enableGetStepButton()
-{
-  ui_.A0_button_get_step->setEnabled(true);
 }
 
 // Update UI - position
@@ -887,10 +911,7 @@ void MainWindow::clearMarkerPanel()
 
 void MainWindow::on_actionAbout_triggered()
 {
-  QMessageBox::about(
-      this,
-      tr("About ..."),
-      tr("<h2>THORMANG3 Demo</h2><p>Copyright Robotis</p>"));
+  QMessageBox::about(this, tr("About ..."), tr("<h2>THORMANG3 Demo</h2><p>Copyright Robotis</p>"));
 }
 
 /*****************************************************************************
@@ -1043,14 +1064,14 @@ void MainWindow::enableModule(QString mode_name)
 
 void MainWindow::readSettings()
 {
-  QSettings settings("Qt-Ros Package", "thor3_control");
+  QSettings settings("Qt-Ros Package", "thormang3_demo");
   restoreGeometry(settings.value("geometry").toByteArray());
   restoreState(settings.value("windowState").toByteArray());
 }
 
 void MainWindow::writeSettings()
 {
-  QSettings settings("Qt-Ros Package", "thor3_control");
+  QSettings settings("Qt-Ros Package", "thormang3_demo");
   settings.setValue("geometry", saveGeometry());
   settings.setValue("windowState", saveState());
 }
