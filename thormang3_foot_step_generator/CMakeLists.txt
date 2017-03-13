@@ -56,8 +56,8 @@ include_directories(
   ${Eigen_INCLUDE_DIRS}
 )
 
-add_executable(thormang3_foot_step_generator_node 
-   src/robotis_foot_step_generator.cpp 
+add_executable(thormang3_foot_step_generator_node
+   src/robotis_foot_step_generator.cpp
    src/message_callback.cpp
    src/main.cpp
 )
