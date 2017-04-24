@@ -63,3 +63,4 @@ script12:
 # Ceremony
 script13:
      cmd1: {cmd_name: play, cmd_arg: 13}
+     cmd2: {cmd_name: mp3,   cmd_arg: "/home/robotis/Music/thormang_mp3/eng/clap_please_eng.mp3"}
