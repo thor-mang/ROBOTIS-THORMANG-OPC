@@ -35,7 +35,6 @@ rosbuild_prepare_qt4(QtCore QtGui)
 ##############################################################################
 # QT Sections and Sources
 ##############################################################################
-
 file(GLOB QT_FORMS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ui/*.ui)
 file(GLOB QT_RESOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} resources/*.qrc)
 file(GLOB_RECURSE QT_MOC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} FOLLOW_SYMLINKS include/thormang3_offset_tuner_client/*.hpp)
