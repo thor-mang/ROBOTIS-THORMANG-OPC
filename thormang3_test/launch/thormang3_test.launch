@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+
+<launch>    
+    <param name="test_tol" value="10.0" type="double"/>
+   
+    <node name="thormang3_test" pkg="thormang3_test" type="thormang3_test" output="screen"/>
+</launch>
