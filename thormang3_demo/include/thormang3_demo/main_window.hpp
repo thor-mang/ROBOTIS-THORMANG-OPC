@@ -174,9 +174,9 @@ Q_OBJECT
   void playMotion(int motion_index);
 
  private:
-  static const double GRIPPER_ON_ANGLE = 60;
-  static const double GRIPPER_OFF_ANGLE = 5;
-  static const double GRIPPER_TORQUE_LIMIT = 250;
+  static constexpr double GRIPPER_ON_ANGLE = 60;
+  static constexpr double GRIPPER_OFF_ANGLE = 5;
+  static constexpr double GRIPPER_TORQUE_LIMIT = 250;
 
   void setUserShortcut();
   void initModeUnit();

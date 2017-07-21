@@ -4,6 +4,8 @@
 cmake_minimum_required(VERSION 2.8.0)
 project(thormang3_offset_tuner_client)
 
+set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
+
 ################################################################################
 # Packages
 ################################################################################
