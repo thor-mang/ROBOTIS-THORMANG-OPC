@@ -28,7 +28,7 @@ id_joint:
   27 : torso_y
   28 : head_y
   29 : head_p
-module_list: [none, walking_module, manipulation_module, head_control_module, base_module, ros_control_module, action_module]
+module_list: [none, walking_module, manipulation_module, head_control_module, base_module, ros_control_module, l3_module, action_module]
 module_button:
   1 : none
   3 : manipulation_module
