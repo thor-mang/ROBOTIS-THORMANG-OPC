@@ -16,7 +16,6 @@ find_package(catkin REQUIRED COMPONENTS
   qt_build
   roscpp
   roslib
-  cmake_modules
   eigen_conversions
   thormang3_foot_step_generator
   robotis_controller_msgs
@@ -28,7 +27,7 @@ find_package(catkin REQUIRED COMPONENTS
   interactive_markers
 )
 
-find_package(Eigen REQUIRED)
+find_package(Eigen3 REQUIRED)
 
 include_directories(
   ${catkin_INCLUDE_DIRS}
