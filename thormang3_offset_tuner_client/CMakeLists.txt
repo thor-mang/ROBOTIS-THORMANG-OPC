@@ -10,11 +10,13 @@ set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
 # Packages
 ################################################################################
 find_package(catkin REQUIRED COMPONENTS
-  qt_build
   roscpp
   roslib
   thormang3_offset_tuner_msgs
 )
+find_package(Qt4 REQUIRED COMPONENTS QtCore QtGui)
+
+include(${QT_USE_FILE})
 
 ################################################################################
 # Declare ROS messages, services and actions
@@ -28,11 +30,6 @@ find_package(catkin REQUIRED COMPONENTS
 # Catkin specific configuration
 ################################################################################
 catkin_package()
-
-##############################################################################
-# Qt Environment
-##############################################################################
-rosbuild_prepare_qt4(QtCore QtGui)
 
 ##############################################################################
 # QT Sections and Sources
@@ -49,7 +46,7 @@ QT4_WRAP_CPP(QT_MOC_HPP ${QT_MOC})
 ################################################################################
 # Build
 ################################################################################
-include_directories(${catkin_INCLUDE_DIRS})
+include_directories(include ${catkin_INCLUDE_DIRS} ${CMAKE_CURRENT_BINARY_DIR})
 
 add_executable(thormang3_offset_tuner_client ${QT_SOURCES} ${QT_RESOURCES_CPP} ${QT_FORMS_HPP} ${QT_MOC_HPP})
 add_dependencies(thormang3_offset_tuner_client ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})

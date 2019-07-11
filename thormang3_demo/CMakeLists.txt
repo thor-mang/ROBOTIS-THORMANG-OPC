@@ -13,7 +13,6 @@ set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
 
 # qt_build provides the qt cmake glue, roscpp the comms for a default talker
 find_package(catkin REQUIRED COMPONENTS
-  qt_build
   roscpp
   roslib
   eigen_conversions
@@ -29,24 +28,18 @@ find_package(catkin REQUIRED COMPONENTS
 
 find_package(Eigen3 REQUIRED)
 
-include_directories(
-  ${catkin_INCLUDE_DIRS}
-  ${Eigen_INCLUDE_DIRS}
-)
+find_package(Qt4 REQUIRED COMPONENTS QtCore QtGui)
+
+include(${QT_USE_FILE})
+
+include_directories(include ${catkin_INCLUDE_DIRS} ${Eigen_INCLUDE_DIRS} ${CMAKE_CURRENT_BINARY_DIR})
+
 # Use this to define what the package will export (e.g. libs, headers).
 # Since the default here is to produce only a binary, we don't worry about
 # exporting anything. 
 catkin_package(
  INCLUDE_DIRS include
 )
-
-##############################################################################
-# Qt Environment
-##############################################################################
-
-# this comes from qt_build's qt-ros.cmake which is automatically 
-# included via the dependency call in package.xml
-rosbuild_prepare_qt4(QtCore QtGui) # Add the appropriate components to the component list here
 
 ##############################################################################
 # Sections
